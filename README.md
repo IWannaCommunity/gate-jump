@@ -24,6 +24,25 @@ lastIP:"127.0.0.1" String
 ```
 For more details on the user object format, see the definition of `UserObject` in main.go
 
+* Alternatively, import the user file from delfruit: ask Klazen for this!
+```sql
+select id as userid
+    , name as username
+    , phash2 as password
+    , email as email
+    , locale as country
+    , date_created as dateCreated
+    , 0 as verified
+    , banned as banned
+    , is_admin as admin
+    , '' as lastToken
+    , date_last_login as lastLogin
+    , last_ip as lastIP
+from User where phash2 is not null and banned = 0;
+```
+
+Then reformat to get each object on one line, remove the array wrapper and commas, replace `0/1` booleans with `false/true`, use `{"$date":"2018-10-05 14:48:59Z"}` for dates (https://docs.mongodb.com/compass/master/import-export/)
+
 ## How to run
 
 To build and run the project:
