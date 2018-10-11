@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Config configuration global variable
@@ -30,8 +31,8 @@ type Configuration struct {
 }
 
 // PortStr helper function
-func (conf *Configuration) PortStr() string {
-	return strconv.Itoa(conf.Port)
+func PortStr() string {
+	return strconv.Itoa(Config.Port)
 }
 
 // LoadConfig loads the config.json file into the configuration struct and set Config to it
@@ -50,3 +51,10 @@ func LoadConfig(filename string) error {
 	Config = con
 	return nil
 }
+
+// GetDatabaseString helper function for creating the database string
+func GetDatabaseString() string {
+	return strings.Join([]string{"mongodb://", Config.Host, ":", PortStr()}, "")
+}
+
+// example: mongodb://localhost:27017
