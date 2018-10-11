@@ -57,7 +57,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 
 // Defined Routes for the API and their relevant information
 var routes = Routes{
-	Route{"GET", "/", Home, PUBLIC, "home"},
+	Route{"GET", "/home", Home, PUBLIC, "home"},
 }
 
 // NewRouter returns a router with all given routes
