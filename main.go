@@ -19,13 +19,13 @@ var client *mongo.Client
 func main() {
 
 	initLog(0, 0, 0) // major,patch,minor
-	LoadConfig("/config/config.json")
+	LoadConfig("config/config.json")
 
 	log.Printf("Welcome to gate-jump server! Setting up environment...")
 
 	//setup database
 	var err error
-	client, err = mongo.NewClient("mongodb://localhost:27017")
+	client, err = mongo.NewClient(GetDatabaseString())
 	if err != nil {
 		log.Fatal(err)
 	}
