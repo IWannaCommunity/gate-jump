@@ -21,6 +21,7 @@ var client *mongo.Client
 func main() {
 
 	initLog(0, 0, 0) // major,patch,minor
+	LoadConfig("/config/config.json")
 
 	log.Printf("Welcome to gate-jump server! Setting up environment...")
 
