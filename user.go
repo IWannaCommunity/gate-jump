@@ -26,8 +26,8 @@ type UserObject struct {
 	LastIP      string    `bson:"lastIP" json:"-"` //don't share the IP via json responses
 }
 
-//UserHandler handles requests to /user/{id}
-func UserHandler(w http.ResponseWriter, r *http.Request) {
+// GetUser handles requests to /user/{id}
+func GetUser(w http.ResponseWriter, r *http.Request) {
 	//get userid from path as integer
 	vars := mux.Vars(r)
 	useridStr := vars["id"]

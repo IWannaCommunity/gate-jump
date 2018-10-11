@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -11,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	"github.com/mongodb/mongo-go-driver/mongo"
 )
 
@@ -38,12 +36,16 @@ func main() {
 	log.Printf("Database initialized!")
 
 	//setup http server
-	router := mux.NewRouter()
-	router.HandleFunc("/", HomeHandler)
-	router.HandleFunc("/register", UserHandler)
-	router.HandleFunc("/user/{id}", UserHandler)
-	handler := handlers.RecoveryHandler()(router)
+	router := NewRouter()
 
+	/*
+		router := mux.NewRouter()
+		router.HandleFunc("/", HomeHandler)
+		router.HandleFunc("/register", UserHandler)
+		router.HandleFunc("/user/{id}", UserHandler)
+	*/
+
+	handler := handlers.RecoveryHandler()(router)
 	//from https://github.com/gorilla/mux, "Graceful Shutdown"
 	srv := &http.Server{
 		Addr:         "0.0.0.0:10420",
@@ -70,9 +72,4 @@ func main() {
 	srv.Shutdown(ctx)
 
 	log.Println("Shutting down...")
-}
-
-//HomeHandler handles requests to the root
-func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, `{"alive": true}`)
 }
