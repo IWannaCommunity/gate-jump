@@ -14,3 +14,5 @@
 logs/
 
 \.vscode/
+
+config/config\.json
