@@ -16,3 +16,5 @@ logs/
 \.vscode/
 
 config/config\.json
+
+debug
