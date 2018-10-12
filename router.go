@@ -75,12 +75,20 @@ func NewRouter() *mux.Router {
 		h = http.HandlerFunc(route.Function)
 		h = CheckAuthLevel(h, route.Auth)
 		h = Logger(h, route.Name)
-		//TODO: if RouteBase is just a /, then don't prepend it
-		router.
-			Methods(route.Method).
-			Path(Config.RouteBase + route.Pattern).
-			Name(route.Name).
-			Handler(h)
+
+		if Config.RouteBase == "/" { // don't prepend it
+			router.
+				Methods(route.Method).
+				Path(route.Pattern).
+				Name(route.Name).
+				Handler(h)
+		} else {
+			router.
+				Methods(route.Method).
+				Path(Config.RouteBase + route.Pattern).
+				Name(route.Name).
+				Handler(h)
+		}
 	}
 
 	return router
