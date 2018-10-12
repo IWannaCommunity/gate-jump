@@ -16,12 +16,11 @@ type loggingResponseWriter struct {
 
 func httpError(w http.ResponseWriter, reason string, errorCode int) {
 	if errorCode == 500 { // big boo boo
-		http.Error(w, reason, errorCode)
 		log.Fatal("Unexpected Result Occured {ERROR:", errorCode, ";REASON:", reason)
+	} else { // minor boo boo
+		log.Println("Error Occured {ERROR:", errorCode, ";REASON:", reason)
 	}
-	// booboo minor
 	http.Error(w, reason, errorCode)
-	log.Println("Error Occured {ERROR:")
 }
 
 // Used in general response codes for simplicity sake where we don't care what happened
@@ -38,8 +37,7 @@ func Recover(h http.Handler) http.Handler {
 			r := recover()
 			if r != nil {
 				log.Printf("Recovered from panic: %v \n %s", r, debug.Stack())
-				http.Error(w, http.StatusText(http.StatusInternalServerError),
-					http.StatusInternalServerError)
+				httpError(w, http.StatusText(http.StatusInternalServerError), 500)
 			}
 		}()
 		h.ServeHTTP(w, r)

@@ -106,7 +106,7 @@ func CheckAuthLevel(inner http.Handler, auth AuthLevel) http.Handler {
 					return []byte(config.Config.JwtSecret), nil
 				})
 			if err != nil {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				httpResponse(w, "Unauthorized", 401)
 				return
 			}
 
@@ -126,13 +126,13 @@ func CheckAuthLevel(inner http.Handler, auth AuthLevel) http.Handler {
 			inner.ServeHTTP(w, r)
 		case USER: //fail if there were no valid claims
 			if !authenticated {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				httpResponse(w, "Unauthorized", 401)
 				return
 			}
 			inner.ServeHTTP(w, r)
 		case ADMIN: //fail if invalid claims or valid claims, but user is not admin
 			if !authenticated || !claims.Admin {
-				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				httpResponse(w, "Unauthorized", 401)
 				return
 			}
 			inner.ServeHTTP(w, r)

@@ -33,7 +33,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	useridStr := vars["id"]
 	userid, err := strconv.Atoi(useridStr)
 	if err != nil { //if userid can't be converted to integer, tell the client it's WRONG
-		http.Error(w, "Invalid user id", 400)
+		httpResponse(w, "Invalid User ID", 400)
 		return
 	}
 
