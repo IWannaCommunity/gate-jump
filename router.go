@@ -57,6 +57,7 @@ func Home(w http.ResponseWriter, r *http.Request) {
 var routes = Routes{
 	Route{"GET", "/", Home, PUBLIC, "home"},
 	Route{"GET", "/user/{id}", GetUser, PUBLIC, "user"},
+	Route{"PUT", "/user/", Register, PUBLIC, "register"},
 }
 
 // NewRouter returns a router with all given routes
@@ -89,6 +90,7 @@ func NewRouter() *mux.Router {
 				Name(route.Name).
 				Handler(h)
 		}
+
 	}
 
 	return router
