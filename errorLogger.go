@@ -16,9 +16,9 @@ type loggingResponseWriter struct {
 
 func httpError(w http.ResponseWriter, reason string, errorCode int) {
 	if errorCode == 500 { // big boo boo
-		log.Fatal("Unexpected Result Occured {ERROR:", errorCode, ";REASON:", reason)
+		log.Panic("Unexpected Result Occured {ERROR:", errorCode, ";REASON:", reason, "}")
 	} else { // minor boo boo
-		log.Println("Error Occured {ERROR:", errorCode, ";REASON:", reason)
+		log.Println("Error Occured {ERROR:", errorCode, ";REASON:", reason, "}")
 	}
 	http.Error(w, reason, errorCode)
 }
@@ -26,8 +26,15 @@ func httpError(w http.ResponseWriter, reason string, errorCode int) {
 // Used in general response codes for simplicity sake where we don't care what happened
 // but still make a habit of calling httpError/httpResponse instead of http.Error
 // just the same thing as http.Error
-func httpResponse(w http.ResponseWriter, reason string, errorCode int) {
-	http.Error(w, reason, errorCode)
+func httpResponse(w http.ResponseWriter, reason string, responseCode int) {
+	http.Error(w, reason, responseCode)
+}
+
+// httpResponseJson does a json return to the response writer
+func httpResponseJson(w http.ResponseWriter, responseCode int, json []byte) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(responseCode)
+	w.Write(json)
 }
 
 // Recover from panics
