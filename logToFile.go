@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"log"
 	"os"
 	"strconv"
@@ -19,6 +20,6 @@ func initLog(major int, patch int, minor int) {
 		if err != nil {
 			log.Panic("Error Opening Log File: ", err)
 		}
-		log.SetOutput(f)
+		log.SetOutput(io.MultiWriter(os.Stdout, f))
 	}
 }

@@ -5,10 +5,8 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"sfm-server-go-sql/config"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/didip/tollbooth"
 	"github.com/gorilla/mux"
 )
 
@@ -57,7 +55,8 @@ func Home(w http.ResponseWriter, r *http.Request) {
 
 // Defined Routes for the API and their relevant information
 var routes = Routes{
-	Route{"GET", "/home", Home, PUBLIC, "home"},
+	Route{"GET", "/", Home, PUBLIC, "home"},
+	Route{"GET", "/user/{id}", GetUser, PUBLIC, "user"},
 }
 
 // NewRouter returns a router with all given routes
@@ -73,28 +72,15 @@ func NewRouter() *mux.Router {
 		)
 
 		var h http.Handler
-
-		//recover from panics
-		h = Recover(h)
-
-		// rate limiter
-		limiter := tollbooth.NewLimiter(5, nil)
-		limiter.SetMessage(`{"error":"Rate Limited"}`)
-
-		h = tollbooth.LimitHandler(limiter, h)
-		//check auth level
+		h = http.HandlerFunc(route.Function)
 		h = CheckAuthLevel(h, route.Auth)
-		//log passed requests
 		h = Logger(h, route.Name)
-
-		//log.Println(Config.RouteBase + route.Pattern)
-
+		//TODO: if RouteBase is just a /, then don't prepend it
 		router.
 			Methods(route.Method).
 			Path(Config.RouteBase + route.Pattern).
 			Name(route.Name).
 			Handler(h)
-
 	}
 
 	return router
@@ -111,7 +97,7 @@ func CheckAuthLevel(inner http.Handler, auth AuthLevel) http.Handler {
 		if tokenString != "" {
 			token, err := jwt.ParseWithClaims(tokenString, &claims,
 				func(token *jwt.Token) (interface{}, error) {
-					return []byte(config.Config.JwtSecret), nil
+					return []byte(Config.JwtSecret), nil
 				})
 			if err != nil {
 				httpResponse(w, "Unauthorized", 401)
