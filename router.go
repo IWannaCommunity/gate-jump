@@ -87,6 +87,14 @@ func NewRouter() *mux.Router {
 		//log passed requests
 		h = Logger(h, route.Name)
 
+		//log.Println(Config.RouteBase + route.Pattern)
+
+		router.
+			Methods(route.Method).
+			Path(Config.RouteBase + route.Pattern).
+			Name(route.Name).
+			Handler(h)
+
 	}
 
 	return router
