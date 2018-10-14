@@ -1,78 +1,19 @@
 package main
 
-import (
-	"context"
-	"flag"
-	"log"
-	"net/http"
-	"os"
-	"os/signal"
-	"time"
-
-	"github.com/didip/tollbooth"
-	"github.com/gorilla/handlers"
-	"github.com/mongodb/mongo-go-driver/mongo"
-)
-
-//shared client,thread-safe: can be used by all request handlers
-var client *mongo.Client
+import "log"
 
 func main() {
 	log.Printf("Welcome to gate-jump server! Setting up environment...")
 
-	initLog(0, 0, 0) // major,patch,minor
+	log.Println("Loading Configuration")
 	LoadConfig("config/config.json")
 
-	//setup database
-	var err error
-	client, err = mongo.NewClient(GetDatabaseString())
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = client.Connect(context.TODO()) //TODO: https://golang.org/pkg/context/
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Database initialized!")
+	log.Println("Initializing Logging")
+	initLog(Config.Major, Config.Patch, Config.Minor) // major,patch,minor
 
-	//setup http server
-	router := NewRouter()
+	log.Printf("Preparing Database")
+	s := Server{}
+	s.Initialize(Config.Database.Username, Config.Database.Password, Config.Database.Dsn)
+	s.Run(Config.Port)
 
-	/*
-		router := mux.NewRouter()
-		router.HandleFunc("/", HomeHandler)
-		router.HandleFunc("/register", UserHandler)
-		router.HandleFunc("/user/{id}", UserHandler)
-	*/
-
-	handler := handlers.RecoveryHandler()(router)
-	// rate limiter
-	limiter := tollbooth.NewLimiter(5, nil)
-	limiter.SetMessage(`{"error":"Rate Limited"}`)
-	handler = tollbooth.LimitHandler(limiter, handler)
-	//from https://github.com/gorilla/mux, "Graceful Shutdown"
-	srv := &http.Server{
-		Addr:         "0.0.0.0:10420",
-		WriteTimeout: time.Second * 15,
-		ReadTimeout:  time.Second * 15,
-		IdleTimeout:  time.Second * 60,
-		Handler:      handler,
-	}
-	go func() {
-		log.Printf("Starting Server! Ctrl+C to quit.")
-		if err := srv.ListenAndServe(); err != nil {
-			log.Fatal(err)
-		}
-	}()
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	<-c
-	log.Println("Shutting down...")
-
-	var wait time.Duration
-	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
-	flag.Parse()
-	ctx, cancel := context.WithTimeout(context.Background(), wait)
-	defer cancel()
-	srv.Shutdown(ctx)
 }

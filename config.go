@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"strconv"
-	"strings"
 )
 
 // Config configuration global variable
@@ -22,17 +20,14 @@ type DatabaseConfig struct {
 type Configuration struct {
 	Database          DatabaseConfig `json:"database"`
 	RouteBase         string         `json:"routebase"`
-	Port              int            `json:"port"`
+	Port              string         `json:"port"`
 	Host              string         `json:"host"`
 	Protocol          string         `json:"protocol"`
 	JwtSecret         string         `json:"jwt_secret"`
-	MapImagePath      string         `json:"map_image_path"`
 	DiscordWebhookURL string         `json:"discord_webhook_url"`
-}
-
-// PortStr helper function
-func PortStr() string {
-	return strconv.Itoa(Config.Port)
+	Major             int            `json:"major"`
+	Patch             int            `json:"patch"`
+	Minor             int            `json:"minor"`
 }
 
 // LoadConfig loads the config.json file into the configuration struct and set Config to it
@@ -51,10 +46,3 @@ func LoadConfig(filename string) error {
 	Config = con
 	return nil
 }
-
-// GetDatabaseString helper function for creating the database string
-func GetDatabaseString() string {
-	return strings.Join([]string{"mongodb://", Config.Host, ":", PortStr()}, "")
-}
-
-// example: mongodb://localhost:27017
