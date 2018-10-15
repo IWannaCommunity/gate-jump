@@ -15,6 +15,9 @@ func main() {
 	s := Server{}
 	s.Initialize(Config.Database.Username, Config.Database.Password, Config.Database.Dsn)
 
+	log.Println("Initializing Routes")
+	s.initializeRoutes()
+
 	log.Println("Starting the gate-jump server now! Ctrl+C to quit.")
 	s.Run(Config.Port)
 }
