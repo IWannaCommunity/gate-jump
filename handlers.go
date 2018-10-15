@@ -9,6 +9,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func (s *Server) getAlive(w http.ResponseWriter, r *http.Request) {
+	respondWithJSON(w, http.StatusOK, map[string]string{"alive": "true"})
+}
+
 func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
