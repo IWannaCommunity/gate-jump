@@ -31,7 +31,8 @@ func (s *Server) Initialize(user, password, dbname string) {
 func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/", s.getAlive).Methods("GET")
 	s.Router.HandleFunc("/user", s.getUsers).Methods("GET")
-	s.Router.HandleFunc("/user", s.createUser).Methods("POST")
+	s.Router.HandleFunc("/register", s.createUser).Methods("POST")
+	s.Router.HandleFunc("/login", s.validateUser).Methods("")
 	s.Router.HandleFunc("/user/{id}", s.getUser).Methods("GET")
 	s.Router.HandleFunc("/user/{id}", s.updateUser).Methods("PUT")
 	s.Router.HandleFunc("/user/{id}", s.deleteUser).Methods("DELETE")
