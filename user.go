@@ -38,8 +38,12 @@ func (u *User) deleteUser(db *sql.DB) error {
 }
 
 func (u *User) createUser(db *sql.DB) error {
-	return db.QueryRow("INSERT INTO users(name, password, email, country, locale) VALUES(?, ?, ?, ?, ?) RETURNING userid",
-		u.Username, u.Password, u.Email, u.Country, u.Locale).Scan(&u.UserID)
+	result, err := db.Exec("INSERT INTO users(name, password, email, country, locale) VALUES(?, ?, ?, ?, ?)",
+		u.Username, u.Password, u.Email, u.Country, u.Locale)
+	if err == nil {
+		u.UserID, err = result.LastInsertId()
+	}
+	return err
 }
 
 func getUsers(db *sql.DB, start, count int) ([]User, error) {
