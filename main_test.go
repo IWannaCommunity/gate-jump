@@ -201,7 +201,7 @@ func clearTable() {
 	s.DB.EXEC("ALTER SEQUENCE users_id_seq RESTART WITH 1")
 }
 
-const tableCreationQuery = `CREATE TABLE user (
+const tableCreationQuery = `CREATE TABLE users (
     userid INT NOT NULL AUTO_INCREMENT,
     name VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
     password CHAR(60) BINARY NOT NULL,
