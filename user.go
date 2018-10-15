@@ -16,6 +16,7 @@ type User struct {
 	DateCreated mysql.NullTime `json:"date_created"`
 	Verified    bool           `json:"verified"`
 	Banned      bool           `json:"banned"`
+	Admin       bool           `json:"admin"`
 	LastToken   string         `json:"last_token"`
 	LastLogin   mysql.NullTime `json:"last_login"`
 	LastIP      string         `json:"last_ip"`
@@ -69,4 +70,9 @@ func getUsers(db *sql.DB, start, count int) ([]User, error) {
 	}
 
 	return users, nil
+}
+
+func (u *User) getUserByName(db *sql.DB) error {
+	return db.QueryRow("SELECT userid, email, country, locale, verified, date_created, last_login FROM users WHERE name=?",
+		u.Username).Scan(&u.UserID, &u.Email, &u.Country, &u.Locale, &u.Verified, &u.DateCreated, &u.LastLogin)
 }
