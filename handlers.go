@@ -7,11 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"golang.org/x/crypto/bcrypt"
-
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
-	"github.com/klazen108/sfm-server-go/config"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (s *Server) getAlive(w http.ResponseWriter, r *http.Request) {
@@ -185,12 +183,12 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 		u.Admin,
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(), //expire in one hour
-			Issuer:    config.Config.Host + ":" + config.Config.PortStr(),
+			Issuer:    Config.Host + ":" + Config.Port,
 			Subject:   strconv.FormatInt(u.UserID, 10), //user id as string
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString([]byte(config.Config.JwtSecret))
+	signedToken, err := token.SignedString([]byte(Config.JwtSecret))
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
