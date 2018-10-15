@@ -48,7 +48,6 @@ func (u *User) createUser(db *sql.DB) error {
 }
 
 func getUsers(db *sql.DB, start, count int) ([]User, error) {
-
 	rows, err := db.Query(
 		"SELECT name, email, country, locale, last_token, verified, banned, date_created, last_login FROM users LIMIT ? OFFSET ?",
 		count, start)

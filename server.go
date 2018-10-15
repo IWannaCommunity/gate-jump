@@ -28,7 +28,7 @@ func (s *Server) Initialize(user, password, dbname string) {
 	s.Router = mux.NewRouter()
 }
 
-func (s *Server) initializeRoutes() {
+func (s *Server) InitializeRoutes() {
 	s.Router.HandleFunc("/", s.getAlive).Methods("GET")
 	s.Router.HandleFunc("/user", s.getUsers).Methods("GET")
 	s.Router.HandleFunc("/register", s.createUser).Methods("POST")

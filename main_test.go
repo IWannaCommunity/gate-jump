@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strconv"
 	"testing"
 
@@ -16,9 +15,17 @@ import (
 var s main.Server
 
 func TestEmptyTable(t *testing.T) {
+	//init server
+	if err := main.LoadConfig("config/config.json"); err != nil {
+		t.Error(err)
+	}
+	s = main.Server{}
+	s.Initialize(main.Config.Database.Username, main.Config.Database.Password, main.Config.Database.Dsn)
+	s.InitializeRoutes()
+
 	clearTable()
 
-	req, _ := http.NewRequest("GET", "/users", nil)
+	req, _ := http.NewRequest("GET", "/user", nil)
 	response := executeRequest(req)
 
 	checkResponseCode(t, http.StatusOK, response.Code)
@@ -39,7 +46,7 @@ func TestGetNonExistentUser(t *testing.T) {
 	var m map[string]string
 	json.Unmarshal(response.Body.Bytes(), &m)
 	if m["error"] != "User not found" {
-		t.Errof("Expected the 'error' key of the response to be set to 'User not found'. Got '%s'", m["error"])
+		t.Errorf("Expected the 'error' key of the response to be set to 'User not found'. Got '%s'", m["error"])
 	}
 }
 
@@ -83,23 +90,13 @@ func TestGetUser(t *testing.T) {
 	checkResponseCode(t, http.StatusOK, response.Code)
 }
 
-func TestGetUser(t *testing.T) {
-	clearTable()
-	addUsers(1)
-
-	req, _ := http.NewRequest("GET", "/user/1", nil)
-	response := executeRequest(req)
-
-	checkResponseCode(t, http.StatusOK, response.Code)
-}
-
 func addUsers(count int) {
 	if count < 1 {
 		count = 1
 	}
 
 	for i := 0; i < count; i++ {
-		a.DB.Exec("INSERT INTO users(name, password, email) VALUES($1, $2, $3)", "User "+strconv.Itoa(i), "Password "+strconv.Itoa(i), "Email "+strconv.Itoa(i))
+		s.DB.Exec("INSERT INTO users(name, password, email) VALUES($1, $2, $3)", "User "+strconv.Itoa(i), "Password "+strconv.Itoa(i), "Email "+strconv.Itoa(i))
 	}
 }
 
@@ -159,7 +156,7 @@ func TestDeleteUser(t *testing.T) {
 
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
-	a.Router.ServeHTTP(rr, req)
+	s.Router.ServeHTTP(rr, req)
 
 	return rr
 }
@@ -170,7 +167,7 @@ func checkResponseCode(t *testing.T, expected, actual int) {
 	}
 }
 
-func TestMain(m *testing.M) {
+/*func TestMain(m *testing.M) {
 	log.Printf("Welcome to gate-jump TEST server! Setting up environment...")
 
 	log.Println("Loading Configuration")
@@ -188,7 +185,7 @@ func TestMain(m *testing.M) {
 
 	os.Exit(code)
 
-}
+}*/
 
 func ensureTableExists() {
 	if _, err := s.DB.Exec(tableCreationQuery); err != nil {
@@ -198,7 +195,7 @@ func ensureTableExists() {
 
 func clearTable() {
 	s.DB.Exec("DELETE FROM users")
-	s.DB.EXEC("ALTER SEQUENCE users_id_seq RESTART WITH 1")
+	s.DB.Exec("ALTER SEQUENCE users_id_seq RESTART WITH 1")
 }
 
 const tableCreationQuery = `CREATE TABLE users (
