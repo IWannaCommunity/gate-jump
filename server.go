@@ -42,6 +42,7 @@ func (s *Server) Run(addr string) {
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
+	log.Println(fmt.Sprintf("Error Code: %d; Error Message: %s", code, message))
 	respondWithJSON(w, code, map[string]string{"error": message})
 }
 
