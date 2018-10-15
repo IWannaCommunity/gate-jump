@@ -3,13 +3,12 @@ package main_test
 import (
 	"bytes"
 	"encoding/json"
+	main "gate-jump"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
-
-	"."
 )
 
 var s main.Server
