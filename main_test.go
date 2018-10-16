@@ -91,7 +91,7 @@ func addUsers(count int) {
 	}
 
 	for i := 0; i < count; i++ {
-		s.DB.Exec("INSERT INTO users(name, password, email) VALUES($1, $2, $3)", "User "+strconv.Itoa(i), "Password "+strconv.Itoa(i), "Email "+strconv.Itoa(i))
+		s.DB.Exec("INSERT INTO users(name, password, email) VALUES(?, ?, ?)", "User "+strconv.Itoa(i), "Password "+strconv.Itoa(i), "Email "+strconv.Itoa(i))
 	}
 }
 
