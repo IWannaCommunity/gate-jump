@@ -52,9 +52,9 @@ func TestGetNonExistentUser(t *testing.T) {
 func TestCreateUser(t *testing.T) {
 	clearTable()
 
-	payload := []byte(`{"name":"test user","password":"12345","email":"email@website.com"}`)
+	payload := []byte(`{"name":"test user","password":"12345","email":"email@website.com","country":"us","locale":"en",}`)
 
-	req, _ := http.NewRequest("POST", "/user", bytes.NewBuffer(payload))
+	req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(payload))
 	response := executeRequest(req)
 
 	checkResponseCode(t, http.StatusCreated, response.Code)
@@ -66,15 +66,11 @@ func TestCreateUser(t *testing.T) {
 		t.Errorf("Expected user name to be 'test user'. Got '%v'", m["name"])
 	}
 
-	if m["password"] != "12345" {
-		t.Errorf("Expected user password to be '12345'. Got '%v'", m["password"])
-	}
-
 	if m["email"] != "email@website.com" {
 		t.Errorf("Expected user email to be 'email@website.com'. Got '%v'", m["email"])
 	}
 
-	if m["id"] != 1.0 { // unmarshal converts int to float
+	if m["userid"] != 1.0 { // unmarshal converts int to float
 		t.Errorf("Expected user ID to be '1'. Got '%v'", m["id"])
 	}
 }
@@ -198,17 +194,18 @@ func clearTable() {
 }
 
 const tableCreationQuery = `CREATE TABLE users (
-    userid INT NOT NULL AUTO_INCREMENT,
+    id INT NOT NULL AUTO_INCREMENT,
     name VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
     password CHAR(60) BINARY NOT NULL,
     email VARCHAR(100),
     country CHAR(2),
     locale VARCHAR(20),
     date_created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    admin BOOL NOT NULL DEFAULT FALSE,
     verified BOOL NOT NULL DEFAULT FALSE,
     banned BOOL NOT NULL DEFAULT FALSE,
     last_token VARCHAR(200),
     last_login DATETIME,
     last_ip VARCHAR(50),
-    PRIMARY KEY (userid)
+    PRIMARY KEY (id)
 )`
