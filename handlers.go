@@ -142,12 +142,6 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-type Claims struct {
-	Username string `json:"username"`
-	Admin    bool   `json:"admin"`
-	jwt.StandardClaims
-}
-
 func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 	var lr LoginRequest
 	decoder := json.NewDecoder(r.Body)
