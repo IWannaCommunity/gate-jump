@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"gate-jump/res"
 	"net/http"
 	"strconv"
 	"time"
@@ -13,30 +14,28 @@ import (
 )
 
 func (s *Server) getAlive(w http.ResponseWriter, r *http.Request) {
-	respondWithJSON(w, NewResponse(http.StatusOK, "", map[string]string{"alive": "true"}))
+	res.New(http.StatusOK).SetData(map[string]bool{"alive": true}).JSON(w)
 }
 
 func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		respondWithError(w, NewResponse(http.StatusBadRequest, "Invalid user ID", nil))
+		res.New(http.StatusBadRequest).SetErrorMessage("Invalid User ID").Error(w)
 		return
 	}
 
-	u := User{UserID: int64(id)}
-	if err := u.getUser(s.DB); err != nil {
-		switch err {
+	u := User{ID: int64(id)}
+	if serr := u.getUser(s.DB); err != nil {
+		switch serr.Err {
 		case sql.ErrNoRows:
-			respondWithError(w, NewResponse(http.StatusNotFound, "User not found", nil))
+			res.New(http.StatusNotFound).SetErrorMessage("User Not Found").Error(w)
 		default:
-			response := NewResponse(http.StatusInternalServerError, "", nil)
-			response.Err = err
-			respondWithError(w, response)
+			res.New(http.StatusInternalServerError).Error(w)
 		}
 		return
 	}
-	respondWithJSON(w, NewResponse(http.StatusOK, "", u))
+	res.New(http.StatusOK).SetData(u).JSON(w)
 }
 
 func (s *Server) getUsers(w http.ResponseWriter, r *http.Request) {
@@ -50,101 +49,88 @@ func (s *Server) getUsers(w http.ResponseWriter, r *http.Request) {
 		start = 0
 	}
 
-	users, err := getUsers(s.DB, start, count)
-	if err != nil {
-		response := NewResponse(http.StatusInternalServerError, "", nil)
-		response.Err = err
-		respondWithError(w, response)
+	users, serr := getUsers(s.DB, start, count)
+	if serr != nil {
+		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
 	}
 
-	respondWithJSON(w, NewResponse(http.StatusOK, "", users))
+	res.New(http.StatusOK).SetData(users).JSON(w)
 }
 
 func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	var u User
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&u); err != nil {
-		respondWithError(w, NewResponse(http.StatusBadRequest, "Invalid request payload", nil))
+		res.New(http.StatusBadRequest).SetErrorMessage("Invalid Request Payload").Error(w)
 		return
 	}
 	defer r.Body.Close()
-
 	//check if user with name already exists; if so, we will get an ErrNoRows which is what we want
 	checkuser := u
-	err := checkuser.getUserByName(s.DB)
-	if err == nil {
-		respondWithError(w, NewResponse(http.StatusBadRequest, "User already exists", nil))
+	serr := checkuser.getUserByName(s.DB)
+	if serr == nil {
+		res.New(http.StatusBadRequest).SetErrorMessage("User Already Exists").Error(w)
 		return
-	} else if err != sql.ErrNoRows {
-		response := NewResponse(http.StatusInternalServerError, "", nil)
-		response.Err = err
-		respondWithError(w, response)
+	} else if serr.Err != sql.ErrNoRows {
+		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
 	}
 
 	//hash the password
 	hashpwd, err := bcrypt.GenerateFromPassword([]byte(u.Password), 12)
 	if err != nil {
-		response := NewResponse(http.StatusInternalServerError, "Failed encrypting password", nil)
-		response.Err = err
-		respondWithError(w, response)
+		res.New(http.StatusInternalServerError).SetErrorMessage("Failed Encrypting Password").Error(w)
 		return
 	}
 	u.Password = string(hashpwd)
 
-	if err := u.createUser(s.DB); err != nil {
-		response := NewResponse(http.StatusInternalServerError, "Failed creating user", nil)
-		response.Err = err
-		respondWithError(w, response)
+	if serr := u.createUser(s.DB); serr != nil {
+		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
 	}
-	respondWithJSON(w, NewResponse(http.StatusCreated, "", u))
+	res.New(http.StatusCreated).SetData(u).JSON(w)
 }
 
 func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		respondWithError(w, NewResponse(http.StatusBadRequest, "Invalid user ID", nil))
+		res.New(http.StatusBadRequest).SetErrorMessage("Invalid User ID").Error(w)
 		return
 	}
 
 	var u User
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&u); err != nil {
-		respondWithError(w, NewResponse(http.StatusBadRequest, "Invalid request payload", ""))
+		res.New(http.StatusBadRequest).SetErrorMessage("Invalid Request Payload").Error(w)
 		return
 	}
 	defer r.Body.Close()
-	u.UserID = int64(id)
+	u.ID = int64(id)
 
-	if err := u.updateUser(s.DB); err != nil {
-		response := NewResponse(http.StatusInternalServerError, "", nil)
-		response.Err = err
-		respondWithError(w, response)
+	if serr := u.updateUser(s.DB); serr != nil {
+		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
 	}
-	respondWithJSON(w, NewResponse(http.StatusOK, "", u))
+	res.New(http.StatusOK).SetData(u).JSON(w)
 }
 
 func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		respondWithError(w, NewResponse(http.StatusBadRequest, "Invalid user ID", nil))
+		res.New(http.StatusBadRequest).SetErrorMessage("Invalid User ID").Error(w)
 		return
 	}
 
-	u := User{UserID: int64(id)}
-	if err := u.deleteUser(s.DB); err != nil {
-		response := NewResponse(http.StatusInternalServerError, "", nil)
-		response.Err = err
-		respondWithError(w, response)
+	u := User{ID: int64(id)}
+	if serr := u.deleteUser(s.DB); serr != nil {
+		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
 	}
 
-	respondWithJSON(w, NewResponse(http.StatusOK, "", map[string]string{"result": "success"}))
+	res.New(http.StatusOK).JSON(w)
 }
 
 // LoginRequest is the request expected on /login
@@ -157,52 +143,46 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 	var lr LoginRequest
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&lr); err != nil {
-		respondWithError(w, NewResponse(http.StatusBadRequest, "Invalid request payload", nil))
+		res.New(http.StatusBadRequest).SetErrorMessage("Invalid Request Payload").Error(w)
 		return
 	}
 	defer r.Body.Close()
 
 	var u User
-	u.Username = lr.Username
+	u.Name = lr.Username
 
 	//get the user; if no user by that name, return 401, if other error, 500
-	if err := u.getUserByName(s.DB); err != nil {
-		if err == sql.ErrNoRows {
-
-			respondWithError(w, NewResponse(http.StatusUnauthorized, "Invalid Account", nil))
+	if serr := u.getUserByName(s.DB); serr != nil {
+		if serr.Err == sql.ErrNoRows {
+			res.New(http.StatusUnauthorized).SetErrorMessage("Invalid Account").Error(w)
 			return
 		} else {
-			response := NewResponse(http.StatusInternalServerError, "", nil)
-			response.Err = err
-			respondWithError(w, response)
+			res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 			return
 		}
 	}
 
 	//check the password
 	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(lr.Password)); err != nil {
-		respondWithError(w, NewResponse(http.StatusUnauthorized, "Invalid Account", nil))
+		res.New(http.StatusInternalServerError).SetErrorMessage("Failed Decrypting Password").Error(w)
 		return
 	}
 
 	//create and sign the token
 	claims := Claims{
-		u.Username,
+		u.Name,
 		u.Admin,
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(), //expire in one hour
 			Issuer:    Config.Host + ":" + Config.Port,
-			Subject:   strconv.FormatInt(u.UserID, 10), //user id as string
+			Subject:   strconv.FormatInt(u.ID, 10), //user id as string
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString([]byte(Config.JwtSecret))
 	if err != nil {
-		response := NewResponse(http.StatusInternalServerError, "", nil)
-		response.Err = err
-		respondWithError(w, response)
+		res.New(http.StatusBadRequest).SetErrorMessage("Failed Creating Token").Error(w)
 		return
 	}
-
-	respondWithJSON(w, NewResponse(http.StatusOK, "", map[string]string{"token": signedToken}))
+	res.New(http.StatusOK).SetToken(signedToken).JSON(w)
 }

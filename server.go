@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
+	"gate-jump/res"
 	"log"
 	"net/http"
 	"os"
@@ -58,60 +58,11 @@ func (s *Server) Run(addr string) {
 	log.Fatal(http.ListenAndServe(":"+addr, handlers.LoggingHandler(s.LogFile, s.Router)))
 }
 
-type Response struct {
-	Function string        // name of the function called
-	Code     int           // response code returned (determines if logged)
-	Message  string        // response message
-	Payload  interface{}   // json payload if relevant
-	Args     []interface{} // arguments to sql query if relevant
-	Query    string        // sql query if relevant
-	Err      error         // error if relevant
-}
-
-func NewResponse(code int, message string, payload interface{}) Response {
-	// predefine any relevant information for normal non-important response
-	r := Response{
-		Function: MyCaller(),
-		Code:     code,
-		Message:  message,
-		Payload:  payload,
-		Args:     nil,
-		Query:    "",
-		Err:      nil,
-	}
-	return r
-}
-
-func respondWithError(w http.ResponseWriter, r Response) {
-	if r.Code >= 500 {
-		/*
-			Example:
-			2018/10/17 21:10:47 ERROR: Failed to get user data from database.
-			(500) getUser:	Invalid sql syntax check something something
-			({<nil>}): "SELECT * FROM users WHERE id=?"
-		*/
-		log.Printf("ERROR: %s\n(%d) %s: %v\n(%v): \"%s\"", r.Message, r.Code, r.Function, r.Err, r.Args, r.Query)
-	}
-	if r.Message == "" {
-		r.Message = r.Err.Error()
-	}
-	r.Payload = map[string]string{"error": r.Message}
-	respondWithJSON(w, r)
-}
-
-func respondWithJSON(w http.ResponseWriter, r Response) {
-	payload, _ := json.Marshal(r.Payload)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.Code)
-	w.Write(payload)
-}
-
 func (s *Server) Recovery(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Println("Recovered from Panic: ", r)
-				respondWithError(w, NewResponse(http.StatusInternalServerError, fmt.Sprintf("%v", r), nil))
+				res.New(http.StatusInternalServerError).SetErrorMessage(fmt.Sprintf("%v", r)).Error(w)
 				return
 			}
 		}()
@@ -149,7 +100,7 @@ func (s *Server) JWTContext(next http.Handler) http.Handler {
 				return []byte(Config.JwtSecret), nil
 			})
 		if err != nil { // token couldn't be read. deny completely
-			respondWithError(w, NewResponse(http.StatusUnauthorized, "Invalid token provided", nil))
+			res.New(http.StatusUnauthorized).SetErrorMessage("Invalid Token Provided").Error(w)
 			return
 		}
 

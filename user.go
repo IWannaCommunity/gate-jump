@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"gate-jump/res"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -22,38 +23,53 @@ type User struct {
 	LastIP      string         `json:"last_ip"`
 }
 
-func (u *User) getUser(db *sql.DB) error {
-	return db.QueryRow("SELECT name, email, country, locale, verified, date_created, last_login FROM users WHERE userid=?",
-		u.UserID).Scan(&u.Username, &u.Email, &u.Country, &u.Locale, &u.Verified, &u.DateCreated, &u.LastLogin)
+func (u *User) getUser(db *sql.DB) *res.ServerError {
+	var serr res.ServerError
+	serr.Query = "SELECT name, email, country, locale, verified, date_created, last_login FROM users WHERE id=?"
+	serr.Args = append(serr.Args, u.ID)
+	serr.Err = db.QueryRow(serr.Query, serr.Args...).
+		Scan(&u.Name, &u.Email, &u.Country, &u.Locale, &u.Verified, &u.DateCreated, &u.LastLogin)
+	return &serr
 }
 
-func (u *User) updateUser(db *sql.DB) error {
-	_, err := db.Exec("UPDATE users SET name=?, email=?, country=?, locale=?, FROM users WHERE userid=?",
-		u.Username, u.Email, u.Country, u.Locale, u.UserID)
-	return err
+func (u *User) updateUser(db *sql.DB) *res.ServerError {
+	var serr res.ServerError
+	serr.Query = "UPDATE users SET name=?, email=?, country=?, locale=?, FROM users WHERE id=?"
+	serr.Args = append(serr.Args, u.Name, u.Email, u.Country, u.Locale, u.ID)
+	_, serr.Err = db.Exec(serr.Query, serr.Args...)
+	return &serr
 }
 
-func (u *User) deleteUser(db *sql.DB) error {
-	_, err := db.Exec("DELETE FROM users WHERE userid=?", u.UserID)
-	return err
+func (u *User) deleteUser(db *sql.DB) *res.ServerError {
+	var serr res.ServerError
+	serr.Query = "DELETE FROM users WHERE id=?"
+	serr.Args = append(serr.Args, u.ID)
+	_, serr.Err = db.Exec(serr.Query, serr.Args...)
+	return &serr
 }
 
-func (u *User) createUser(db *sql.DB) error {
-	result, err := db.Exec("INSERT INTO users(name, password, email, country, locale) VALUES(?, ?, ?, ?, ?)",
-		u.Username, u.Password, u.Email, u.Country, u.Locale)
-	if err == nil {
-		u.UserID, err = result.LastInsertId()
+func (u *User) createUser(db *sql.DB) *res.ServerError {
+	var serr res.ServerError
+	var result sql.Result
+	serr.Query = "INSERT INTO users(name, password, email, country, locale) VALUES(?, ?, ?, ?, ?)"
+	serr.Args = append(serr.Args, u.Name, u.Password, u.Email, u.Country, u.Locale)
+	result, serr.Err = db.Exec(serr.Query, serr.Args...)
+	if serr.Err != nil {
+		return &serr
 	}
-	return err
+	u.ID, _ = result.LastInsertId() // we confirmed that there will be no error
+	return nil
 }
 
-func getUsers(db *sql.DB, start, count int) ([]User, error) {
-	rows, err := db.Query(
-		"SELECT name, email, country, locale, last_token, verified, banned, date_created, last_login FROM users LIMIT ? OFFSET ?",
-		count, start)
+func getUsers(db *sql.DB, start, count int) ([]User, *res.ServerError) {
+	var serr res.ServerError
+	var rows *sql.Rows
+	serr.Query = "SELECT name, email, country, locale, last_token, verified, banned, date_created, last_login FROM users LIMIT ? OFFSET ?"
+	serr.Args = append(serr.Args, count, start)
+	rows, serr.Err = db.Query(serr.Query, serr.Args...)
 
-	if err != nil {
-		return nil, err
+	if serr.Err != nil {
+		return nil, &serr
 	}
 
 	defer rows.Close()
@@ -62,8 +78,9 @@ func getUsers(db *sql.DB, start, count int) ([]User, error) {
 
 	for rows.Next() {
 		var u User
-		if err := rows.Scan(&u.Username, &u.Email, &u.Country, &u.Locale, &u.LastToken, &u.Verified, &u.Banned, &u.DateCreated, &u.LastLogin); err != nil {
-			return nil, err
+		if serr.Err = rows.
+			Scan(&u.Name, &u.Email, &u.Country, &u.Locale, &u.LastToken, &u.Verified, &u.Banned, &u.DateCreated, &u.LastLogin); serr.Err != nil {
+			return nil, &serr
 		}
 		users = append(users, u)
 	}
@@ -71,7 +88,11 @@ func getUsers(db *sql.DB, start, count int) ([]User, error) {
 	return users, nil
 }
 
-func (u *User) getUserByName(db *sql.DB) error {
-	return db.QueryRow("SELECT userid, email, country, locale, verified, date_created, last_login FROM users WHERE name=?",
-		u.Username).Scan(&u.UserID, &u.Email, &u.Country, &u.Locale, &u.Verified, &u.DateCreated, &u.LastLogin)
+func (u *User) getUserByName(db *sql.DB) *res.ServerError {
+	var serr res.ServerError
+	serr.Query = "SELECT id, email, country, locale, verified, date_created, last_login FROM users WHERE name=?"
+	serr.Args = append(serr.Args, u.Name)
+	serr.Err = db.QueryRow(serr.Query, serr.Args...).
+		Scan(&u.ID, &u.Email, &u.Country, &u.Locale, &u.Verified, &u.DateCreated, &u.LastLogin)
+	return &serr
 }
