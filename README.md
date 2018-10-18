@@ -7,10 +7,10 @@ Central Authentication Service for Delfruit, IWM, and other fangame community se
 * Install MongoDB Driver for Go: `go get github.com/mongodb/mongo-go-driver/mongo`
 * Install Gorilla-Mux (golang http server framework) `go get github.com/gorilla/mux`
 * Get MongoDB Compass Community Edition (GUI for MongoDB): https://www.mongodb.com/download-center#compass
-* Open Compass and create a database called `gatejump` and a collection called `users`, and add a user with userid 1:
+* Open Compass and create a database called `gatejump` and a collection called `users`, and add a user with id 1:
 
 ```
-userid:1 Int64
+id:1 Int64
 username:"Klazen108" String
 password:<a hashed bcrypt password> String
 email:"cmurphy1337@live.com" String
@@ -26,7 +26,7 @@ For more details on the user object format, see the definition of `UserObject` i
 
 * Alternatively, import the user file from delfruit: ask Klazen for this!
 ```sql
-select id as userid
+select id as id
     , name as username
     , phash2 as password
     , email as email

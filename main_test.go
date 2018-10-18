@@ -70,7 +70,7 @@ func TestCreateUser(t *testing.T) {
 		t.Errorf("Expected user email to be 'email@website.com'. Got '%v'", m["email"])
 	}
 
-	if m["userid"] != 1.0 { // unmarshal converts int to float
+	if m["id"] != 1.0 { // unmarshal converts int to float
 		t.Errorf("Expected user ID to be '1'. Got '%v'", m["id"])
 	}
 }
