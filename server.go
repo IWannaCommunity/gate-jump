@@ -22,12 +22,6 @@ type Server struct {
 	LogFile *os.File
 }
 
-type Claims struct {
-	Username string `json:"username"`
-	Admin    bool   `json:"admin"`
-	jwt.StandardClaims
-}
-
 const (
 	PUBLIC    = 0
 	USER      = 1
@@ -97,6 +91,12 @@ id==JWTid	admin	context	type
 1			0		2		admin
 1			1		3		adminuser
 */
+
+type Claims struct {
+	Username string `json:"username"`
+	Admin    bool   `json:"admin"`
+	jwt.StandardClaims
+}
 
 func (s *Server) JWTContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
