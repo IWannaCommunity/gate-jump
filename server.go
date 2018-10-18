@@ -58,17 +58,52 @@ func (s *Server) Run(addr string) {
 	log.Fatal(http.ListenAndServe(":"+addr, handlers.LoggingHandler(s.LogFile, s.Router)))
 }
 
-func respondWithError(w http.ResponseWriter, code int, message string) {
-	log.Println(fmt.Sprintf("Error Code: %d; Error Message: %s", code, message))
-	respondWithJSON(w, code, map[string]string{"error": message})
+type Response struct {
+	Function string        // name of the function called
+	Code     int           // response code returned (determines if logged)
+	Message  string        // response message
+	Payload  interface{}   // json payload if relevant
+	Args     []interface{} // arguments to sql query if relevant
+	Query    string        // sql query if relevant
+	Err      error         // error if relevant
 }
 
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	response, _ := json.Marshal(payload)
+func NewResponse(code int, message string, payload interface{}) Response {
+	// predefine any relevant information for normal non-important response
+	r := Response{
+		Function: MyCaller(),
+		Code:     code,
+		Message:  message,
+		Payload:  payload,
+		Args:     nil,
+		Query:    "",
+		Err:      nil,
+	}
+	return r
+}
 
+func respondWithError(w http.ResponseWriter, r Response) {
+	if r.Code >= 500 {
+		/*
+			Example:
+			2018/10/17 21:10:47 ERROR: Failed to get user data from database.
+			(500) getUser:	Invalid sql syntax check something something
+			({<nil>}): "SELECT * FROM users WHERE id=?"
+		*/
+		log.Printf("ERROR: %s\n(%d) %s: %v\n(%v): \"%s\"", r.Message, r.Code, r.Function, r.Err, r.Args, r.Query)
+	}
+	if r.Message == "" {
+		r.Message = r.Err.Error()
+	}
+	r.Payload = map[string]string{"error": r.Message}
+	respondWithJSON(w, r)
+}
+
+func respondWithJSON(w http.ResponseWriter, r Response) {
+	payload, _ := json.Marshal(r.Payload)
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write(response)
+	w.WriteHeader(r.Code)
+	w.Write(payload)
 }
 
 func (s *Server) Recovery(next http.Handler) http.Handler {
@@ -76,7 +111,7 @@ func (s *Server) Recovery(next http.Handler) http.Handler {
 		defer func() {
 			if r := recover(); r != nil {
 				log.Println("Recovered from Panic: ", r)
-				respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("%v", r))
+				respondWithError(w, NewResponse(http.StatusInternalServerError, fmt.Sprintf("%v", r), nil))
 				return
 			}
 		}()
@@ -114,7 +149,7 @@ func (s *Server) JWTContext(next http.Handler) http.Handler {
 				return []byte(Config.JwtSecret), nil
 			})
 		if err != nil { // token couldn't be read. deny completely
-			respondWithError(w, http.StatusUnauthorized, "Invalid token provided")
+			respondWithError(w, NewResponse(http.StatusUnauthorized, "Invalid token provided", nil))
 			return
 		}
 
