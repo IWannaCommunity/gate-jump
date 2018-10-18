@@ -7,17 +7,19 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
+	"os"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
 //shared client,thread-safe: can be used by all request handlers
 
 type Server struct {
-	Router *mux.Router
-	DB     *sql.DB
+	Router  *mux.Router
+	DB      *sql.DB
+	LogFile *os.File
 }
 
 type Claims struct {
@@ -59,7 +61,7 @@ func (s *Server) InitializeRoutes() {
 }
 
 func (s *Server) Run(addr string) {
-	log.Fatal(http.ListenAndServe(":"+addr, s.Router))
+	log.Fatal(http.ListenAndServe(":"+addr, handlers.LoggingHandler(s.LogFile, s.Router)))
 }
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
@@ -77,7 +79,6 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 
 func (s *Server) Recovery(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Recovery Layer Executing")
 		defer func() {
 			if r := recover(); r != nil {
 				log.Println("Recovered from Panic: ", r)
@@ -86,16 +87,6 @@ func (s *Server) Recovery(next http.Handler) http.Handler {
 			}
 		}()
 		next.ServeHTTP(w, r)
-	})
-}
-
-func (s *Server) Logging(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Logging Layer Executing")
-		ts := time.Now()
-		next.ServeHTTP(w, r)
-		// ex: GET /users -> 500 (30.00s)
-		log.Printf("%s\t%s\t%s\t" /*%d*/, r.Method, r.RequestURI, time.Since(ts) /*,lw.statusCode*/)
 	})
 }
 

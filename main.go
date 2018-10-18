@@ -1,18 +1,26 @@
 package main
 
-import "log"
+import (
+	"log"
+	"os"
+)
 
 func main() {
-	log.Println("Welcome to gate-jump server! Setting up environment...")
+
+	f := initLog(0, 0, 0) // major,patch,minor
+	if f != os.Stdout {
+		defer func() {
+			f.Close()
+		}()
+	}
+
+	log.Println("Welcome to the gate-jump server! Setting up environment...")
 
 	log.Println("Loading Configuration")
 	LoadConfig("config/config.json")
 
-	log.Println("Initializing Logging")
-	initLog(Config.Major, Config.Patch, Config.Minor) // major,patch,minor
-
 	log.Println("Initializing Database")
-	s := Server{}
+	s := Server{LogFile: f}
 	s.Initialize(Config.Database.Username, Config.Database.Password, Config.Database.Dsn)
 
 	log.Println("Initializing Routes")
