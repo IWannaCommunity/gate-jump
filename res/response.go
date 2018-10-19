@@ -12,16 +12,16 @@ type Response struct {
 	Function string
 	Code     int
 	Payload  struct {
-		Success bool
-		Error   *ResponseError
-		Data    interface{}
+		Success bool           `json:"success"`
+		Error   *ResponseError `json:"error"`
+		Data    interface{}    `json:"data"`
 	}
 	InternalError *ServerError
 }
 
 type ResponseError struct {
-	Code    int
-	Message string
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
 type ServerError struct {
