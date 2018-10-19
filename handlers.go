@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"gate-jump/res"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -167,21 +167,20 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//create and sign the token
-	claims := Claims{
-		u.Name,
-		u.Admin,
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(), //expire in one hour
-			Issuer:    Config.Host + ":" + Config.Port,
-			Subject:   strconv.FormatInt(u.ID, 10), //user id as string
-		},
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString([]byte(Config.JwtSecret))
+	signedToken, err := u.CreateToken()
 	if err != nil {
 		res.New(http.StatusBadRequest).SetErrorMessage("Failed Creating Token").Error(w)
 		return
 	}
+
+	u.LastToken = signedToken
+	u.LastLogin.Valid = true
+	u.LastLogin.Time = time.Now()
+	u.LastIP = r.RemoteAddr
+	if serr := u.updateUser(s.DB); serr.Err != nil {
+		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+		return
+	}
+
 	res.New(http.StatusOK).SetToken(signedToken).JSON(w)
 }

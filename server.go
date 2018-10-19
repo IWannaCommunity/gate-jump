@@ -78,12 +78,6 @@ id==JWTid	admin	context	type
 1			1		3		adminuser
 */
 
-type Claims struct {
-	Username string `json:"username"`
-	Admin    bool   `json:"admin"`
-	jwt.StandardClaims
-}
-
 func (s *Server) JWTContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("JWTContext Layer Executing")

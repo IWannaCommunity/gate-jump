@@ -88,11 +88,45 @@ func getUsers(db *sql.DB, start, count int) ([]User, *res.ServerError) {
 	return users, nil
 }
 
+// used to determine if valid login username or username in use
 func (u *User) getUserByName(db *sql.DB) *res.ServerError {
 	var serr res.ServerError
-	serr.Query = "SELECT id, email, country, locale, verified, date_created, last_login FROM users WHERE name=?"
+	serr.Query = "SELECT * FROM users WHERE name=?"
 	serr.Args = append(serr.Args, u.Name)
 	serr.Err = db.QueryRow(serr.Query, serr.Args...).
-		Scan(&u.ID, &u.Email, &u.Country, &u.Locale, &u.Verified, &u.DateCreated, &u.LastLogin)
+		Scan(&u.ID, &u.Name, &u.Password, &u.Email, &u.Country, &u.Locale,
+			&u.DateCreated, &u.Verified, &u.Banned, &u.Admin,
+			&u.LastToken, &u.LastLogin, &u.LastIP)
 	return &serr
+}
+
+type Claims struct {
+	ID       int64  `json:"id"`
+	Username string `json:"username"`
+	Admin    bool   `json:"admin"`
+	Country  string `json:"country"`
+	Locale   string `json:"locale"`
+	Verified bool   `json:"verified"`
+	Banned   bool   `json:"banned"`
+	jwt.StandardClaims
+}
+
+func (u *User) CreateToken() (string, error) {
+	//create and sign the token
+	claims := Claims{
+		u.ID,
+		u.Name,
+		u.Admin,
+		u.Country,
+		u.Locale,
+		u.Verified,
+		u.Banned,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(), //expire in one hour
+			Issuer:    Config.Host + ":" + Config.Port,
+			Subject:   strconv.FormatInt(u.ID, 10), //user id as string
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(Config.JwtSecret))
 }
