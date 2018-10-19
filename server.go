@@ -10,6 +10,7 @@ import (
 	"os"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
@@ -31,7 +32,6 @@ const (
 
 func (s *Server) Initialize(user, password, dbname string) {
 	var err error
-
 	s.DB, err = sql.Open("mysql", fmt.Sprintf("%s:%s@/%s?charset=utf8mb4&parseTime=True&interpolateParams=true", user, password, dbname))
 	if err != nil {
 		log.Fatal(err)
