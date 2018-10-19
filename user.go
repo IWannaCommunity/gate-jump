@@ -40,6 +40,14 @@ func (u *User) updateUser(db *sql.DB) *res.ServerError {
 	return &serr
 }
 
+func (u *User) updateLoginInfo(db *sql.DB) *res.ServerError {
+	var serr res.ServerError
+	serr.Query = "UPDATE users SET last_token=?, last_login=?, last_ip=? FROM users WHERE id=?"
+	serr.Args = append(serr.Args, u.LastToken, u.LastLogin, u.LastIP, u.ID)
+	_, serr.Err = db.Exec(serr.Query, serr.Args...)
+	return &serr
+}
+
 func (u *User) deleteUser(db *sql.DB) *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "DELETE FROM users WHERE id=?"
