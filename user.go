@@ -9,23 +9,20 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-// how to handle null data
-// https://medium.com/aubergine-solutions/how-i-handled-null-possible-values-from-database-rows-in-golang-521fb0ee267
-
 type User struct {
 	ID          int64      `json:"id"`
-	Name        NullString `json:"name"`
-	Password    NullString `json:"password"`
-	Email       NullString `json:"email"`
-	Country     NullString `json:"country"`
-	Locale      NullString `json:"locale"`
-	DateCreated NullTime   `json:"date_created"`
+	Name        *string    `json:"name"`
+	Password    *string    `json:"password"`
+	Email       *string    `json:"email"`
+	Country     *string    `json:"country"`
+	Locale      *string    `json:"locale"`
+	DateCreated *time.Time `json:"date_created"`
 	Verified    bool       `json:"verified"`
 	Banned      bool       `json:"banned"`
 	Admin       bool       `json:"admin"`
-	LastToken   NullString `json:"last_token"`
-	LastLogin   NullTime   `json:"last_login"`
-	LastIP      NullString `json:"last_ip"`
+	LastToken   *string    `json:"last_token"`
+	LastLogin   *time.Time `json:"last_login"`
+	LastIP      *string    `json:"last_ip"`
 }
 
 func (u *User) getUser(db *sql.DB) *res.ServerError {
@@ -48,7 +45,7 @@ func (u *User) updateUser(db *sql.DB) *res.ServerError {
 func (u *User) updateLoginInfo(db *sql.DB) *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "UPDATE users SET last_token=?, last_login=?, last_ip=? FROM users WHERE id=?"
-	serr.Args = append(serr.Args, u.LastToken.String, u.LastLogin, u.LastIP, u.ID)
+	serr.Args = append(serr.Args, u.LastToken, u.LastLogin, u.LastIP, u.ID)
 	_, serr.Err = db.Exec(serr.Query, serr.Args...)
 	return &serr
 }
@@ -65,7 +62,7 @@ func (u *User) createUser(db *sql.DB) *res.ServerError {
 	var serr res.ServerError
 	var result sql.Result
 	serr.Query = "INSERT INTO users(name, password, email, country, locale) VALUES(?, ?, ?, ?, ?)"
-	serr.Args = append(serr.Args, u.Name.String, u.Password.String, u.Email.String, u.Country.String, u.Locale.String)
+	serr.Args = append(serr.Args, u.Name, u.Password, u.Email, u.Country, u.Locale)
 	result, serr.Err = db.Exec(serr.Query, serr.Args...)
 	if serr.Err != nil {
 		return &serr
@@ -105,7 +102,7 @@ func getUsers(db *sql.DB, start, count int) ([]User, *res.ServerError) {
 func (u *User) getUserByName(db *sql.DB) *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "SELECT * FROM users WHERE name=?"
-	serr.Args = append(serr.Args, u.Name.String)
+	serr.Args = append(serr.Args, u.Name)
 	serr.Err = db.QueryRow(serr.Query, serr.Args...).
 		Scan(&u.ID, &u.Name, &u.Password, &u.Email, &u.Country, &u.Locale,
 			&u.DateCreated, &u.Verified, &u.Banned, &u.Admin,
@@ -114,13 +111,13 @@ func (u *User) getUserByName(db *sql.DB) *res.ServerError {
 }
 
 type Claims struct {
-	ID       int64  `json:"id"`
-	Username string `json:"username"`
-	Admin    bool   `json:"admin"`
-	Country  string `json:"country"`
-	Locale   string `json:"locale"`
-	Verified bool   `json:"verified"`
-	Banned   bool   `json:"banned"`
+	ID       int64   `json:"id"`
+	Username *string `json:"username"`
+	Admin    bool    `json:"admin"`
+	Country  *string `json:"country"`
+	Locale   *string `json:"locale"`
+	Verified bool    `json:"verified"`
+	Banned   bool    `json:"banned"`
 	jwt.StandardClaims
 }
 
@@ -128,10 +125,10 @@ func (u *User) CreateToken() (string, error) {
 	//create and sign the token
 	claims := Claims{
 		u.ID,
-		u.Name.String,
+		u.Name,
 		u.Admin,
-		u.Country.String,
-		u.Locale.String,
+		u.Country,
+		u.Locale,
 		u.Verified,
 		u.Banned,
 		jwt.StandardClaims{
