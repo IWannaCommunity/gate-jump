@@ -36,8 +36,8 @@ func (u *User) getUser(db *sql.DB) *res.ServerError {
 
 func (u *User) updateUser(db *sql.DB) *res.ServerError {
 	var serr res.ServerError
-	serr.Query = "UPDATE users SET name=?, email=?, country=?, locale=? FROM users WHERE id=?"
-	serr.Args = append(serr.Args, u.Name.String, u.Email.String, u.Country.String, u.Locale.String, u.ID)
+	serr.Query = "UPDATE users SET name=?, email=?, country=?, locale=? WHERE id=?"
+	serr.Args = append(serr.Args, u.Name, u.Email, u.Country, u.Locale, u.ID)
 	_, serr.Err = db.Exec(serr.Query, serr.Args...)
 	return &serr
 }
