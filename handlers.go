@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"gate-jump/res"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -78,12 +77,12 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//hash the password
-	hashpwd, err := bcrypt.GenerateFromPassword([]byte(u.Password), 12)
+	hashpwd, err := bcrypt.GenerateFromPassword([]byte(u.Password.String), 12)
 	if err != nil {
 		res.New(http.StatusInternalServerError).SetErrorMessage("Failed Encrypting Password").Error(w)
 		return
 	}
-	u.Password = string(hashpwd)
+	u.Password.Scan(hashpwd)
 
 	if serr := u.createUser(s.DB); serr != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
@@ -149,7 +148,7 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	var u User
-	u.Name = lr.Username
+	u.Name.Scan(lr.Username)
 
 	//get the user; if no user by that name, return 401, if other error, 500
 	if serr := u.getUserByName(s.DB); serr != nil {
@@ -162,7 +161,7 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	//check the password
-	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(lr.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(u.Password.String), []byte(lr.Password)); err != nil {
 		res.New(http.StatusInternalServerError).SetErrorMessage("Failed Decrypting Password").Error(w)
 		return
 	}
@@ -173,10 +172,10 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.LastToken = signedToken
+	u.LastToken.Scan(signedToken)
 	u.LastLogin.Valid = true
 	u.LastLogin.Time = time.Now()
-	u.LastIP = r.RemoteAddr
+	u.LastIP.Scan(r.RemoteAddr)
 	if serr := u.updateUser(s.DB); serr.Err != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
