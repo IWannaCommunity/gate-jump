@@ -69,7 +69,7 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	//check if user with name already exists; if so, we will get an ErrNoRows which is what we want
 	checkuser := u
 	serr := checkuser.getUserByName(s.DB)
-	if serr == nil {
+	if serr.Err == nil {
 		res.New(http.StatusBadRequest).SetErrorMessage("User Already Exists").Error(w)
 		return
 	} else if serr.Err != sql.ErrNoRows {
@@ -156,12 +156,11 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 		if serr.Err == sql.ErrNoRows {
 			res.New(http.StatusUnauthorized).SetErrorMessage("Invalid Account").Error(w)
 			return
-		} else {
+		} else if serr.Err != nil {
 			res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 			return
 		}
 	}
-
 	//check the password
 	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(lr.Password)); err != nil {
 		res.New(http.StatusInternalServerError).SetErrorMessage("Failed Decrypting Password").Error(w)
