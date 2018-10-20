@@ -117,7 +117,48 @@ func getUsers(db *sql.DB, start, count int, auth AuthLevel) ([]User, *res.Server
 	return users, nil
 }
 
-// HELPER FUNCTIONS : ONLY USED BY SERVER
+// HELPER FUNCTIONS ==============================================================================
+
+// scans all user data into the user struct
+func (u *User) ScanAll(row *sql.Row) error {
+	return row.Scan(
+		&u.ID,
+		&u.Name,
+		&u.Password,
+		&u.Email,
+		&u.Country,
+		&u.Locale,
+		&u.DateCreated,
+		&u.Verified,
+		&u.Banned,
+		&u.Admin,
+		&u.LastToken,
+		&u.LastLogin,
+		&u.LastIP)
+}
+
+// applies read user data permissions of a fully retrieved user
+func (u *User) CleanDataRead(auth AuthLevel, serr res.ServerError) {
+	if serr.Err != nil {
+		return
+	}
+	switch auth {
+	case SERVER:
+		// we dont want to stop the server from reading anything
+	case PUBLIC:
+		u.Email = nil
+		fallthrough
+	case USER:
+		u.LastIP = nil
+		fallthrough
+	case ADMINUSER:
+		fallthrough
+	case ADMIN:
+		fallthrough
+	default: // by default always remove password. this is here for security of passwords
+		u.Password = nil
+	}
+}
 
 // used for updating login information directly
 func (u *User) UpdateLoginInfo(db *sql.DB) *res.ServerError {
