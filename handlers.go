@@ -138,12 +138,6 @@ func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 	res.New(http.StatusOK).JSON(w)
 }
 
-// LoginRequest is the request expected on /login
-type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
 func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 	var lr LoginRequest
 	decoder := json.NewDecoder(r.Body)
