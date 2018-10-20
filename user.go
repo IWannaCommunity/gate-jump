@@ -63,8 +63,23 @@ func (u *User) getUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 
 func (u *User) updateUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 	var serr res.ServerError
-	serr.Query = "UPDATE users SET name=?, email=?, country=?, locale=? WHERE id=?"
-	serr.Args = append(serr.Args, u.Name, u.Email, u.Country, u.Locale, u.ID)
+	switch auth {
+	case SERVER: // name, password, email, country, locale, last_token, last_login, last_ip
+		serr.Query = "UPDATE users SET name=?, password=?, email=?, country=?, locale=?, last_token=?, last_login=?, last_ip=? WHERE id=?"
+		serr.Args = append(serr.Args, u.Name, u.Password, u.Email, u.Country, u.Locale, u.LastToken, u.LastLogin, u.LastIP, u.ID)
+	case ADMIN: // can update: name, banned
+		serr.Query = "UPDATE users SET name=?, banned=? WHERE id=?"
+		serr.Args = append(serr.Args, u.Name, u.Banned, u.ID)
+	case ADMINUSER: // can update: name, password, email, country, locale, (cant update own banned status)
+		fallthrough // same perms as user
+	case USER: // can update: name, password, email, country, locale
+		serr.Query = "UPDATE users SET name=?, password=?, email=?, country=?, locale=? WHERE id=?"
+		serr.Args = append(serr.Args, u.Name, u.Password, u.Email, u.Country, u.Locale, u.ID)
+	case PUBLIC: // can update: nothing (shouldn't occur)
+		fallthrough
+	default: // can update: nothing (shouldn't occur)
+		return &res.ServerError{Err: errors.New("This shouldn't occur.")}
+	}
 	_, serr.Err = db.Exec(serr.Query, serr.Args...)
 	return &serr
 }
@@ -176,15 +191,6 @@ func (u *User) CleanDataRead(auth AuthLevel, serr res.ServerError) {
 	default: // by default always remove password. this is here for security of passwords
 		u.Password = nil
 	}
-}
-
-// used for updating login information directly
-func (u *User) UpdateLoginInfo(db *sql.DB) *res.ServerError {
-	var serr res.ServerError
-	serr.Query = "UPDATE users SET last_token=?, last_login=?, last_ip=? FROM users WHERE id=?"
-	serr.Args = append(serr.Args, u.LastToken, u.LastLogin, u.LastIP, u.ID)
-	_, serr.Err = db.Exec(serr.Query, serr.Args...)
-	return &serr
 }
 
 // used to determine if valid login username or username in use
