@@ -69,7 +69,7 @@ func (u *User) updateUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 	return &serr
 }
 
-func (u *User) deleteUser(db *sql.DB, auth AuthLevel) *res.ServerError {
+func (u *User) deleteUser(db *sql.DB) *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "DELETE FROM users WHERE id=?"
 	serr.Args = append(serr.Args, u.ID)

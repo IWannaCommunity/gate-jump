@@ -18,10 +18,12 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+// is the server alive
 func (s *Server) getAlive(w http.ResponseWriter, r *http.Request) {
 	res.New(http.StatusOK).SetData(map[string]bool{"alive": true}).JSON(w)
 }
 
+// get multiple
 func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -50,6 +52,7 @@ func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	res.New(http.StatusOK).SetData(u).JSON(w)
 }
 
+// get
 func (s *Server) getUsers(w http.ResponseWriter, r *http.Request) {
 	count, _ := strconv.Atoi(r.FormValue("count"))
 	start, _ := strconv.Atoi(r.FormValue("start"))
@@ -76,6 +79,7 @@ func (s *Server) getUsers(w http.ResponseWriter, r *http.Request) {
 	res.New(http.StatusOK).SetData(users).JSON(w)
 }
 
+// register
 func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	var u User
 	decoder := json.NewDecoder(r.Body)
@@ -107,9 +111,16 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
 	}
-	res.New(http.StatusCreated).SetData(u).JSON(w)
+
+	signedToken, err := u.CreateToken()
+	if err != nil {
+		res.New(http.StatusInternalServerError).SetErrorMessage("User Created But Failed To Create Token").Error(w)
+	}
+
+	res.New(http.StatusCreated).SetToken(signedToken).JSON(w)
 }
 
+// update
 func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -133,6 +144,11 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if auth < USER { // only users+ can update said user
+		res.New(http.StatusUnauthorized).SetErrorMessage("Requires User Permissions").Error(w)
+		return
+	}
+
 	if serr := u.updateUser(s.DB, auth); serr != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
@@ -140,6 +156,7 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 	res.New(http.StatusOK).SetData(u).JSON(w)
 }
 
+// delete
 func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -156,7 +173,12 @@ func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if serr := u.deleteUser(s.DB, auth); serr != nil {
+	if auth < ADMIN { // they arent an admin
+		res.New(http.StatusUnauthorized).SetErrorMessage("Requires Administrative Permissions").Error(w)
+		return
+	}
+
+	if serr := u.deleteUser(s.DB); serr != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
 	}
@@ -164,6 +186,7 @@ func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 	res.New(http.StatusOK).JSON(w)
 }
 
+// login
 func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 	var lr LoginRequest
 
