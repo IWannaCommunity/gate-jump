@@ -21,8 +21,8 @@ const (
 	CLAIMS    AuthLevel = -1 // just the claims context tag
 	PUBLIC    AuthLevel = 0  // public return
 	USER      AuthLevel = 1  // user return
-	ADMIN     AuthLevel = 2  // admin return
-	ADMINUSER AuthLevel = 3  // admin wants to change password. admins cant change other users passwords so this exists
+	ADMINUSER AuthLevel = 2  // admin wants to change password. admins cant change other users passwords so this exists
+	ADMIN     AuthLevel = 3  // admin return
 	SERVER    AuthLevel = 4  // server can update any user without giving 2 shits
 )
 
