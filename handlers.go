@@ -86,7 +86,7 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	//check if user with name already exists; if so, we will get an ErrNoRows which is what we want
 	checkuser := u
-	serr := checkuser.getUserByName(s.DB)
+	serr := checkuser.GetUserByName(s.DB)
 	if serr.Err == nil {
 		res.New(http.StatusBadRequest).SetErrorMessage("User Already Exists").Error(w)
 		return
@@ -178,7 +178,7 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 	u.Name = &lr.Username
 
 	//get the user; if no user by that name, return 401, if other error, 500
-	if serr := u.getUserByName(s.DB); serr != nil {
+	if serr := u.GetUserByName(s.DB); serr != nil {
 		if serr.Err == sql.ErrNoRows {
 			res.New(http.StatusUnauthorized).SetErrorMessage("Invalid Account").Error(w)
 			return
@@ -220,7 +220,7 @@ func (s *Server) getAuthLevel(r *http.Request, u1 *User) (AuthLevel, *res.Respon
 
 	var u2 User
 	u2.Name = claims.Name
-	serr := u2.getUserByName(s.DB)
+	serr := u2.GetUserByName(s.DB)
 	if serr.Err == sql.ErrNoRows { // claims user wasn't found
 		return PUBLIC, res.New(http.StatusUnauthorized).SetErrorMessage("Token's User Doesn't Exist")
 	} else if serr.Err != nil {

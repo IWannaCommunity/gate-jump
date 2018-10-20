@@ -120,7 +120,7 @@ func getUsers(db *sql.DB, start, count int, auth AuthLevel) ([]User, *res.Server
 // HELPER FUNCTIONS : ONLY USED BY SERVER
 
 // used for updating login information directly
-func (u *User) updateLoginInfo(db *sql.DB) *res.ServerError {
+func (u *User) UpdateLoginInfo(db *sql.DB) *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "UPDATE users SET last_token=?, last_login=?, last_ip=? FROM users WHERE id=?"
 	serr.Args = append(serr.Args, u.LastToken, u.LastLogin, u.LastIP, u.ID)
@@ -129,7 +129,7 @@ func (u *User) updateLoginInfo(db *sql.DB) *res.ServerError {
 }
 
 // used to determine if valid login username or username in use
-func (u *User) getUserByName(db *sql.DB) *res.ServerError {
+func (u *User) GetUserByName(db *sql.DB) *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "SELECT * FROM users WHERE name=?"
 	serr.Args = append(serr.Args, u.Name)
