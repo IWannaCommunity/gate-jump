@@ -54,10 +54,10 @@ type User struct {
 
 func (u *User) getUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 	var serr res.ServerError
-	serr.Query = "SELECT name, email, country, locale, verified, date_created, last_login FROM users WHERE id=?"
+	serr.Query = "SELECT * FROM users WHERE id=?"
 	serr.Args = append(serr.Args, u.ID)
-	serr.Err = db.QueryRow(serr.Query, serr.Args...).
-		Scan(&u.Name, &u.Email, &u.Country, &u.Locale, &u.Verified, &u.DateCreated, &u.LastLogin)
+	serr.Err = u.ScanAll(db.QueryRow(serr.Query, serr.Args...))
+	u.CleanDataRead(auth, serr)
 	return &serr
 }
 
