@@ -40,7 +40,7 @@ func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if serr := u.getUser(s.DB, auth); err != nil {
+	if serr := u.getUser(s.DB, auth); serr.Err != nil {
 		switch serr.Err {
 		case sql.ErrNoRows:
 			res.New(http.StatusNotFound).SetErrorMessage("User Not Found").Error(w)
