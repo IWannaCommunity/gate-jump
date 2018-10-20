@@ -16,31 +16,31 @@ type User struct {
 	// Write: Nobody
 	Name *string `json:"name"`
 	// Read: PUBLIC
-	// Write: USER or ADMIN or SERVER (offensive names)
+	// Write: USER (offensive names, all included due to offensive names)
 	Password *string `json:"password"`
 	// Read: SERVER
-	// Write: USER only
+	// Write: USER or SERVER
 	Email *string `json:"email"`
 	// Read: USER
-	// Write: USER only
+	// Write: USER or SERVER
 	Country *string `json:"country"`
 	// Read: PUBLIC
-	// Write: USER only
+	// Write: USER or SERVER
 	Locale *string `json:"locale"`
 	// Read: PUBLIC
-	// Write: USER only
+	// Write: USER or SERVER
 	DateCreated *time.Time `json:"date_created"`
 	// Read: PUBLIC
-	// Write: SERVER
+	// Write: Nobody (This is only ever set on creation.)
 	Verified bool `json:"verified"`
 	// Read: PUBLIC
-	// Write: SERVER (by logging into sql only)
+	// Write: Nobody (by logging into sql only)
 	Banned bool `json:"banned"`
 	// Read: PUBLIC
-	// Write: ADMIN
+	// Write: ADMIN only
 	Admin bool `json:"admin"`
 	// Read: PUBLIC
-	// Write: SERVER (by logging into sql only)
+	// Write: Nobody (by logging into sql only)
 	LastToken *string `json:"last_token"` // ? is this needed
 	// Read: SERVER
 	// Write: SERVER
