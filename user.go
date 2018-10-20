@@ -80,8 +80,8 @@ func (u *User) deleteUser(db *sql.DB) *res.ServerError {
 func (u *User) createUser(db *sql.DB) *res.ServerError {
 	var serr res.ServerError
 	var result sql.Result
-	serr.Query = "INSERT INTO users(name, password, email, country, locale) VALUES(?, ?, ?, ?, ?)"
-	serr.Args = append(serr.Args, u.Name, u.Password, u.Email, u.Country, u.Locale)
+	serr.Query = "INSERT INTO users(name, password, email) VALUES(?, ?, ?)"
+	serr.Args = append(serr.Args, u.Name, u.Password, u.Email)
 	result, serr.Err = db.Exec(serr.Query, serr.Args...)
 	if serr.Err != nil {
 		return &serr
