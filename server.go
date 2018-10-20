@@ -107,9 +107,13 @@ func (s *Server) JWTContext(next http.Handler) http.Handler {
 			return
 		}
 
-		claims = *token.Claims.(*Claims) // ?????
+		if token.Claims == nil {
+			res.New(http.StatusInternalServerError).SetErrorMessage("Token Is Null").Error(w)
+			return
+		}
+		claims = *token.Claims.(*Claims)
 
-		ctx := context.WithValue(r.Context(), CLAIMS, nil)
+		ctx := context.WithValue(r.Context(), CLAIMS, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
