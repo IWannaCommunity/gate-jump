@@ -110,17 +110,6 @@ func (u *User) getUserByName(db *sql.DB) *res.ServerError {
 	return &serr
 }
 
-type Claims struct {
-	ID       int64   `json:"id"`
-	Username *string `json:"username"`
-	Admin    bool    `json:"admin"`
-	Country  *string `json:"country"`
-	Locale   *string `json:"locale"`
-	Verified bool    `json:"verified"`
-	Banned   bool    `json:"banned"`
-	jwt.StandardClaims
-}
-
 func (u *User) CreateToken() (string, error) {
 	//create and sign the token
 	claims := Claims{

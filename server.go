@@ -70,13 +70,16 @@ func (s *Server) Recovery(next http.Handler) http.Handler {
 	})
 }
 
-/*
-id==JWTid	admin	context	type
-0			0		0		public
-0			1		1		user
-1			0		2		admin
-1			1		3		adminuser
-*/
+type Claims struct {
+	ID       int64   `json:"id"`
+	Name     *string `json:"username"`
+	Admin    bool    `json:"admin"`
+	Country  *string `json:"country"`
+	Locale   *string `json:"locale"`
+	Verified bool    `json:"verified"`
+	Banned   bool    `json:"banned"`
+	jwt.StandardClaims
+}
 
 func (s *Server) JWTContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
