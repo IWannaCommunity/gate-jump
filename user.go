@@ -190,6 +190,7 @@ func (u *User) CleanDataRead(auth AuthLevel, serr res.ServerError) {
 		fallthrough
 	default: // by default always remove password. this is here for security of passwords
 		u.Password = nil
+		u.LastToken = nil
 	}
 }
 
