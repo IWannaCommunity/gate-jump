@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"gate-jump/res"
 	"strconv"
 	"time"
@@ -51,6 +52,8 @@ type User struct {
 	// Read: ADMIN
 	// Write: SERVER
 }
+
+// SQL FUNCTIONS =================================================================================
 
 func (u *User) getUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 	var serr res.ServerError
