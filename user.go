@@ -93,7 +93,7 @@ func (u *User) createUser(db *sql.DB) *res.ServerError {
 func getUsers(db *sql.DB, start, count int, auth AuthLevel) ([]User, *res.ServerError) {
 	var serr res.ServerError
 	var rows *sql.Rows
-	serr.Query = "SELECT name, email, country, locale, last_token, verified, banned, date_created, last_login FROM users LIMIT ? OFFSET ?"
+	serr.Query = "SELECT * FROM users LIMIT ? OFFSET ?"
 	serr.Args = append(serr.Args, count, start)
 	rows, serr.Err = db.Query(serr.Query, serr.Args...)
 
@@ -107,10 +107,10 @@ func getUsers(db *sql.DB, start, count int, auth AuthLevel) ([]User, *res.Server
 
 	for rows.Next() {
 		var u User
-		if serr.Err = rows.
-			Scan(&u.Name, &u.Email, &u.Country, &u.Locale, &u.LastToken, &u.Verified, &u.Banned, &u.DateCreated, &u.LastLogin); serr.Err != nil {
+		if serr.Err = u.ScanAlls(rows); serr.Err != nil {
 			return nil, &serr
 		}
+		u.CleanDataRead(auth, serr)
 		users = append(users, u)
 	}
 
