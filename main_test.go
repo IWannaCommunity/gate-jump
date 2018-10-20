@@ -204,7 +204,7 @@ const tableCreationQuery = `CREATE TABLE users (
     admin BOOL NOT NULL DEFAULT FALSE,
     verified BOOL NOT NULL DEFAULT FALSE,
     banned BOOL NOT NULL DEFAULT FALSE,
-    last_token VARCHAR(200),
+    last_token BLOB,
     last_login DATETIME,
     last_ip VARCHAR(50),
     PRIMARY KEY (id)

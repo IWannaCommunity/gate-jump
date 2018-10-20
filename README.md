@@ -58,7 +58,7 @@ If you see `{"alive": true}`, you're all set!
 Try `http://localhost:10420/user/1` to see your user!
 
 
-Database Properties
+#Database Properties
 CREATE TABLE users (
     id INT NOT NULL AUTO_INCREMENT,
     name VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE users (
     admin BOOL NOT NULL DEFAULT FALSE,
     verified BOOL NOT NULL DEFAULT FALSE,
     banned BOOL NOT NULL DEFAULT FALSE,
-    last_token VARCHAR(200),
+    last_token BLOB,
     last_login DATETIME,
     last_ip VARCHAR(50),
     PRIMARY KEY (id)
