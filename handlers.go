@@ -31,7 +31,14 @@ func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u := User{ID: int64(id)}
-	if serr := u.getUser(s.DB); err != nil {
+
+	auth, response := s.getAuthLevel(r, &u)
+	if response != nil {
+		response.Error(w)
+		return
+	}
+
+	if serr := u.getUser(s.DB, auth); err != nil {
 		switch serr.Err {
 		case sql.ErrNoRows:
 			res.New(http.StatusNotFound).SetErrorMessage("User Not Found").Error(w)
@@ -54,7 +61,13 @@ func (s *Server) getUsers(w http.ResponseWriter, r *http.Request) {
 		start = 0
 	}
 
-	users, serr := getUsers(s.DB, start, count)
+	auth, response := s.getAuthLevel(r, nil)
+	if response != nil {
+		response.Error(w)
+		return
+	}
+
+	users, serr := getUsers(s.DB, start, count, auth)
 	if serr != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
@@ -114,7 +127,13 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	u.ID = int64(id)
 
-	if serr := u.updateUser(s.DB); serr != nil {
+	auth, response := s.getAuthLevel(r, &u)
+	if response != nil {
+		response.Error(w)
+		return
+	}
+
+	if serr := u.updateUser(s.DB, auth); serr != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
 	}
@@ -130,7 +149,14 @@ func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	u := User{ID: int64(id)}
-	if serr := u.deleteUser(s.DB); serr != nil {
+
+	auth, response := s.getAuthLevel(r, &u)
+	if response != nil {
+		response.Error(w)
+		return
+	}
+
+	if serr := u.deleteUser(s.DB, auth); serr != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
 	}
@@ -140,6 +166,7 @@ func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 	var lr LoginRequest
+
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&lr); err != nil {
 		res.New(http.StatusBadRequest).SetErrorMessage("Invalid Request Payload").Error(w)
@@ -148,7 +175,7 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	var u User
-	*u.Name = lr.Username
+	u.Name = &lr.Username
 
 	//get the user; if no user by that name, return 401, if other error, 500
 	if serr := u.getUserByName(s.DB); serr != nil {
@@ -172,13 +199,55 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	*u.LastToken = signedToken
-	*u.LastLogin = time.Now()
-	*u.LastIP = r.RemoteAddr
-	if serr := u.updateUser(s.DB); serr.Err != nil {
+	u.LastToken = &signedToken
+	u.LastLogin = &[]time.Time{time.Now()}[0] // how to get pointer from function call (its gross): goo.gl/9BXtsj
+	u.LastIP = &r.RemoteAddr
+	if serr := u.updateUser(s.DB, SERVER); serr.Err != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
 	}
 
 	res.New(http.StatusOK).SetToken(signedToken).JSON(w)
+}
+
+// provide with request and said user and claims and confirm claims user exists and claims user's authentication level
+func (s *Server) getAuthLevel(r *http.Request, u1 *User) (AuthLevel, *res.Response) {
+	claims := r.Context().Value(CLAIMS).(Claims) // confirmed valid on jwt layer
+
+	if claims.ID == 0 { // no claims exist
+		return PUBLIC, nil
+	}
+
+	var u2 User
+	u2.Name = claims.Name
+	serr := u2.getUserByName(s.DB)
+	if serr.Err == sql.ErrNoRows { // claims user wasn't found
+		return PUBLIC, res.New(http.StatusUnauthorized).SetErrorMessage("Token's User Doesn't Exist")
+	} else if serr.Err != nil {
+		return PUBLIC, res.New(http.StatusInternalServerError).SetInternalError(serr)
+	}
+	if claims.ID != u2.ID { // claims user exists but is not the said user (this might be overkill)
+		return PUBLIC, res.New(http.StatusUnauthorized).SetErrorMessage("Token's ID And Found User's ID Are Not The Same")
+	}
+
+	// we assume the username of the claimed user and the found user (u2) is the same because we searched by name
+
+	if u1 == nil { // we aren't editing a user directly so no user was provided
+		if u2.Admin { // u2 is an admin
+			return ADMIN, nil
+		} else { // u2 is not an admin
+			return PUBLIC, nil
+		}
+	} else {
+		if u1.ID == u2.ID { // is u1 u2?
+			if u2.Admin { // is u2 an admin like they say they are?
+				return ADMINUSER, nil
+			} else { // u2 is not an admin but is u1
+				return USER, nil
+			}
+		} else if u2.Admin { // is u2 not u1 but is an admin?
+			return ADMIN, nil
+		}
+		return PUBLIC, nil // u2 is neither u1 or an admin
+	}
 }

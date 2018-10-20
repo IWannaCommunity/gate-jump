@@ -25,7 +25,7 @@ type User struct {
 	LastIP      *string    `json:"last_ip"`
 }
 
-func (u *User) getUser(db *sql.DB) *res.ServerError {
+func (u *User) getUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "SELECT name, email, country, locale, verified, date_created, last_login FROM users WHERE id=?"
 	serr.Args = append(serr.Args, u.ID)
@@ -34,7 +34,7 @@ func (u *User) getUser(db *sql.DB) *res.ServerError {
 	return &serr
 }
 
-func (u *User) updateUser(db *sql.DB) *res.ServerError {
+func (u *User) updateUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "UPDATE users SET name=?, email=?, country=?, locale=? WHERE id=?"
 	serr.Args = append(serr.Args, u.Name, u.Email, u.Country, u.Locale, u.ID)
@@ -42,15 +42,7 @@ func (u *User) updateUser(db *sql.DB) *res.ServerError {
 	return &serr
 }
 
-func (u *User) updateLoginInfo(db *sql.DB) *res.ServerError {
-	var serr res.ServerError
-	serr.Query = "UPDATE users SET last_token=?, last_login=?, last_ip=? FROM users WHERE id=?"
-	serr.Args = append(serr.Args, u.LastToken, u.LastLogin, u.LastIP, u.ID)
-	_, serr.Err = db.Exec(serr.Query, serr.Args...)
-	return &serr
-}
-
-func (u *User) deleteUser(db *sql.DB) *res.ServerError {
+func (u *User) deleteUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "DELETE FROM users WHERE id=?"
 	serr.Args = append(serr.Args, u.ID)
@@ -71,7 +63,7 @@ func (u *User) createUser(db *sql.DB) *res.ServerError {
 	return nil
 }
 
-func getUsers(db *sql.DB, start, count int) ([]User, *res.ServerError) {
+func getUsers(db *sql.DB, start, count int, auth AuthLevel) ([]User, *res.ServerError) {
 	var serr res.ServerError
 	var rows *sql.Rows
 	serr.Query = "SELECT name, email, country, locale, last_token, verified, banned, date_created, last_login FROM users LIMIT ? OFFSET ?"
@@ -96,6 +88,17 @@ func getUsers(db *sql.DB, start, count int) ([]User, *res.ServerError) {
 	}
 
 	return users, nil
+}
+
+// HELPER FUNCTIONS : ONLY USED BY SERVER
+
+// used for updating login information directly
+func (u *User) updateLoginInfo(db *sql.DB) *res.ServerError {
+	var serr res.ServerError
+	serr.Query = "UPDATE users SET last_token=?, last_login=?, last_ip=? FROM users WHERE id=?"
+	serr.Args = append(serr.Args, u.LastToken, u.LastLogin, u.LastIP, u.ID)
+	_, serr.Err = db.Exec(serr.Query, serr.Args...)
+	return &serr
 }
 
 // used to determine if valid login username or username in use

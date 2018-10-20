@@ -15,20 +15,22 @@ import (
 	"github.com/gorilla/mux"
 )
 
-//shared client,thread-safe: can be used by all request handlers
+type AuthLevel int
+
+const (
+	CLAIMS    AuthLevel = -1 // just the claims context tag
+	PUBLIC    AuthLevel = 0  // public return
+	USER      AuthLevel = 1  // user return
+	ADMIN     AuthLevel = 2  // admin return
+	ADMINUSER AuthLevel = 3  // admin wants to change password. admins cant change other users passwords so this exists
+	SERVER    AuthLevel = 4  // server can update any user without giving 2 shits
+)
 
 type Server struct {
 	Router  *mux.Router
 	DB      *sql.DB
 	LogFile *os.File
 }
-
-const (
-	PUBLIC    = 0
-	USER      = 1
-	ADMIN     = 2
-	ADMINUSER = 3
-)
 
 func (s *Server) Initialize(user, password, dbname string) {
 	var err error
@@ -49,8 +51,7 @@ func (s *Server) InitializeRoutes() {
 	s.Router.HandleFunc("/user/{id}", s.updateUser).Methods("PUT")
 	s.Router.HandleFunc("/user/{id}", s.deleteUser).Methods("DELETE")
 	s.Router.Use(s.Recovery)
-	//s.Router.Use(s.Logging)
-	//s.Router.Use(s.JWTContext)
+	s.Router.Use(s.JWTContext)
 
 }
 
@@ -83,27 +84,32 @@ type Claims struct {
 
 func (s *Server) JWTContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("JWTContext Layer Executing")
 		claims := Claims{}
 		tokenString := r.Header.Get("Authorization")
 
 		if tokenString == "" { // no token provided. public credential only
-			ctx := context.WithValue(r.Context(), "AUTH", PUBLIC)
+			ctx := context.WithValue(r.Context(), CLAIMS, Claims{ID: 0})
 			next.ServeHTTP(w, r.WithContext(ctx))
+			return
 		}
 		// parse token provided
-		_, err := jwt.ParseWithClaims(tokenString, &claims,
+		token, err := jwt.ParseWithClaims(tokenString, &claims,
 			func(token *jwt.Token) (interface{}, error) {
 				return []byte(Config.JwtSecret), nil
 			})
-		if err != nil { // token couldn't be read. deny completely
+		if err != nil { // token couldn't be read
 			res.New(http.StatusUnauthorized).SetErrorMessage("Invalid Token Provided").Error(w)
 			return
 		}
+		if !token.Valid { // token has been edited
+			log.Println("hi?")
+			res.New(http.StatusUnauthorized).SetErrorMessage("Token Invalid").Error(w)
+			return
+		}
 
-		//if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		claims = *token.Claims.(*Claims) // ?????
 
-		//}
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), CLAIMS, nil)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
