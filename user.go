@@ -16,7 +16,7 @@ type User struct {
 	// Write: Nobody
 	Name *string `json:"name"`
 	// Read: PUBLIC
-	// Write: USER only
+	// Write: USER or ADMIN or SERVER (offensive names)
 	Password *string `json:"password"`
 	// Read: SERVER
 	// Write: USER only
