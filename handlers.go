@@ -23,7 +23,7 @@ func (s *Server) getAlive(w http.ResponseWriter, r *http.Request) {
 	res.New(http.StatusOK).SetData(map[string]bool{"alive": true}).JSON(w)
 }
 
-// get multiple
+// get
 func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -52,7 +52,7 @@ func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 	res.New(http.StatusOK).SetData(u).JSON(w)
 }
 
-// get
+// get multiple
 func (s *Server) getUsers(w http.ResponseWriter, r *http.Request) {
 	count, _ := strconv.Atoi(r.FormValue("count"))
 	start, _ := strconv.Atoi(r.FormValue("start"))
