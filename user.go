@@ -10,19 +10,46 @@ import (
 )
 
 type User struct {
-	ID          int64      `json:"id"`
-	Name        *string    `json:"name"`
-	Password    *string    `json:"password"`
-	Email       *string    `json:"email"`
-	Country     *string    `json:"country"`
-	Locale      *string    `json:"locale"`
+	// PUBLIC < USER == ADMINUSER < ADMIN < SERVER
+	ID int64 `json:"id"`
+	// Read: PUBLIC
+	// Write: Nobody
+	Name *string `json:"name"`
+	// Read: PUBLIC
+	// Write: USER only
+	Password *string `json:"password"`
+	// Read: SERVER
+	// Write: USER only
+	Email *string `json:"email"`
+	// Read: USER
+	// Write: USER only
+	Country *string `json:"country"`
+	// Read: PUBLIC
+	// Write: USER only
+	Locale *string `json:"locale"`
+	// Read: PUBLIC
+	// Write: USER only
 	DateCreated *time.Time `json:"date_created"`
-	Verified    bool       `json:"verified"`
-	Banned      bool       `json:"banned"`
-	Admin       bool       `json:"admin"`
-	LastToken   *string    `json:"last_token"`
-	LastLogin   *time.Time `json:"last_login"`
-	LastIP      *string    `json:"last_ip"`
+	// Read: PUBLIC
+	// Write: SERVER
+	Verified bool `json:"verified"`
+	// Read: PUBLIC
+	// Write: SERVER (by logging into sql only)
+	Banned bool `json:"banned"`
+	// Read: PUBLIC
+	// Write: ADMIN
+	Admin bool `json:"admin"`
+	// Read: PUBLIC
+	// Write: SERVER (by logging into sql only)
+	LastToken *string `json:"last_token"` // ? is this needed
+	// Read: SERVER
+	// Write: SERVER
+	LastLogin *time.Time `json:"last_login"`
+	// Read: PUBLIC
+	// Write: SERVER
+	LastIP *string `json:"last_ip"`
+	// Read: ADMIN
+	// Write: SERVER
 }
 
 func (u *User) getUser(db *sql.DB, auth AuthLevel) *res.ServerError {
