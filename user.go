@@ -137,6 +137,24 @@ func (u *User) ScanAll(row *sql.Row) error {
 		&u.LastIP)
 }
 
+// scans all user data into the user struct (for rows)
+func (u *User) ScanAlls(rows *sql.Rows) error {
+	return rows.Scan(
+		&u.ID,
+		&u.Name,
+		&u.Password,
+		&u.Email,
+		&u.Country,
+		&u.Locale,
+		&u.DateCreated,
+		&u.Verified,
+		&u.Banned,
+		&u.Admin,
+		&u.LastToken,
+		&u.LastLogin,
+		&u.LastIP)
+}
+
 // applies read user data permissions of a fully retrieved user
 func (u *User) CleanDataRead(auth AuthLevel, serr res.ServerError) {
 	if serr.Err != nil {
