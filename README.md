@@ -4,7 +4,7 @@ Central Authentication Service for Delfruit, IWM, and other fangame community se
 ## Environment Setup
 
 * Install the MySQL server (v14.14 Distrib 5.7.24 for Linux x86_64): https://www.mysql.com/downloads/
-* Install MySQL Driver for Go: `go get ggithub.com/go-sql-driver/mysql`
+* Install MySQL Driver for Go: `go get github.com/go-sql-driver/mysql`
 * Install Gorilla-Mux (golang http server framework) `go get github.com/gorilla/mux`
 * Install jwt-go (jwt token encoder and decoder) `go get github.com/dgrijalva/jwt-go`
 * Log into MySql by opening a terminal and typing `mysql -u root -p` and then entering the root password.
