@@ -16,11 +16,19 @@ type DatabaseConfig struct {
 	Dsn      string `json:"dsn"`
 }
 
+// HTTPS config info - if missing, then should fallback to HTTP
+type HttpsConfig struct {
+	CertFile string `json:"certFile"`
+	KeyFile  string `json:"keyFile"`
+}
+
 // Configuration data structure containing relevant database information (basically hides jwt from github)
 type Configuration struct {
 	Database          DatabaseConfig `json:"database"`
+	Https             HttpsConfig    `json:"https"`
 	RouteBase         string         `json:"routebase"`
 	Port              string         `json:"port"`
+	SslPort           string         `json:"sslPort"`
 	Host              string         `json:"host"`
 	Protocol          string         `json:"protocol"`
 	JwtSecret         string         `json:"jwt_secret"`

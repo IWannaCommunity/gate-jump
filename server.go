@@ -55,8 +55,14 @@ func (s *Server) InitializeRoutes() {
 
 }
 
-func (s *Server) Run(addr string) {
-	log.Fatal(http.ListenAndServe(":"+addr, handlers.LoggingHandler(s.LogFile, s.Router)))
+func (s *Server) Run(httpPort, httpsPort string) {
+	if Config.Https.CertFile != "" && Config.Https.KeyFile != "" {
+		log.Println("HTTPS Credentials picked up, running HTTPS")
+		log.Fatal(http.ListenAndServeTLS(":"+httpsPort, Config.Https.CertFile, Config.Https.KeyFile, handlers.LoggingHandler(s.LogFile, s.Router)))
+	} else {
+		log.Println("HTTPS Credentials missing, running HTTP")
+		log.Fatal(http.ListenAndServe(":"+httpPort, handlers.LoggingHandler(s.LogFile, s.Router)))
+	}
 }
 
 func (s *Server) Recovery(next http.Handler) http.Handler {

@@ -27,5 +27,5 @@ func main() {
 	s.InitializeRoutes()
 
 	log.Println("Starting the gate-jump server now! Ctrl+C to quit.")
-	s.Run(Config.Port)
+	s.Run(Config.Port, Config.SslPort)
 }
