@@ -83,6 +83,3 @@ Navigate to `http://localhost:10420/`
 If you see `{"alive": true}`, you're all set!
 
 Try `http://localhost:10420/user/1` to see your user!
-
-
-#Database Properties
