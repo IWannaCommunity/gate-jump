@@ -26,7 +26,7 @@ CREATE TABLE users (
     last_login DATETIME,
     last_ip VARCHAR(50),
     PRIMARY KEY (id)
-)
+) 
 ```
 
 For more details on the `users` columns please look at `user.go` in the main directory of the project.
