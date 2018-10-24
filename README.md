@@ -31,7 +31,7 @@ CREATE TABLE users (
 
 For more details on the `users` columns please look at `user.go` in the main directory of the project.
 
-*Create a file and appropriately name the following information under `~/config/config.json`
+* Create a file and appropriately name the following information under `~/config/config.json`
 
 ```json
 {
