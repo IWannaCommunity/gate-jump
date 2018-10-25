@@ -4,64 +4,78 @@ import (
 	"bytes"
 	"encoding/json"
 	main "gate-jump"
-	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"testing"
 )
 
 var s main.Server
 
-func TestEmptyTable(t *testing.T) {
+// unmarshal will create a map from a json response, for quick and dirty testing
+func unmarshal(t *testing.T, responseBody *bytes.Buffer) map[string]interface{} {
+	var result map[string]interface{}
+	if err := json.Unmarshal(responseBody.Bytes(), &result); err != nil {
+		t.Error(err)
+		return nil
+	}
+	return result
+}
+
+// TestMain is the main entrypoint all tests, and ensures the server is ready to go
+// every test will call this first
+func TestMain(m *testing.M) {
 	//init server
 	if err := main.LoadConfig("config/config.json"); err != nil {
-		t.Error(err)
+		panic(err)
 	}
 	s = main.Server{}
 	s.Initialize(main.Config.Database.Username, main.Config.Database.Password, main.Config.Database.Dsn)
 	s.InitializeRoutes()
-
+	ensureTableExists()
 	clearTable()
 
+	code := m.Run()
+
+	os.Exit(code)
+}
+
+func TestEmptyTable(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/user", nil)
 	response := executeRequest(req)
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
-	if body := response.Body.String(); body != "[]" {
-		t.Errorf("Expected an empty array. Got %s", body)
+	result := unmarshal(t, response.Body)
+	data := result["data"].([]interface{})
+
+	if len(data) > 0 {
+		t.Errorf("Expected an empty array. Got %v", data)
 	}
 }
 
 func TestGetNonExistentUser(t *testing.T) {
-	clearTable()
-
 	req, _ := http.NewRequest("GET", "/user/11", nil)
 	response := executeRequest(req)
 
 	checkResponseCode(t, http.StatusNotFound, response.Code)
 
-	var m map[string]string
-	json.Unmarshal(response.Body.Bytes(), &m)
-	if m["error"] != "User not found" {
-		t.Errorf("Expected the 'error' key of the response to be set to 'User not found'. Got '%s'", m["error"])
+	result := unmarshal(t, response.Body)
+	if result["error"] != "User not found" {
+		t.Errorf("Expected the 'error' key of the response to be set to 'User not found'. Got '%s'", result["error"])
 	}
 }
 
 func TestCreateUser(t *testing.T) {
-	clearTable()
-
-	payload := []byte(`{"name":"test user","password":"12345","email":"email@website.com","country":"us","locale":"en",}`)
+	payload := []byte(`{"name":"test user","password":"12345","email":"email@website.com","country":"us","locale":"en"}`)
 
 	req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(payload))
 	response := executeRequest(req)
 
 	checkResponseCode(t, http.StatusCreated, response.Code)
 
-	var m map[string]interface{}
-	json.Unmarshal(response.Body.Bytes(), &m)
-
+	m := unmarshal(t, response.Body)
 	if m["name"] != "test user" {
 		t.Errorf("Expected user name to be 'test user'. Got '%v'", m["name"])
 	}
@@ -76,7 +90,6 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestGetUser(t *testing.T) {
-	clearTable()
 	addUsers(1)
 
 	req, _ := http.NewRequest("GET", "/user/1", nil)
@@ -96,13 +109,11 @@ func addUsers(count int) {
 }
 
 func TestUpdateUser(t *testing.T) {
-	clearTable()
 	addUsers(1)
 
 	req, _ := http.NewRequest("GET", "/user/1", nil)
 	response := executeRequest(req)
-	var originalUser map[string]interface{}
-	json.Unmarshal(response.Body.Bytes(), &originalUser)
+	originalUser := unmarshal(t, response.Body)
 
 	payload := []byte(`{"name":"test user - updated name","password":"54321","email:"newemail@website.com"}`)
 
@@ -111,8 +122,7 @@ func TestUpdateUser(t *testing.T) {
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
-	var m map[string]interface{}
-	json.Unmarshal(response.Body.Bytes(), &m)
+	m := unmarshal(t, response.Body)
 
 	if m["id"] != originalUser["id"] {
 		t.Errorf("Expected the id to remain the same (%v). Got %v", originalUser["id"], m["id"])
@@ -132,7 +142,6 @@ func TestUpdateUser(t *testing.T) {
 }
 
 func TestDeleteUser(t *testing.T) {
-	clearTable()
 	addUsers(1)
 
 	req, _ := http.NewRequest("GET", "/user/1", nil)
@@ -162,29 +171,11 @@ func checkResponseCode(t *testing.T, expected, actual int) {
 	}
 }
 
-/*func TestMain(m *testing.M) {
-	log.Printf("Welcome to gate-jump TEST server! Setting up environment...")
-
-	log.Println("Loading Configuration")
-	LoadConfig("config/config.json")
-
-	log.Println("Initializing Server")
-	s = main.Server{}
-	s.Initialize(Config.Database.Username, Config.Database.Password, Config.Database.Dsn)
-
-	ensureTableExists()
-
-	code := s.Run()
-
-	clearTable()
-
-	os.Exit(code)
-
-}*/
-
 func ensureTableExists() {
 	if _, err := s.DB.Exec(tableCreationQuery); err != nil {
-		log.Fatal(err)
+		//TODO: if no result for SHOW TABLES LIKE 'yourtable'; then create
+		//for now we'll just run the query every time, if it doesn't exist it will make, if it does it will error but whatever
+		//log.Fatal(err)
 	}
 }
 
