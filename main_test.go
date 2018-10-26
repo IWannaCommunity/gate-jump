@@ -3,6 +3,7 @@ package main_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	main "gate-jump"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +11,49 @@ import (
 	"strconv"
 	"testing"
 )
+
+func executeRequest(req *http.Request) *httptest.ResponseRecorder {
+	rr := httptest.NewRecorder()
+	s.Router.ServeHTTP(rr, req)
+
+	return rr
+}
+
+func checkResponseCode(t *testing.T, expected, actual int) {
+	if expected != actual {
+		t.Errorf("Expected response code %d. Got %d\n", expected, actual)
+	}
+}
+
+func ensureTableExists() {
+	if _, err := s.DB.Exec(tableCreationQuery); err != nil {
+		//TODO: if no result for SHOW TABLES LIKE 'yourtable'; then create
+		//for now we'll just run the query every time, if it doesn't exist it will make, if it does it will error but whatever
+		//log.Fatal(err)
+	}
+}
+
+func clearTable() {
+	s.DB.Exec("DELETE FROM users")
+	s.DB.Exec("ALTER TABLE users AUTO_INCREMENT = 1")
+}
+
+const tableCreationQuery = `CREATE TABLE users (
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+    password CHAR(60) BINARY NOT NULL,
+    email VARCHAR(100),
+    country CHAR(2),
+    locale VARCHAR(20),
+    date_created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    admin BOOL NOT NULL DEFAULT FALSE,
+    verified BOOL NOT NULL DEFAULT FALSE,
+    banned BOOL NOT NULL DEFAULT FALSE,
+    last_token BLOB,
+    last_login DATETIME,
+    last_ip VARCHAR(50),
+    PRIMARY KEY (id)
+)`
 
 var s main.Server
 
@@ -41,6 +85,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+// confirm interacting with an empty user works as expected
 func TestEmptyTable(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/user", nil)
 	response := executeRequest(req)
@@ -58,8 +103,20 @@ func TestEmptyTable(t *testing.T) {
 	}
 }
 
-func TestGetNonExistentUser(t *testing.T) {
-	clearTable()
+// confirm creating user succeeds
+func TestCreateUser(t *testing.T) {
+	payload := []byte(`{"name":"test user","password":"12345","email":"email@website.com","country":"us","locale":"en"}`)
+	req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(payload))
+	response := executeRequest(req)
+	checkResponseCode(t, http.StatusCreated, response.Code)
+	m := unmarshal(t, response.Body)
+	if m["success"] != true {
+		t.Errorf("Expected 'true' got '%v'", m["success"])
+	}
+}
+
+func TestGetUser(t *testing.T) {
+	// test getting non existent user
 	req, _ := http.NewRequest("GET", "/user/11", nil)
 	response := executeRequest(req)
 	checkResponseCode(t, http.StatusNotFound, response.Code)
@@ -70,37 +127,34 @@ func TestGetNonExistentUser(t *testing.T) {
 	if val := result["error"].(map[string]interface{})["message"].(string); val != "User Not Found" {
 		t.Errorf("Expected 'User Not Found' got '%v'", val)
 	}
-}
-
-func TestCreateUser(t *testing.T) {
-	payload := []byte(`{"name":"test user","password":"12345","email":"email@website.com","country":"us","locale":"en"}`)
-
-	req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(payload))
-	response := executeRequest(req)
-
-	checkResponseCode(t, http.StatusCreated, response.Code)
-
-	m := unmarshal(t, response.Body)
-	if m["name"] != "test user" {
-		t.Errorf("Expected user name to be 'test user'. Got '%v'", m["name"])
-	}
-
-	if m["email"] != "email@website.com" {
-		t.Errorf("Expected user email to be 'email@website.com'. Got '%v'", m["email"])
-	}
-
-	if m["id"] != 1.0 { // unmarshal converts int to float
-		t.Errorf("Expected user ID to be '1'. Got '%v'", m["id"])
-	}
-}
-
-func TestGetUser(t *testing.T) {
-	addUsers(1)
-
-	req, _ := http.NewRequest("GET", "/user/1", nil)
-	response := executeRequest(req)
-
+	// test getting existing user (from testcreateuser)
+	req, _ = http.NewRequest("GET", "/user/1", nil)
+	response = executeRequest(req)
 	checkResponseCode(t, http.StatusOK, response.Code)
+	result = unmarshal(t, response.Body)
+	if result["success"] != true {
+		t.Errorf("Expected 'true' got '%v'", result["success"])
+	}
+	if result["user"] == nil {
+		t.Errorf("Expected something got '%v'", result["user"])
+	} else {
+		if user := result["user"].(map[string]interface{}); user == nil {
+			t.Errorf("Expected something got '%v'", user)
+		} else {
+			if user["id"].(float64) != 1.0 {
+				t.Errorf("Expected something got '%v'", user["id"])
+			}
+			if user["name"].(string) != "test user" {
+				t.Errorf("Expected 'test user' got '%v'", user["name"].(string))
+			}
+			if user["country"] == "" {
+				t.Errorf("Expected '<nil>' got '%v'", user["country"])
+			}
+			if user["locale"] == "" {
+				t.Errorf("Expected '<nil>' got '%v'", user["locale"])
+			}
+		}
+	}
 }
 
 func addUsers(count int) {
@@ -113,42 +167,60 @@ func addUsers(count int) {
 	}
 }
 
-func TestUpdateUser(t *testing.T) {
-	addUsers(1)
-
-	req, _ := http.NewRequest("GET", "/user/1", nil)
+func TestLoginUser(t *testing.T) {
+	payload := []byte(`{"username":"test user","password":"12345"}`)
+	req, _ := http.NewRequest("POST", "/login", bytes.NewBuffer(payload))
 	response := executeRequest(req)
-	originalUser := unmarshal(t, response.Body)
-
-	payload := []byte(`{"name":"test user - updated name","password":"54321","email:"newemail@website.com"}`)
-
-	req, _ = http.NewRequest("PUT", "/user/1", bytes.NewBuffer(payload))
-	response = executeRequest(req)
-
-	checkResponseCode(t, http.StatusOK, response.Code)
-
-	m := unmarshal(t, response.Body)
-
-	if m["id"] != originalUser["id"] {
-		t.Errorf("Expected the id to remain the same (%v). Got %v", originalUser["id"], m["id"])
-	}
-
-	if m["name"] == originalUser["name"] {
-		t.Errorf("Expected the name to change from '%v' to '%v'. Got '%v'", originalUser["name"], m["name"], m["name"])
-	}
-
-	if m["password"] == originalUser["password"] {
-		t.Errorf("Expected the password to change from '%v' to '%v'. Got '%v'", originalUser["password"], m["password"], m["password"])
-	}
-
-	if m["email"] == originalUser["email"] {
-		t.Errorf("Expected the password to change from '%v' to '%v'. Got '%v'", originalUser["email"], m["email"], m["email"])
+	result := unmarshal(t, response.Body)
+	if result["success"] != true {
+		t.Errorf("Expected 'true' got '%v'", result["success"])
+	} else {
+		if result["token"] == "" {
+			t.Errorf("Expected something got '%v'", result["token"])
+		}
 	}
 }
 
-func TestDeleteUser(t *testing.T) {
-	addUsers(1)
+func loginUser(t *testing.T, username string, password string) string {
+	payload_string := fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password)
+	payload := []byte(payload_string)
+	req, _ := http.NewRequest("POST", "/login", bytes.NewBuffer(payload))
+	response := executeRequest(req)
+	result := unmarshal(t, response.Body)
+	return result["token"].(string)
+}
 
+func TestUpdateUserNoAuth(t *testing.T) {
+	// check if auth is required
+	payload := []byte(`{"name":"test user - updated name","password":"54321","email:"newemail@website.com","country":"jp","locale":"jp"}`)
+	req, _ := http.NewRequest("PUT", "/user/1", bytes.NewBuffer(payload))
+	response := executeRequest(req)
+	checkResponseCode(t, http.StatusBadRequest, response.Code)
+}
+func TestUpdateUser(t *testing.T) {
+	payload := []byte(`{"name":"test user - updated name","password":"54321","email:"newemail@website.com","country":"jp","locale":"jp"}`)
+	req, _ := http.NewRequest("PUT", "/user/1", bytes.NewBuffer(payload))
+	req.Header.Set("Authorization", loginUser(t, "test user", "12345"))
+	response := executeRequest(req)
+	checkResponseCode(t, http.StatusOK, response.Code)
+	m := unmarshal(t, response.Body)
+
+	if m["id"] != 1 {
+		t.Errorf("Expected 1 got '%v'", m["id"])
+	}
+	if m["name"] != "test user - updated name" {
+		t.Errorf("Expected 'test user - updated name' got '%v'", m["name"])
+	}
+	if m["password"] == "" {
+		t.Errorf("Expected '<nil>' got '%v'", m["password"])
+	}
+	if m["email"] != "newemail@website.com" {
+		t.Errorf("Expected 'newemail@website.com' got '%v'", m["email"])
+	}
+}
+
+/*
+func TestDeleteUser(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/user/1", nil)
 	response := executeRequest(req)
 	checkResponseCode(t, http.StatusOK, response.Code)
@@ -163,45 +235,14 @@ func TestDeleteUser(t *testing.T) {
 	checkResponseCode(t, http.StatusNotFound, response.Code)
 }
 
-func executeRequest(req *http.Request) *httptest.ResponseRecorder {
-	rr := httptest.NewRecorder()
-	s.Router.ServeHTTP(rr, req)
+func TestGetUsers(t *testing.T) {
+	clearTable()
+	addUsers(5)
 
-	return rr
+	req, _ := http.NewRequest("GET", "/user", nil)
+	response := executeRequest(req)
+	checkResponseCode(t, http.StatusOK, response.Code)
+	users := unmarshal(t, response.Body)
+	t.Error(users)
 }
-
-func checkResponseCode(t *testing.T, expected, actual int) {
-	if expected != actual {
-		t.Errorf("Expected response code %d. Got %d\n", expected, actual)
-	}
-}
-
-func ensureTableExists() {
-	if _, err := s.DB.Exec(tableCreationQuery); err != nil {
-		//TODO: if no result for SHOW TABLES LIKE 'yourtable'; then create
-		//for now we'll just run the query every time, if it doesn't exist it will make, if it does it will error but whatever
-		//log.Fatal(err)
-	}
-}
-
-func clearTable() {
-	s.DB.Exec("DELETE FROM users")
-	s.DB.Exec("ALTER SEQUENCE users_id_seq RESTART WITH 1")
-}
-
-const tableCreationQuery = `CREATE TABLE users (
-    id INT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-    password CHAR(60) BINARY NOT NULL,
-    email VARCHAR(100),
-    country CHAR(2),
-    locale VARCHAR(20),
-    date_created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    admin BOOL NOT NULL DEFAULT FALSE,
-    verified BOOL NOT NULL DEFAULT FALSE,
-    banned BOOL NOT NULL DEFAULT FALSE,
-    last_token BLOB,
-    last_login DATETIME,
-    last_ip VARCHAR(50),
-    PRIMARY KEY (id)
-)`
+*/
