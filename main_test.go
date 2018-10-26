@@ -59,14 +59,16 @@ func TestEmptyTable(t *testing.T) {
 }
 
 func TestGetNonExistentUser(t *testing.T) {
+	clearTable()
 	req, _ := http.NewRequest("GET", "/user/11", nil)
 	response := executeRequest(req)
-
 	checkResponseCode(t, http.StatusNotFound, response.Code)
-
 	result := unmarshal(t, response.Body)
-	if result["error"] != "User not found" {
-		t.Errorf("Expected the 'error' key of the response to be set to 'User not found'. Got '%s'", result["error"])
+	if result["success"] != false {
+		t.Errorf("Expected 'false' got '%v'", result["success"])
+	}
+	if val := result["error"].(map[string]interface{})["message"].(string); val != "User Not Found" {
+		t.Errorf("Expected 'User Not Found' got '%v'", val)
 	}
 }
 
