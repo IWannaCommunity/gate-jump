@@ -23,7 +23,7 @@ type User struct {
 	Email *string `json:"email,omitempty"`
 	// Read: USER
 	// Write: USER or SERVER
-	Country *string `json:"country"`
+	Country *string `json:"country,omitempty"`
 	// Read: PUBLIC
 	// Write: USER or SERVER
 	Locale *string `json:"locale,omitempty"`

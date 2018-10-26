@@ -145,6 +145,10 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if u.Name != nil || u.Email != nil { // confirm unique email and username
+
+	}
+
 	//hash the password
 	hashpwd, err := bcrypt.GenerateFromPassword([]byte(*u.Password), 12)
 	if err != nil {
