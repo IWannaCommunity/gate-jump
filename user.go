@@ -53,6 +53,12 @@ type User struct {
 	// Write: SERVER
 }
 
+type UserList struct {
+	StartIndex int    `json:"startIndex"` // starting index
+	TotalItems int    `json:"totalItems"` // how many items are returned
+	Users      []User `json:"users"`      // user array
+}
+
 // SQL FUNCTIONS =================================================================================
 
 func (u *User) getUser(db *sql.DB, auth AuthLevel) *res.ServerError {
@@ -108,7 +114,7 @@ func (u *User) createUser(db *sql.DB) *res.ServerError {
 	return nil
 }
 
-func getUsers(db *sql.DB, start, count int, auth AuthLevel) ([]User, *res.ServerError) {
+func getUsers(db *sql.DB, start, count int, auth AuthLevel) (*UserList, *res.ServerError) {
 	var serr res.ServerError
 	var rows *sql.Rows
 	serr.Query = "SELECT * FROM users LIMIT ? OFFSET ?"
@@ -132,7 +138,7 @@ func getUsers(db *sql.DB, start, count int, auth AuthLevel) ([]User, *res.Server
 		users = append(users, u)
 	}
 
-	return users, nil
+	return &UserList{Users: users, StartIndex: start, TotalItems: len(users)}, nil
 }
 
 // HELPER FUNCTIONS ==============================================================================

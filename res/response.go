@@ -12,11 +12,11 @@ type Response struct {
 	Function string
 	Code     int
 	Payload  struct {
-		Success bool           `json:"success"`
-		Error   *ResponseError `json:"error,omitempty"`
-		Token   *string        `json:"token,omitempty"`
-		User    interface{}    `json:"user,omitempty"`
-		Users   interface{}    `json:"users,omitempty"`
+		Success  bool           `json:"success"`
+		Error    *ResponseError `json:"error,omitempty"`
+		Token    *string        `json:"token,omitempty"`
+		User     interface{}    `json:"user,omitempty"`
+		UserList interface{}    `json:"userList,omitempty"`
 	}
 	InternalError *ServerError
 }
@@ -51,7 +51,7 @@ func (r *Response) SetUser(data interface{}) *Response {
 	return r
 }
 func (r *Response) SetUsers(datas interface{}) *Response {
-	r.Payload.Users = datas
+	r.Payload.UserList = datas
 	return r
 }
 func (r *Response) SetToken(token string) *Response {
