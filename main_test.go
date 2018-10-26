@@ -192,30 +192,40 @@ func loginUser(t *testing.T, username string, password string) string {
 
 func TestUpdateUserNoAuth(t *testing.T) {
 	// check if auth is required
-	payload := []byte(`{"name":"test user - updated name","password":"54321","email:"newemail@website.com","country":"jp","locale":"jp"}`)
+	payload := []byte(`{"name":"test user - updated name","password":"54321","email":"newemail@website.com","country":"jp","locale":"jp"}`)
 	req, _ := http.NewRequest("PUT", "/user/1", bytes.NewBuffer(payload))
 	response := executeRequest(req)
-	checkResponseCode(t, http.StatusBadRequest, response.Code)
+	checkResponseCode(t, http.StatusUnauthorized, response.Code)
 }
 func TestUpdateUser(t *testing.T) {
-	payload := []byte(`{"name":"test user - updated name","password":"54321","email:"newemail@website.com","country":"jp","locale":"jp"}`)
+	payload := []byte(`{"name":"test user - updated name","password":"54321","email":"newemail@website.com","country":"jp","locale":"en"}`)
 	req, _ := http.NewRequest("PUT", "/user/1", bytes.NewBuffer(payload))
-	req.Header.Set("Authorization", loginUser(t, "test user", "12345"))
+	token := loginUser(t, "test user", "12345")
+	req.Header.Set("Authorization", token)
 	response := executeRequest(req)
 	checkResponseCode(t, http.StatusOK, response.Code)
 	m := unmarshal(t, response.Body)
-
-	if m["id"] != 1 {
-		t.Errorf("Expected 1 got '%v'", m["id"])
-	}
-	if m["name"] != "test user - updated name" {
-		t.Errorf("Expected 'test user - updated name' got '%v'", m["name"])
-	}
-	if m["password"] == "" {
-		t.Errorf("Expected '<nil>' got '%v'", m["password"])
-	}
-	if m["email"] != "newemail@website.com" {
-		t.Errorf("Expected 'newemail@website.com' got '%v'", m["email"])
+	if m["success"] != true {
+		t.Errorf("Expected 'true' got '%v'", m["success"])
+	} else {
+		if val := m["user"].(map[string]interface{})["id"]; val != 1.0 {
+			t.Errorf("Expected '1' got '%v'", val)
+		}
+		if val := m["user"].(map[string]interface{})["name"]; val != "test user - updated name" {
+			t.Errorf("Expected 'test user - updated name' got '%v'", val)
+		}
+		if val := m["user"].(map[string]interface{})["password"]; val != nil {
+			t.Errorf("Expected '<nil>' got '%v'", val)
+		}
+		if val := m["user"].(map[string]interface{})["email"]; val != "newemail@website.com" {
+			t.Errorf("Expected 'newemail@website.com' got '%v'", val)
+		}
+		if val := m["user"].(map[string]interface{})["country"]; val != "jp" {
+			t.Errorf("Expected 'jp' got '%v'", val)
+		}
+		if val := m["user"].(map[string]interface{})["locale"]; val != "en" {
+			t.Errorf("Expected 'en' got '%v'", val)
+		}
 	}
 }
 
