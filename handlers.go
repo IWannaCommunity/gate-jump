@@ -112,12 +112,7 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	signedToken, err := u.CreateToken()
-	if err != nil {
-		res.New(http.StatusInternalServerError).SetErrorMessage("User Created But Failed To Create Token").Error(w)
-	}
-
-	res.New(http.StatusCreated).SetToken(signedToken).JSON(w)
+	res.New(http.StatusCreated).JSON(w)
 }
 
 // update
