@@ -250,24 +250,24 @@ func (s *Server) getAuthLevel(r *http.Request, u1 *User) (AuthLevel, *res.Respon
 
 	// we assume the username of the claimed user and the found user (u2) is the same because we searched by name
 
-	if u2.Banned { // fuck this guy in particular
+	if *u2.Banned { // fuck this guy in particular
 		return PUBLIC, nil
 	}
 
 	if u1 == nil { // we aren't editing a user directly so no user was provided
-		if u2.Admin { // u2 is an admin
+		if *u2.Admin { // u2 is an admin
 			return ADMIN, nil
 		} else { // u2 is not an admin
 			return PUBLIC, nil
 		}
 	} else {
 		if u1.ID == u2.ID { // is u1 u2?
-			if u2.Admin { // is u2 an admin like they say they are?
+			if *u2.Admin { // is u2 an admin like they say they are?
 				return ADMINUSER, nil
 			} else { // u2 is not an admin but is u1
 				return USER, nil
 			}
-		} else if u2.Admin { // is u2 not u1 but is an admin?
+		} else if *u2.Admin { // is u2 not u1 but is an admin?
 			return ADMIN, nil
 		}
 		return PUBLIC, nil // u2 is neither u1 or an admin

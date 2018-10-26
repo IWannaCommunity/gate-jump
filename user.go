@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"gate-jump/res"
 	"strconv"
 	"time"
@@ -15,7 +14,7 @@ type User struct {
 	ID int64 `json:"id"`
 	// Read: PUBLIC
 	// Write: Nobody
-	Name *string `json:"name"`
+	Name *string `json:"name,omitempty"`
 	// Read: PUBLIC
 	// Write: USER (offensive names, all included due to offensive names)
 	Password *string `json:"password,omitempty"`
@@ -27,25 +26,25 @@ type User struct {
 	Country *string `json:"country"`
 	// Read: PUBLIC
 	// Write: USER or SERVER
-	Locale *string `json:"locale"`
+	Locale *string `json:"locale,omitempty"`
 	// Read: PUBLIC
 	// Write: USER or SERVER
-	DateCreated *time.Time `json:"date_created"`
+	DateCreated *time.Time `json:"date_created,omitempty"`
 	// Read: PUBLIC
 	// Write: Nobody (This is only ever set on creation.)
-	Verified bool `json:"verified"`
+	Verified *bool `json:"verified,omitempty"`
 	// Read: PUBLIC
 	// Write: Nobody (by logging into sql only)
-	Banned bool `json:"banned"`
+	Banned *bool `json:"banned,omitempty"`
 	// Read: PUBLIC
 	// Write: ADMIN only
-	Admin bool `json:"admin"`
+	Admin *bool `json:"admin,omitempty"`
 	// Read: PUBLIC
 	// Write: Nobody (by logging into sql only)
 	LastToken *string `json:"last_token,omitempty"` // ? is this needed
 	// Read: SERVER
 	// Write: SERVER
-	LastLogin *time.Time `json:"last_login"`
+	LastLogin *time.Time `json:"last_login,omitempty"`
 	// Read: PUBLIC
 	// Write: SERVER
 	LastIP *string `json:"last_ip,omitempty"`
@@ -220,11 +219,11 @@ func (u *User) CreateToken() (string, error) {
 	claims := Claims{
 		u.ID,
 		u.Name,
-		u.Admin,
+		*u.Admin,
 		u.Country,
 		u.Locale,
-		u.Verified,
-		u.Banned,
+		*u.Verified,
+		*u.Banned,
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(), //expire in one hour
 			Issuer:    Config.Host + ":" + Config.Port,
