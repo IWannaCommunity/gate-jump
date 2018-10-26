@@ -20,7 +20,7 @@ type LoginRequest struct {
 
 // is the server alive
 func (s *Server) getAlive(w http.ResponseWriter, r *http.Request) {
-	res.New(http.StatusOK).SetData(map[string]bool{"alive": true}).JSON(w)
+	res.New(http.StatusOK).JSON(w)
 }
 
 // get
