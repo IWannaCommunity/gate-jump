@@ -131,23 +131,34 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
-	u.ID = int64(id)
+	u.ID = int64(id) // set expected id to url id value
 
+	// get auth level of the request for the given id
 	auth, response := s.getAuthLevel(r, &u)
 	if response != nil {
 		response.Error(w)
 		return
 	}
-
-	if auth < USER { // only users+ can update said user
+	// api requests made by permissions less than users can't edit any other user so reject them completely
+	if auth < USER {
 		res.New(http.StatusUnauthorized).SetErrorMessage("Requires User Permissions").Error(w)
 		return
 	}
 
-	if serr := u.updateUser(s.DB, auth); serr != nil {
+	//hash the password
+	hashpwd, err := bcrypt.GenerateFromPassword([]byte(*u.Password), 12)
+	if err != nil {
+		res.New(http.StatusInternalServerError).SetErrorMessage("Failed Encrypting Password").Error(w)
+		return
+	}
+	*u.Password = string(hashpwd)
+
+	serr := u.updateUser(s.DB, auth)
+	if serr.Err != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
 	}
+
 	res.New(http.StatusOK).SetUser(u).JSON(w)
 }
 

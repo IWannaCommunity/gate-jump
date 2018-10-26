@@ -71,23 +71,70 @@ func (u *User) getUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 
 func (u *User) updateUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 	var serr res.ServerError
-	switch auth {
-	case SERVER: // name, password, email, country, locale, last_token, last_login, last_ip
-		serr.Query = "UPDATE users SET name=?, password=?, email=?, country=?, locale=?, last_token=?, last_login=?, last_ip=? WHERE id=?"
-		serr.Args = append(serr.Args, u.Name, u.Password, u.Email, u.Country, u.Locale, u.LastToken, u.LastLogin, u.LastIP, u.ID)
-	case ADMIN: // can update: name, banned
-		serr.Query = "UPDATE users SET name=?, banned=? WHERE id=?"
-		serr.Args = append(serr.Args, u.Name, u.Banned, u.ID)
-	case ADMINUSER: // can update: name, password, email, country, locale, (cant update own banned status)
-		fallthrough // same perms as user
-	case USER: // can update: name, password, email, country, locale
-		serr.Query = "UPDATE users SET name=?, password=?, email=?, country=?, locale=? WHERE id=?"
-		serr.Args = append(serr.Args, u.Name, u.Password, u.Email, u.Country, u.Locale, u.ID)
-	case PUBLIC: // can update: nothing (shouldn't occur)
-		fallthrough
-	default: // can update: nothing (shouldn't occur)
-		return &res.ServerError{Err: errors.New("This shouldn't occur.")}
+	//"UPDATE users SET name=?, password=?, email=?, country=?, locale=?, last_token=?, last_login=?, last_ip=? WHERE id=?"
+	serr.Query = "UPDATE users SET"
+
+	if u.Name != nil { // USER+
+		serr.Query += " name=?,"
+		serr.Args = append(serr.Args, u.Name)
+	} else { // dont return if not edited
+		u.Name = nil
 	}
+	if u.Password != nil && (auth == USER || auth == ADMINUSER || auth == SERVER) {
+		serr.Query += " password=?,"
+		serr.Args = append(serr.Args, u.Password) // hash handled in handler
+	}
+	u.Password = nil // never return password in payload
+	if u.Email != nil && (auth == USER || auth == ADMINUSER || auth == SERVER) {
+		serr.Query += " email=?,"
+		serr.Args = append(serr.Args, u.Email)
+	} else {
+		u.Email = nil
+	}
+	if u.Country != nil && (auth == USER || auth == ADMINUSER || auth == SERVER) {
+		serr.Query += " country=?,"
+		serr.Args = append(serr.Args, u.Country)
+	} else {
+		u.Country = nil
+	}
+	if u.Locale != nil && (auth == USER || auth == ADMINUSER || auth == SERVER) {
+		serr.Query += " locale=?,"
+		serr.Args = append(serr.Args, u.Locale)
+	} else {
+		u.Locale = nil
+	}
+	if u.Banned != nil && (auth == ADMIN) {
+		serr.Query += " banned=?,"
+		serr.Args = append(serr.Args, u.Banned)
+	} else {
+		u.Banned = nil
+	}
+	if u.LastToken != nil && (auth == SERVER) {
+		serr.Query += " last_token=?,"
+		serr.Args = append(serr.Args, u.LastToken)
+	} else {
+		u.LastToken = nil
+	}
+	if u.LastLogin != nil && (auth == SERVER) {
+		serr.Query += " last_login=?,"
+		serr.Args = append(serr.Args, u.LastLogin)
+	} else {
+		u.LastLogin = nil
+	}
+	if u.LastIP != nil && (auth == SERVER) {
+		serr.Query += " last_ip=?,"
+		serr.Args = append(serr.Args, u.LastIP)
+	} else {
+		u.LastIP = nil
+	}
+
+	if len(serr.Args) == 0 {
+		return &serr // there were no sections to update so return empty user
+	}
+
+	serr.Query = serr.Query[:len(serr.Query)-1] + " WHERE id=?" // remove last comma of query and add WHERE condition
+	serr.Args = append(serr.Args, u.ID)
+
 	_, serr.Err = db.Exec(serr.Query, serr.Args...)
 	return &serr
 }
