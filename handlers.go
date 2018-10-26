@@ -49,7 +49,7 @@ func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	res.New(http.StatusOK).SetData(u).JSON(w)
+	res.New(http.StatusOK).SetUser(u).JSON(w)
 }
 
 // get multiple
@@ -76,7 +76,7 @@ func (s *Server) getUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res.New(http.StatusOK).SetData(users).JSON(w)
+	res.New(http.StatusOK).SetUsers(users).JSON(w)
 }
 
 // register
@@ -153,7 +153,7 @@ func (s *Server) updateUser(w http.ResponseWriter, r *http.Request) {
 		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
 	}
-	res.New(http.StatusOK).SetData(u).JSON(w)
+	res.New(http.StatusOK).SetUser(u).JSON(w)
 }
 
 // delete

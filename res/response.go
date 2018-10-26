@@ -13,8 +13,10 @@ type Response struct {
 	Code     int
 	Payload  struct {
 		Success bool           `json:"success"`
-		Error   *ResponseError `json:"error"`
-		Data    interface{}    `json:"data"`
+		Error   *ResponseError `json:"error,omitempty"`
+		Token   *string        `json:"token,omitempty"`
+		User    interface{}    `json:"user,omitempty"`
+		Users   interface{}    `json:"users,omitempty"`
 	}
 	InternalError *ServerError
 }
@@ -44,14 +46,19 @@ func CreateInternalError(query string, args []interface{}, err error) *ServerErr
 	return &ServerError{Query: query, Args: args, Err: err}
 }
 
-func (r *Response) SetData(data interface{}) *Response {
-	r.Payload.Data = data
+func (r *Response) SetUser(data interface{}) *Response {
+	r.Payload.User = data
+	return r
+}
+func (r *Response) SetUsers(datas interface{}) *Response {
+	r.Payload.Users = datas
 	return r
 }
 func (r *Response) SetToken(token string) *Response {
-	r.Payload.Data = map[string]string{"token": token}
+	r.Payload.Token = &token
 	return r
 }
+
 func (r *Response) SetErrorMessage(message string) *Response {
 	e := ResponseError{}
 	e.Code = r.Code
