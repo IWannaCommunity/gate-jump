@@ -18,10 +18,10 @@ type User struct {
 	Name *string `json:"name"`
 	// Read: PUBLIC
 	// Write: USER (offensive names, all included due to offensive names)
-	Password *string `json:"password"`
+	Password *string `json:"password,omitempty"`
 	// Read: SERVER
 	// Write: USER or SERVER
-	Email *string `json:"email"`
+	Email *string `json:"email,omitempty"`
 	// Read: USER
 	// Write: USER or SERVER
 	Country *string `json:"country"`
@@ -42,13 +42,13 @@ type User struct {
 	Admin bool `json:"admin"`
 	// Read: PUBLIC
 	// Write: Nobody (by logging into sql only)
-	LastToken *string `json:"last_token"` // ? is this needed
+	LastToken *string `json:"last_token,omitempty"` // ? is this needed
 	// Read: SERVER
 	// Write: SERVER
 	LastLogin *time.Time `json:"last_login"`
 	// Read: PUBLIC
 	// Write: SERVER
-	LastIP *string `json:"last_ip"`
+	LastIP *string `json:"last_ip,omitempty"`
 	// Read: ADMIN
 	// Write: SERVER
 }
