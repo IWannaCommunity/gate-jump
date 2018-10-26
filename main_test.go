@@ -44,14 +44,17 @@ func TestMain(m *testing.M) {
 func TestEmptyTable(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/user", nil)
 	response := executeRequest(req)
-
 	checkResponseCode(t, http.StatusOK, response.Code)
-
 	result := unmarshal(t, response.Body)
-	data := result["data"].([]interface{})
-
-	if len(data) > 0 {
-		t.Errorf("Expected an empty array. Got %v", data)
+	if result["success"] != true {
+		t.Errorf("Expected 'true' got '%v'", result["success"])
+	}
+	userList := result["userList"].(map[string]interface{})
+	if userList["startIndex"].(float64) != 0.0 {
+		t.Errorf("Expected '0' got '%v'", userList["totalItems"].(int))
+	}
+	if userList["totalItems"].(float64) != 0.0 {
+		t.Errorf("Expected '0' got '%v'", userList["totalItems"].(int))
 	}
 }
 
