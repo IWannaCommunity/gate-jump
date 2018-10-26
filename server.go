@@ -108,7 +108,6 @@ func (s *Server) JWTContext(next http.Handler) http.Handler {
 			return
 		}
 		if !token.Valid { // token has been edited
-			log.Println("hi?")
 			res.New(http.StatusUnauthorized).SetErrorMessage("Token Invalid").Error(w)
 			return
 		}
