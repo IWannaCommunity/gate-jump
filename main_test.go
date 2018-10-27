@@ -229,15 +229,28 @@ func TestUpdateUser(t *testing.T) {
 	}
 }
 
-/*
-func TestDeleteUser(t *testing.T) {
+func TestDeleteUserNoAuth(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/user/1", nil)
 	response := executeRequest(req)
 	checkResponseCode(t, http.StatusOK, response.Code)
 
 	req, _ = http.NewRequest("DELETE", "/user/1", nil)
 	response = executeRequest(req)
+	checkResponseCode(t, http.StatusUnauthorized, response.Code)
 
+	req, _ = http.NewRequest("GET", "/user/1", nil)
+	response = executeRequest(req)
+	checkResponseCode(t, http.StatusOK, response.Code)
+}
+func TestDeleteUser(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/user/1", nil)
+	response := executeRequest(req)
+	checkResponseCode(t, http.StatusOK, response.Code)
+
+	req, _ = http.NewRequest("DELETE", "/user/1", nil)
+	token := loginUser(t, "test user - updated name", "54321")
+	req.Header.Set("Authorization", token)
+	response = executeRequest(req)
 	checkResponseCode(t, http.StatusOK, response.Code)
 
 	req, _ = http.NewRequest("GET", "/user/1", nil)
