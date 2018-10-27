@@ -260,12 +260,33 @@ func TestDeleteUser(t *testing.T) {
 
 func TestGetUsers(t *testing.T) {
 	clearTable()
-	addUsers(5)
+	count := 75
+	addUsers(count)
+	count = 50
 
 	req, _ := http.NewRequest("GET", "/user", nil)
 	response := executeRequest(req)
+	m := unmarshal(t, response.Body)
 	checkResponseCode(t, http.StatusOK, response.Code)
-	users := unmarshal(t, response.Body)
-	t.Error(users)
+	if userList := m["userList"].(map[string]interface{}); m["success"] != true {
+		t.Errorf("Expected 'true' got '%v'", m["success"])
+	} else {
+		var user map[string]interface{}
+		users := userList["users"].([]interface{})
+		if userList["startIndex"] != 0.0 {
+			t.Errorf("Expected '0' got '%v'", userList["startingIndex"])
+		}
+		if userList["totalItems"] != float64(count) {
+			t.Errorf("Expected '%v' got '%v'", float64(count), userList["totalItems"])
+		}
+		for i := 0; i < count; i++ {
+			user = users[i].(map[string]interface{})
+			if user["id"] != float64(i+1) {
+				t.Errorf("Expected `%v` got `%v`", float64(i+1), user["id"])
+			}
+			if user["name"] != fmt.Sprintf("User %d", i) {
+				t.Errorf("Expected `%v` got `%v`", fmt.Sprintf("User %d", i), user["name"])
+			}
+		}
+	}
 }
-*/
