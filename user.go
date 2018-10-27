@@ -151,8 +151,8 @@ func (u *User) updateUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 
 func (u *User) deleteUser(db *sql.DB) *res.ServerError {
 	var serr res.ServerError
-	serr.Query = "DELETE FROM users WHERE id=?"
-	serr.Args = append(serr.Args, u.ID)
+	serr.Query = "UPDATE users SET deleted=true AND date_deleted=? WHERE id=?"
+	serr.Args = append(serr.Args, time.Now(), u.ID)
 	_, serr.Err = db.Exec(serr.Query, serr.Args...)
 	return &serr
 }
