@@ -182,8 +182,7 @@ func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 		response.Error(w)
 		return
 	}
-
-	if auth < ADMIN { // they arent an admin
+	if auth < USER { // they arent an admin
 		res.New(http.StatusUnauthorized).SetErrorMessage("Requires Administrative Permissions").Error(w)
 		return
 	}
