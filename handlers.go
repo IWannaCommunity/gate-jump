@@ -190,7 +190,7 @@ func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		return
 	}
-	res.New(http.StatusOK).JSON(w)
+	res.New(http.StatusAccepted).JSON(w)
 }
 
 // login
@@ -261,7 +261,6 @@ func (s *Server) getAuthLevel(r *http.Request, u1 *User) (AuthLevel, *res.Respon
 	}
 
 	// we assume the username of the claimed user and the found user (u2) is the same because we searched by name
-
 	if u2.Banned != nil && *u2.Banned { // fuck this guy in particular
 		return PUBLIC, nil
 	}
