@@ -68,7 +68,11 @@ type UserList struct {
 
 func (u *User) getUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 	var serr res.ServerError
-	serr.Query = "SELECT * FROM users WHERE id=?"
+	if auth > USER { // deleted search check
+		serr.Query = "SELECT * FROM users WHERE id=?"
+	} else {
+		serr.Query = "SELECT * FROM users WHERE id=? AND deleted=false"
+	}
 	serr.Args = append(serr.Args, u.ID)
 	serr.Err = u.ScanAll(db.QueryRow(serr.Query, serr.Args...))
 	u.CleanDataRead(auth, serr)
@@ -169,7 +173,7 @@ func (u *User) createUser(db *sql.DB) *res.ServerError {
 func getUsers(db *sql.DB, start, count int, auth AuthLevel) (*UserList, *res.ServerError) {
 	var serr res.ServerError
 	var rows *sql.Rows
-	serr.Query = "SELECT * FROM users LIMIT ? OFFSET ?"
+	serr.Query = "SELECT * FROM users LIMIT ? OFFSET ? WHERE deleted=false"
 	serr.Args = append(serr.Args, count, start)
 	rows, serr.Err = db.Query(serr.Query, serr.Args...)
 
