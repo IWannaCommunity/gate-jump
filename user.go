@@ -75,7 +75,10 @@ func (u *User) getUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 	}
 	serr.Args = append(serr.Args, u.ID)
 	serr.Err = u.ScanAll(db.QueryRow(serr.Query, serr.Args...))
-	u.CleanDataRead(auth, serr)
+	if serr.Err != nil {
+		return &serr
+	}
+	u.CleanDataRead(auth)
 	return &serr
 }
 
@@ -190,7 +193,7 @@ func getUsers(db *sql.DB, start, count int, auth AuthLevel) (*UserList, *res.Ser
 		if serr.Err = u.ScanAlls(rows); serr.Err != nil {
 			return nil, &serr
 		}
-		u.CleanDataRead(auth, serr)
+		u.CleanDataRead(auth)
 		users = append(users, u)
 	}
 
