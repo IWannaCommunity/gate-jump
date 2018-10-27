@@ -182,8 +182,8 @@ func (s *Server) deleteUser(w http.ResponseWriter, r *http.Request) {
 		response.Error(w)
 		return
 	}
-	if auth < USER { // they arent an admin
-		res.New(http.StatusUnauthorized).SetErrorMessage("Requires Administrative Permissions").Error(w)
+	if auth < USER { // they arent the given user
+		res.New(http.StatusUnauthorized).SetErrorMessage("Invalid Permissions").Error(w)
 		return
 	}
 	if serr := u.deleteUser(s.DB); serr.Err != nil {
