@@ -50,6 +50,12 @@ type User struct {
 	LastIP *string `json:"last_ip,omitempty"`
 	// Read: ADMIN
 	// Write: SERVER
+	Deleted *bool `json:"deleted,omitempty"`
+	// READ: ADMIN
+	// WRITE: USER (if false) Nobody (if true [sql only])
+	DateDeleted *time.Time `json:"date_deleted,omitempty"`
+	// READ: ADMIN
+	// WRITE: SERVER
 }
 
 type UserList struct {
@@ -204,7 +210,9 @@ func (u *User) ScanAll(row *sql.Row) error {
 		&u.Admin,
 		&u.LastToken,
 		&u.LastLogin,
-		&u.LastIP)
+		&u.LastIP,
+		&u.Deleted,
+		&u.DateDeleted)
 }
 
 // scans all user data into the user struct (for rows)
@@ -222,14 +230,13 @@ func (u *User) ScanAlls(rows *sql.Rows) error {
 		&u.Admin,
 		&u.LastToken,
 		&u.LastLogin,
-		&u.LastIP)
+		&u.LastIP,
+		&u.Deleted,
+		&u.DateDeleted)
 }
 
 // applies read user data permissions of a fully retrieved user
-func (u *User) CleanDataRead(auth AuthLevel, serr res.ServerError) {
-	if serr.Err != nil {
-		return
-	}
+func (u *User) CleanDataRead(auth AuthLevel) {
 	switch auth {
 	case SERVER:
 		// we dont want to stop the server from reading anything
@@ -238,6 +245,8 @@ func (u *User) CleanDataRead(auth AuthLevel, serr res.ServerError) {
 		fallthrough
 	case USER:
 		u.LastIP = nil
+		u.DateDeleted = nil
+		u.Deleted = nil
 		fallthrough
 	case ADMINUSER:
 		fallthrough

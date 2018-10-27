@@ -52,6 +52,8 @@ const tableCreationQuery = `CREATE TABLE users (
     last_token BLOB,
     last_login DATETIME,
     last_ip VARCHAR(50),
+    deleted BOOL NOT NULL DEFAULT FALSE,
+    date_deleted DATETIME,
     PRIMARY KEY (id)
 )`
 
