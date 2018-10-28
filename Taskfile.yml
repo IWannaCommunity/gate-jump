@@ -1,0 +1,6 @@
+version: '2'
+
+tasks:
+    build:
+        cmds:
+            - go build -v -i ./src/api/
