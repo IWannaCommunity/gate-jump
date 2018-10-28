@@ -71,7 +71,7 @@ func (u *User) getUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 	if auth > USER { // deleted search check
 		serr.Query = "SELECT * FROM users WHERE id=?"
 	} else {
-		serr.Query = "SELECT * FROM users WHERE id=? AND deleted=false"
+		serr.Query = "SELECT * FROM users WHERE id=? AND deleted=FALSE"
 	}
 	serr.Args = append(serr.Args, u.ID)
 	serr.Err = u.ScanAll(db.QueryRow(serr.Query, serr.Args...))
@@ -154,7 +154,7 @@ func (u *User) updateUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 
 func (u *User) deleteUser(db *sql.DB) *res.ServerError {
 	var serr res.ServerError
-	serr.Query = "UPDATE users SET deleted=true AND date_deleted=? WHERE id=?"
+	serr.Query = "UPDATE users SET deleted=TRUE, date_deleted=? WHERE id=?"
 	serr.Args = append(serr.Args, time.Now(), u.ID)
 	_, serr.Err = db.Exec(serr.Query, serr.Args...)
 	return &serr
@@ -176,7 +176,7 @@ func (u *User) createUser(db *sql.DB) *res.ServerError {
 func getUsers(db *sql.DB, start, count int, auth AuthLevel) (*UserList, *res.ServerError) {
 	var serr res.ServerError
 	var rows *sql.Rows
-	serr.Query = "SELECT * FROM users LIMIT ? OFFSET ? WHERE deleted=false"
+	serr.Query = "SELECT * FROM users  WHERE deleted=FALSE LIMIT ? OFFSET ?"
 	serr.Args = append(serr.Args, count, start)
 	rows, serr.Err = db.Query(serr.Query, serr.Args...)
 
