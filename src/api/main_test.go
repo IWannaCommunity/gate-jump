@@ -253,7 +253,7 @@ func TestDeleteUser(t *testing.T) {
 	token := loginUser(t, "test user - updated name", "54321")
 	req.Header.Set("Authorization", token)
 	response = executeRequest(req)
-	checkResponseCode(t, http.StatusOK, response.Code)
+	checkResponseCode(t, http.StatusAccepted, response.Code)
 
 	req, _ = http.NewRequest("GET", "/user/1", nil)
 	response = executeRequest(req)
