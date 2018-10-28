@@ -208,7 +208,7 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 	u.Name = &lr.Username
 
 	//get the user; if no user by that name, return 401, if other error, 500
-	if serr := u.GetUserByName(s.DB); serr != nil {
+	if serr := u.GetUserByName(s.DB); serr.Err != nil {
 		if serr.Err == sql.ErrNoRows {
 			res.New(http.StatusUnauthorized).SetErrorMessage("Invalid Account").Error(w)
 			return
