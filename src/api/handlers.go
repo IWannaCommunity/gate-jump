@@ -240,6 +240,38 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 	res.New(http.StatusOK).SetToken(signedToken).JSON(w)
 }
 
+func (s *Server) refreshUser(w http.ResponseWriter, r *http.Request) {
+	// get user
+	claims := r.Context().Value(CLAIMS).(Claims) // claims at this point are validated so refresh is allowed
+	var u User
+	u.ID = claims.ID
+	if serr := u.getUser(s.DB, SERVER); serr.Err != nil {
+		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+		return
+	}
+
+	// make token
+	token, err := u.CreateToken()
+	if err != nil {
+		res.New(http.StatusInternalServerError).SetErrorMessage("Error Creating Token").Error(w)
+		return
+	}
+
+	// update login information
+	u.LastToken = &token
+	u.LastLogin = &[]time.Time{time.Now()}[0] // how to get pointer from function call (its gross): goo.gl/9BXtsj
+	u.LastIP = &r.RemoteAddr
+
+	// update information
+	if serr := u.updateUser(s.DB, SERVER); serr.Err != nil {
+		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+		return
+	}
+
+	// return token
+	res.New(http.StatusOK).SetToken(token).JSON(w)
+}
+
 // provide with request and said user and claims and confirm claims user exists and claims user's authentication level
 func (s *Server) getAuthLevel(r *http.Request, u1 *User) (AuthLevel, *res.Response) {
 	claims := r.Context().Value(CLAIMS).(Claims) // confirmed valid on jwt layer

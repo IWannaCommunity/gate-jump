@@ -47,6 +47,7 @@ func (s *Server) InitializeRoutes() {
 	s.Router.HandleFunc("/user", s.getUsers).Methods("GET")
 	s.Router.HandleFunc("/register", s.createUser).Methods("POST")
 	s.Router.HandleFunc("/login", s.validateUser).Methods("POST")
+	s.Router.HandleFunc("/refresh", s.refreshUser).Methods("POST")
 	s.Router.HandleFunc("/user/{id}", s.getUser).Methods("GET")
 	s.Router.HandleFunc("/user/{id}", s.updateUser).Methods("PUT")
 	s.Router.HandleFunc("/user/{id}", s.deleteUser).Methods("DELETE")
