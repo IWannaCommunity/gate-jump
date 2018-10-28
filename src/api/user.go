@@ -270,10 +270,7 @@ func (u *User) GetUserByName(db *sql.DB) *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "SELECT * FROM users WHERE name=?"
 	serr.Args = append(serr.Args, u.Name)
-	serr.Err = db.QueryRow(serr.Query, serr.Args...).
-		Scan(&u.ID, &u.Name, &u.Password, &u.Email, &u.Country, &u.Locale,
-			&u.DateCreated, &u.Verified, &u.Banned, &u.Admin,
-			&u.LastToken, &u.LastLogin, &u.LastIP)
+	serr.Err = u.ScanAll(db.QueryRow(serr.Query, serr.Args...))
 	return &serr
 }
 
