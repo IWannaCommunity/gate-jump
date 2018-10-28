@@ -71,6 +71,17 @@ select id as id
     , last_ip as lastIP
 from User where phash2 is not null and banned = 0;
 ```
+## Web Environnment Setup
+
+* Install Node.js from `https://nodejs.org/en/`
+* Run in the root directory
+```shell
+npm install
+```
+* Run in the root directory
+```shell
+npm start
+```
 
 ## How to run
 
