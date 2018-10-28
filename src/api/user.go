@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"gate-jump/res"
+	"gate-jump/src/api/res"
 	"strconv"
 	"time"
 

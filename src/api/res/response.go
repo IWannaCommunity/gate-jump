@@ -3,7 +3,7 @@ package res
 import (
 	"encoding/json"
 	"errors"
-	"gate-jump/util"
+	"gate-jump/src/api/util"
 	"log"
 	"net/http"
 )

@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"gate-jump/res"
+	"gate-jump/src/api/res"
 	"net/http"
 	"strconv"
 	"time"

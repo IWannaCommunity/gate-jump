@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	main "gate-jump"
+	main "gate-jump/src/api"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -87,7 +87,6 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// confirm interacting with an empty user works as expected
 func TestEmptyTable(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/user", nil)
 	response := executeRequest(req)
@@ -105,7 +104,6 @@ func TestEmptyTable(t *testing.T) {
 	}
 }
 
-// confirm creating user succeeds
 func TestCreateUser(t *testing.T) {
 	payload := []byte(`{"name":"test user","password":"12345","email":"email@website.com","country":"us","locale":"en"}`)
 	req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(payload))
@@ -199,6 +197,7 @@ func TestUpdateUserNoAuth(t *testing.T) {
 	response := executeRequest(req)
 	checkResponseCode(t, http.StatusUnauthorized, response.Code)
 }
+
 func TestUpdateUser(t *testing.T) {
 	payload := []byte(`{"name":"test user - updated name","password":"54321","email":"newemail@website.com","country":"jp","locale":"en"}`)
 	req, _ := http.NewRequest("PUT", "/user/1", bytes.NewBuffer(payload))
@@ -244,6 +243,7 @@ func TestDeleteUserNoAuth(t *testing.T) {
 	response = executeRequest(req)
 	checkResponseCode(t, http.StatusOK, response.Code)
 }
+
 func TestDeleteUser(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/user/1", nil)
 	response := executeRequest(req)
