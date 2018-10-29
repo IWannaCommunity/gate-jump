@@ -3,4 +3,5 @@ version: '2'
 tasks:
     build:
         cmds:
+            - go version
             - go build -v -i ./src/api/
