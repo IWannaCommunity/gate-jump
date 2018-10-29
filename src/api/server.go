@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"gate-jump/src/api/res"
-	"log"
+	"gate-jump/src/api/log"
 	"net/http"
 	"os"
 
@@ -58,10 +58,10 @@ func (s *Server) InitializeRoutes() {
 
 func (s *Server) Run(httpPort, httpsPort string) {
 	if Config.Https.CertFile != "" && Config.Https.KeyFile != "" {
-		log.Println("HTTPS Credentials picked up, running HTTPS")
+		log.Info("HTTPS Credentials picked up, running HTTPS")
 		log.Fatal(http.ListenAndServeTLS(":"+httpsPort, Config.Https.CertFile, Config.Https.KeyFile, handlers.LoggingHandler(s.LogFile, s.Router)))
 	} else {
-		log.Println("HTTPS Credentials missing, running HTTP")
+		log.Info("HTTPS Credentials missing, running HTTP")
 		log.Fatal(http.ListenAndServe(":"+httpPort, handlers.LoggingHandler(s.LogFile, s.Router)))
 	}
 }

@@ -1,31 +1,26 @@
 package main
 
 import (
-	"log"
-	"os"
+	"gate-jump/src/api/log"
 )
 
 func main() {
 
-	f := initLog(0, 0, 0) // major,patch,minor
-	if f != os.Stdout {
-		defer func() {
-			f.Close()
-		}()
-	}
+	f := log.Init()
+	defer f.Close()
 
-	log.Println("Welcome to the gate-jump server! Setting up environment...")
+	log.Info("Setting up environment...")
+	log.Info("Loading Configuration")
 
-	log.Println("Loading Configuration")
 	LoadConfig("config/config.json")
 
-	log.Println("Initializing Database")
+	log.Info("Initializing Database")
 	s := Server{LogFile: f}
 	s.Initialize(Config.Database.Username, Config.Database.Password, Config.Database.Dsn)
 
-	log.Println("Initializing Routes")
+	log.Info("Initializing Routes")
 	s.InitializeRoutes()
 
-	log.Println("Starting the gate-jump server now! Ctrl+C to quit.")
+	log.Info("Starting the gate-jump server now! Ctrl+C to quit.")
 	s.Run(Config.Port, Config.SslPort)
 }

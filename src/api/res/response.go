@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"gate-jump/src/api/util"
-	"log"
+	"gate-jump/src/api/log"
 	"net/http"
 )
 
@@ -81,7 +81,7 @@ func (r *Response) Error(w http.ResponseWriter) {
 				"SELECT * FROM users WHERE id=?" << ({<nil>})
 				Message: Invalid sql syntax check something something
 		*/
-		log.Printf("\n\tInternal Server Error (%d) in Function: %s()\n\t\"%s\" << %v\n\tMessage: %s",
+		log.Error("\n\tInternal Server Error (%d) in Function: %s()\n\t\"%s\" << %v\n\tMessage: %s",
 			r.Code, r.Function, r.InternalError.Query, r.InternalError.Args, r.InternalError.Err.Error())
 	}
 	r.Payload.Success = false

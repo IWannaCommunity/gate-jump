@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"os"
+	"gate-jump/src/api/log"
 )
 
 // Config configuration global variable
@@ -41,7 +41,7 @@ type Configuration struct {
 // LoadConfig loads the config.json file into the configuration struct and set Config to it
 func LoadConfig(filename string) error {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		log.Panic("Configuration file " + filename + " does not exist!")
+		log.Fatal("Configuration file " + filename + " does not exist!")
 	}
 
 	file, _ := os.Open(filename)
