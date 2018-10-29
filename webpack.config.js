@@ -2,7 +2,7 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
-  entry: "./webui/index.js",
+  entry: "./src/webui/index.js",
   output: {
     path: path.join(__dirname, "/dist"),
     filename: "index-bundle.js"
@@ -29,7 +29,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: "./webui/index.html"
+      template: "./src/webui/index.html"
     })
   ]
 };
