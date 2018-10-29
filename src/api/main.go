@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gate-jump/src/api/log"
+	"github.com/IWannaCommunity/gate-jump/src/api/log"
 )
 
 func main() {

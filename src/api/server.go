@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"gate-jump/src/api/res"
-	"gate-jump/src/api/log"
+	"github.com/IWannaCommunity/gate-jump/src/api/res"
+	"github.com/IWannaCommunity/gate-jump/src/api/log"
 	"net/http"
 	"os"
 

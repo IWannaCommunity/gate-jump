@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"os"
-	"gate-jump/src/api/log"
+	"github.com/IWannaCommunity/gate-jump/src/api/log"
 )
 
 // Config configuration global variable

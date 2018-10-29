@@ -3,8 +3,8 @@ package res
 import (
 	"encoding/json"
 	"errors"
-	"gate-jump/src/api/util"
-	"gate-jump/src/api/log"
+	"github.com/IWannaCommunity/gate-jump/src/api/util"
+	"github.com/IWannaCommunity/gate-jump/src/api/log"
 	"net/http"
 )
 
