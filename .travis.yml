@@ -1,32 +1,30 @@
 language: go
 
 go:
-    - "1.11.x"
-    - master
+- master
+- "1.11.x"
 
 matrix:
-    include:
-        - os: osx
-          osx_image: xcode6.4
-          addons:
-              homebrew:
-                  taps:
-                      - go-task/homebrew-tap
-                  casks:
-                      - go-task
-        - os: linux
-          dist: precise
-          sudo: required
-          addons:
-              apt:
-                  sources:
-                      - ubuntu-toolchain-r-test
-                  packages:
-                      - wget
-                      - pkg-config
-          before_script:
-              - wget https://github.com/go-task/task/releases/download/v2.2.0/task_linux_amd64.deb
-              - sudo dpkg -i task_linux_amd64.deb
+  include:
+    - os: osx
+      osx_image: xcode6.4
+      before_script:
+        - brew tap go-task/homebrew-tap
+        - brew cask install go-task
+
+    - os: linux
+      dist: precise
+      sudo: required
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - wget
+            - pkg-config
+      before_script:
+        - wget https://github.com/go-task/task/releases/download/v2.2.0/task_linux_amd64.deb
+        - sudo dpkg -I task_linux_amd64.deb
 
 script:
-    - task build
+  - task build
