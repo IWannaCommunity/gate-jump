@@ -78,6 +78,11 @@ func (s *Server) Recovery(next http.Handler) http.Handler {
 	})
 }
 
+type Context struct {
+	claims Claims
+	token  string
+}
+
 type Claims struct {
 	ID       int64   `json:"id"`
 	Name     *string `json:"username"`
@@ -91,16 +96,16 @@ type Claims struct {
 
 func (s *Server) JWTContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		claims := Claims{}
+		contextData := Context{}
 		tokenString := r.Header.Get("Authorization")
 
 		if tokenString == "" { // no token provided. public credential only
-			ctx := context.WithValue(r.Context(), CLAIMS, Claims{ID: 0})
+			ctx := context.WithValue(r.Context(), CLAIMS, Context{claims: Claims{ID: 0}})
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 		// parse token provided
-		token, err := jwt.ParseWithClaims(tokenString, &claims,
+		token, err := jwt.ParseWithClaims(tokenString, &contextData.claims,
 			func(token *jwt.Token) (interface{}, error) {
 				return []byte(Config.JwtSecret), nil
 			})
@@ -109,17 +114,18 @@ func (s *Server) JWTContext(next http.Handler) http.Handler {
 			return
 		}
 		if !token.Valid { // token has been edited
-			res.New(http.StatusUnauthorized).SetErrorMessage("Token Invalid").Error(w)
+			res.New(http.StatusUnauthorized).SetErrorMessage("Token Is Invalid").Error(w)
 			return
 		}
 
-		if token.Claims == nil {
+		if token.Claims == nil { // nothing was put into the token
 			res.New(http.StatusInternalServerError).SetErrorMessage("Token Is Null").Error(w)
 			return
 		}
-		claims = *token.Claims.(*Claims)
+		contextData.token = tokenString
+		contextData.claims = *token.Claims.(*Claims)
 
-		ctx := context.WithValue(r.Context(), CLAIMS, claims)
+		ctx := context.WithValue(r.Context(), CLAIMS, contextData)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

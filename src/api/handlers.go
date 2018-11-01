@@ -274,22 +274,22 @@ func (s *Server) refreshUser(w http.ResponseWriter, r *http.Request) {
 
 // provide with request and said user and claims and confirm claims user exists and claims user's authentication level
 func (s *Server) getAuthLevel(r *http.Request, u1 *User) (AuthLevel, *res.Response) {
-	claims := r.Context().Value(CLAIMS).(Claims) // confirmed valid on jwt layer
+	ctx := r.Context().Value(CLAIMS).(Context) // confirmed valid on jwt layer
 
-	if claims.ID == 0 { // no claims exist
+	if ctx.claims.ID == 0 { // no claims exist
 		return PUBLIC, nil
 	}
 
 	var u2 User
-	u2.Name = claims.Name
-	serr := u2.GetUserByName(s.DB)
+	u2.ID = ctx.claims.ID
+	serr := u2.getUser(s.DB, SERVER)
 	if serr.Err == sql.ErrNoRows { // claims user wasn't found
 		return PUBLIC, res.New(http.StatusUnauthorized).SetErrorMessage("Token's User Doesn't Exist")
 	} else if serr.Err != nil {
 		return PUBLIC, res.New(http.StatusInternalServerError).SetInternalError(serr)
 	}
-	if claims.ID != u2.ID { // claims user exists but is not the said user (this might be overkill)
-		return PUBLIC, res.New(http.StatusUnauthorized).SetErrorMessage("Token's ID And Found User's ID Are Not The Same")
+	if u2.LastToken == nil || ctx.token != *u2.LastToken { // confirm the token is actually the last token used by the user
+		return PUBLIC, res.New(http.StatusUnauthorized).SetErrorMessage("Token's User And Found User's Last Token Are Not The Same")
 	}
 
 	// we assume the username of the claimed user and the found user (u2) is the same because we searched by name
