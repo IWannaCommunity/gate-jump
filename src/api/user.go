@@ -2,10 +2,10 @@ package main
 
 import (
 	"database/sql"
-	"github.com/IWannaCommunity/gate-jump/src/api/res"
 	"strconv"
 	"time"
 
+	"github.com/IWannaCommunity/gate-jump/src/api/res"
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
@@ -74,6 +74,30 @@ func (u *User) getUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 		serr.Query = "SELECT * FROM users WHERE id=? AND deleted=FALSE"
 	}
 	serr.Args = append(serr.Args, u.ID)
+	serr.Err = u.ScanAll(db.QueryRow(serr.Query, serr.Args...))
+	if serr.Err != nil {
+		return &serr
+	}
+	u.CleanDataRead(auth)
+	return &serr
+}
+
+func (u *User) GetUserByName(db *sql.DB, auth AuthLevel) *res.ServerError {
+	var serr res.ServerError
+	serr.Query = "SELECT * FROM users WHERE name=?"
+	serr.Args = append(serr.Args, u.Name)
+	serr.Err = u.ScanAll(db.QueryRow(serr.Query, serr.Args...))
+	if serr.Err != nil {
+		return &serr
+	}
+	u.CleanDataRead(auth)
+	return &serr
+}
+
+func (u *User) GetUserByEmail(db *sql.DB, auth AuthLevel) *res.ServerError {
+	var serr res.ServerError
+	serr.Query = "SELECT * FROM users WHERE email=?"
+	serr.Args = append(serr.Args, u.Email)
 	serr.Err = u.ScanAll(db.QueryRow(serr.Query, serr.Args...))
 	if serr.Err != nil {
 		return &serr
@@ -263,15 +287,6 @@ func (u *User) CleanDataRead(auth AuthLevel) {
 		u.Password = nil
 		u.LastToken = nil
 	}
-}
-
-// used to determine if valid login username or username in use
-func (u *User) GetUserByName(db *sql.DB) *res.ServerError {
-	var serr res.ServerError
-	serr.Query = "SELECT * FROM users WHERE name=?"
-	serr.Args = append(serr.Args, u.Name)
-	serr.Err = u.ScanAll(db.QueryRow(serr.Query, serr.Args...))
-	return &serr
 }
 
 func (u *User) CreateToken() (string, error) {

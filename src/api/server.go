@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/IWannaCommunity/gate-jump/src/api/res"
-	"github.com/IWannaCommunity/gate-jump/src/api/log"
 	"net/http"
 	"os"
 
+	"github.com/IWannaCommunity/gate-jump/src/api/log"
+	"github.com/IWannaCommunity/gate-jump/src/api/res"
 	jwt "github.com/dgrijalva/jwt-go"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/handlers"
@@ -48,9 +48,10 @@ func (s *Server) InitializeRoutes() {
 	s.Router.HandleFunc("/register", s.createUser).Methods("POST")
 	s.Router.HandleFunc("/login", s.validateUser).Methods("POST")
 	s.Router.HandleFunc("/refresh", s.refreshUser).Methods("POST")
-	s.Router.HandleFunc("/user/{id}", s.getUser).Methods("GET")
-	s.Router.HandleFunc("/user/{id}", s.updateUser).Methods("PUT")
-	s.Router.HandleFunc("/user/{id}", s.deleteUser).Methods("DELETE")
+	s.Router.HandleFunc("/user/{id:[0-9]+}", s.getUser).Methods("GET")
+	s.Router.HandleFunc("/user/{id}", s.getUserByName).Methods("GET")
+	s.Router.HandleFunc("/user/{id:[0-9]+}", s.updateUser).Methods("PUT")
+	s.Router.HandleFunc("/user/{id:[0-9]+}", s.deleteUser).Methods("DELETE")
 	s.Router.Use(s.Recovery)
 	s.Router.Use(s.JWTContext)
 

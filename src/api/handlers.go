@@ -3,11 +3,11 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"github.com/IWannaCommunity/gate-jump/src/api/res"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/IWannaCommunity/gate-jump/src/api/res"
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -45,10 +45,30 @@ func (s *Server) getUser(w http.ResponseWriter, r *http.Request) {
 		case sql.ErrNoRows:
 			res.New(http.StatusNotFound).SetErrorMessage("User Not Found").Error(w)
 		default:
-			res.New(http.StatusInternalServerError).Error(w)
+			res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 		}
 		return
 	}
+	res.New(http.StatusOK).SetUser(u).JSON(w)
+}
+
+// get via name
+func (s *Server) getUserByName(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	name := vars["name"]
+
+	u := User{Name: &name}
+
+	if serr := u.getUser(s.DB, PUBLIC); serr.Err != nil {
+		switch serr.Err {
+		case sql.ErrNoRows:
+			res.New(http.StatusNotFound).SetErrorMessage("User Not Found").Error(w)
+		default:
+			res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+		}
+		return
+	}
+
 	res.New(http.StatusOK).SetUser(u).JSON(w)
 }
 
@@ -208,7 +228,7 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 	u.Name = &lr.Username
 
 	//get the user; if no user by that name, return 401, if other error, 500
-	if serr := u.GetUserByName(s.DB); serr.Err != nil {
+	if serr := u.GetUserByName(s.DB, SERVER); serr.Err != nil {
 		if serr.Err == sql.ErrNoRows {
 			res.New(http.StatusUnauthorized).SetErrorMessage("Invalid Account").Error(w)
 			return
