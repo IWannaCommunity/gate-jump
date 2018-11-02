@@ -108,11 +108,20 @@ func (s *Server) createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
-	//check if user with name already exists; if so, we will get an ErrNoRows which is what we want
+
 	checkuser := u
-	serr := checkuser.GetUserByName(s.DB)
-	if serr.Err == nil {
-		res.New(http.StatusBadRequest).SetErrorMessage("User Already Exists").Error(w)
+
+	//check if user with name already exists; if not, we will get an ErrNoRows which is what we want
+	if serr := checkuser.GetUserByName(s.DB, SERVER); serr.Err == nil {
+		res.New(http.StatusConflict).SetErrorMessage("User Already Exists").Error(w)
+		return
+	} else if serr.Err != sql.ErrNoRows {
+		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+		return
+	}
+	// check if user with email already exists; if not, we will get an ErrNoRows which is what we want
+	if serr := checkuser.GetUserByEmail(s.DB, SERVER); serr.Err == nil {
+		res.New(http.StatusConflict).SetErrorMessage("Email Already In Use").Error(w)
 		return
 	} else if serr.Err != sql.ErrNoRows {
 		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
