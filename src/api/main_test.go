@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strconv"
 	"testing"
 )
 
@@ -88,6 +87,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestEmptyTable(t *testing.T) {
+	clearTable()
 	req, _ := http.NewRequest("GET", "/user", nil)
 	response := executeRequest(req)
 	checkResponseCode(t, http.StatusOK, response.Code)
@@ -105,78 +105,143 @@ func TestEmptyTable(t *testing.T) {
 }
 
 func TestCreateUser(t *testing.T) {
-	payload := []byte(`{"name":"test user","password":"12345","email":"email@website.com","country":"us","locale":"en"}`)
-	req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(payload))
+	clearTable()
+	mainUser := []byte(`{"name":"test_user","password":"12345","email":"email@website.com"}`)
+	duplicateName := []byte(`{"name":"test_user","password":"12345","email":"email@someotherwebsite.com"}`) // name == mainUser.Name
+	duplicateEmail := []byte(`{"name":"some_other_user","password":"12345","email":"email@website.com"}`)   // email == mainUser.Email
+
+	// test that you can create users
+	req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(mainUser))
 	response := executeRequest(req)
 	checkResponseCode(t, http.StatusCreated, response.Code)
 	m := unmarshal(t, response.Body)
 	if m["success"] != true {
 		t.Errorf("Expected 'true' got '%v'", m["success"])
 	}
-}
-
-func TestGetUser(t *testing.T) {
-	// test getting non existent user
-	req, _ := http.NewRequest("GET", "/user/11", nil)
-	response := executeRequest(req)
-	checkResponseCode(t, http.StatusNotFound, response.Code)
-	result := unmarshal(t, response.Body)
-	if result["success"] != false {
-		t.Errorf("Expected 'false' got '%v'", result["success"])
-	}
-	if val := result["error"].(map[string]interface{})["message"].(string); val != "User Not Found" {
-		t.Errorf("Expected 'User Not Found' got '%v'", val)
-	}
-	// test getting existing user (from testcreateuser)
-	req, _ = http.NewRequest("GET", "/user/1", nil)
+	// test that you can't create a user with a duplicate name
+	req, _ = http.NewRequest("POST", "/register", bytes.NewBuffer(duplicateName))
 	response = executeRequest(req)
-	checkResponseCode(t, http.StatusOK, response.Code)
-	result = unmarshal(t, response.Body)
-	if result["success"] != true {
-		t.Errorf("Expected 'true' got '%v'", result["success"])
+	checkResponseCode(t, http.StatusConflict, response.Code)
+	m = unmarshal(t, response.Body)
+	if m["success"] != false {
+		t.Errorf("Expected 'false' got '%v'", m["success"])
 	}
-	if result["user"] == nil {
-		t.Errorf("Expected something got '%v'", result["user"])
-	} else {
-		if user := result["user"].(map[string]interface{}); user == nil {
-			t.Errorf("Expected something got '%v'", user)
-		} else {
-			if user["id"].(float64) != 1.0 {
-				t.Errorf("Expected something got '%v'", user["id"])
-			}
-			if user["name"].(string) != "test user" {
-				t.Errorf("Expected 'test user' got '%v'", user["name"].(string))
-			}
-			if user["country"] == "" {
-				t.Errorf("Expected '<nil>' got '%v'", user["country"])
-			}
-			if user["locale"] == "" {
-				t.Errorf("Expected '<nil>' got '%v'", user["locale"])
-			}
+	if m["error"] != nil {
+		if val := m["error"].(map[string]interface{})["message"].(string); val != "User Already Exists" {
+			t.Errorf("Expected 'User Already Exists' got '%v'", val)
 		}
+	} else {
+		t.Errorf("Expected something got '%v'", m["error"])
+	}
+	// test that you can't create a user with a duplicate email
+	req, _ = http.NewRequest("POST", "/register", bytes.NewBuffer(duplicateEmail))
+	response = executeRequest(req)
+	checkResponseCode(t, http.StatusConflict, response.Code)
+	m = unmarshal(t, response.Body)
+	if m["success"] != false {
+		t.Errorf("Expected 'false' got '%v'", m["success"])
+	}
+	if val := m["error"].(map[string]interface{})["message"].(string); val != "Email Already In Use" {
+		t.Errorf("Expected 'Email Already In Use' got '%v'", val)
 	}
 }
 
-func addUsers(count int) {
+func CreateUsers(count int) {
+	clearTable()
 	if count < 1 {
 		count = 1
 	}
 
-	for i := 0; i < count; i++ {
-		s.DB.Exec("INSERT INTO users(name, password, email) VALUES(?, ?, ?)", "User "+strconv.Itoa(i), "Password "+strconv.Itoa(i), "Email "+strconv.Itoa(i))
+	for i := 1; i < count+1; i++ {
+		newUser := []byte(fmt.Sprintf(`{"name":"user%d","password":"password%d","email":"email%d@website.com"}`, i, i, i))
+		req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(newUser))
+		_ = executeRequest(req)
 	}
 }
 
 func TestLoginUser(t *testing.T) {
-	payload := []byte(`{"username":"test user","password":"12345"}`)
-	req, _ := http.NewRequest("POST", "/login", bytes.NewBuffer(payload))
+	clearTable()
+	CreateUsers(1)
+	wrongRe := []byte(`{"BADREQUEST"}`)
+	wrongUP := []byte(`{"username":"wrongusername","password":"wrongpassword"}`)
+	wrongUs := []byte(`{"username":"wrongusername","password":"password1"}`)
+	wrongPa := []byte(`{"username":"user1","password":"wrongpassword"}`)
+	correct := []byte(`{"username":"user1","password":"password1"}`)
+
+	// test bad request
+	req, _ := http.NewRequest("POST", "/login", bytes.NewBuffer(wrongRe))
 	response := executeRequest(req)
-	result := unmarshal(t, response.Body)
-	if result["success"] != true {
-		t.Errorf("Expected 'true' got '%v'", result["success"])
+	m := unmarshal(t, response.Body)
+	checkResponseCode(t, http.StatusBadRequest, response.Code)
+	if m["success"] != false {
+		t.Errorf("Expected 'false' got '%v'", m["success"])
+	}
+	if m["error"] == nil {
+		t.Errorf("Expected something got '%v'", m["error"])
 	} else {
-		if result["token"] == "" {
-			t.Errorf("Expected something got '%v'", result["token"])
+		if val := m["error"].(map[string]interface{})["message"].(string); val != "Invalid Request Payload" {
+			t.Errorf("Expected 'Invalid Request Payload' got '%v'", val)
+		}
+	}
+
+	// test wrong username and password
+	req, _ = http.NewRequest("POST", "/login", bytes.NewBuffer(wrongUP))
+	response = executeRequest(req)
+	m = unmarshal(t, response.Body)
+	checkResponseCode(t, http.StatusUnauthorized, response.Code)
+	if m["success"] != false {
+		t.Errorf("Expected 'false' got '%v'", m["success"])
+	}
+	if m["error"] == nil {
+		t.Errorf("Expected something got '%v'", m["error"])
+	} else {
+		if val := m["error"].(map[string]interface{})["message"].(string); val != "User Doesn't Exist" {
+			t.Errorf("Expected 'User Doesn't Exist' got '%v'", val)
+		}
+	}
+
+	// test wrong username correct password
+	req, _ = http.NewRequest("POST", "/login", bytes.NewBuffer(wrongUs))
+	response = executeRequest(req)
+	m = unmarshal(t, response.Body)
+	checkResponseCode(t, http.StatusUnauthorized, response.Code)
+	if m["success"] != false {
+		t.Errorf("Expected 'false' got '%v'", m["success"])
+	}
+	if m["error"] == nil {
+		t.Errorf("Expected something got '%v'", m["error"])
+	} else {
+		if val := m["error"].(map[string]interface{})["message"].(string); val != "User Doesn't Exist" {
+			t.Errorf("Expected 'User Doesn't Exist' got '%v'", val)
+		}
+	}
+
+	// test correct username wrong password
+	req, _ = http.NewRequest("POST", "/login", bytes.NewBuffer(wrongPa))
+	response = executeRequest(req)
+	m = unmarshal(t, response.Body)
+	checkResponseCode(t, http.StatusUnauthorized, response.Code)
+	if m["success"] != false {
+		t.Errorf("Expected 'false' got '%v'", m["success"])
+	}
+	if m["error"] == nil {
+		t.Errorf("Expected something got '%v'", m["error"])
+	} else {
+		if val := m["error"].(map[string]interface{})["message"].(string); val != "Wrong Password" {
+			t.Errorf("Expected 'Wrong Password' got '%v'", val)
+		}
+	}
+
+	// test correct username correct password
+	req, _ = http.NewRequest("POST", "/login", bytes.NewBuffer(correct))
+	response = executeRequest(req)
+	m = unmarshal(t, response.Body)
+	checkResponseCode(t, http.StatusOK, response.Code)
+	if m["success"] != true {
+		t.Errorf("Expected 'true' got '%v'", m["success"])
+	} else {
+		if m["token"] == "" {
+			t.Errorf("Expected something got '%v'", m["token"])
 		}
 	}
 }
@@ -188,6 +253,52 @@ func loginUser(t *testing.T, username string, password string) string {
 	response := executeRequest(req)
 	result := unmarshal(t, response.Body)
 	return result["token"].(string)
+}
+func TestGetUser(t *testing.T) {
+	clearTable()
+
+	// test getting non existent user
+	req, _ := http.NewRequest("GET", "/user/1", nil)
+	response := executeRequest(req)
+	checkResponseCode(t, http.StatusNotFound, response.Code)
+	m := unmarshal(t, response.Body)
+	if m["success"] != false {
+		t.Errorf("Expected 'false' got '%v'", m["success"])
+	}
+	if val := m["error"].(map[string]interface{})["message"].(string); val != "User Not Found" {
+		t.Errorf("Expected 'User Not Found' got '%v'", val)
+	}
+
+	CreateUsers(1)
+
+	// test getting existing user
+	req, _ = http.NewRequest("GET", "/user/1", nil)
+	response = executeRequest(req)
+	checkResponseCode(t, http.StatusOK, response.Code)
+	m = unmarshal(t, response.Body)
+	if val := m["success"]; val != true {
+		t.Errorf("Expected 'true' got '%v'", val)
+	}
+	if val := m["user"]; val == nil {
+		t.Errorf("Expected something got '%v'", val)
+	} else {
+		if user := m["user"].(map[string]interface{}); user == nil {
+			t.Errorf("Expected something got '%v'", user)
+		} else {
+			if user["id"].(float64) != 1.0 {
+				t.Errorf("Expected '1' got '%v'", user["id"])
+			}
+			if val := user["name"].(string); val != "user1" {
+				t.Errorf("Expected 'user1' got '%v'", val)
+			}
+			if val := user["country"].(string); val != "us" {
+				t.Errorf("Expected 'us' got '%v'", val)
+			}
+			if val := user["locale"].(string); val != "en" {
+				t.Errorf("Expected 'en' got '%v'", val)
+			}
+		}
+	}
 }
 
 func TestUpdateUserNoAuth(t *testing.T) {
@@ -263,7 +374,7 @@ func TestDeleteUser(t *testing.T) {
 func TestGetUsers(t *testing.T) {
 	clearTable()
 	count := 75
-	addUsers(count)
+	CreateUsers(count)
 	count = 50
 
 	req, _ := http.NewRequest("GET", "/user", nil)
