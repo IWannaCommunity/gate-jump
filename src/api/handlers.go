@@ -239,7 +239,7 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 	//get the user; if no user by that name, return 401, if other error, 500
 	if serr := u.GetUserByName(s.DB, SERVER); serr.Err != nil {
 		if serr.Err == sql.ErrNoRows {
-			res.New(http.StatusUnauthorized).SetErrorMessage("Invalid Account").Error(w)
+			res.New(http.StatusUnauthorized).SetErrorMessage("User Doesn't Exist").Error(w)
 			return
 		} else if serr.Err != nil {
 			res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
@@ -248,13 +248,13 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	//check the password
 	if err := bcrypt.CompareHashAndPassword([]byte(*u.Password), []byte(lr.Password)); err != nil {
-		res.New(http.StatusInternalServerError).SetErrorMessage("Failed Decrypting Password").Error(w)
+		res.New(http.StatusUnauthorized).SetErrorMessage("Wrong Password").Error(w)
 		return
 	}
 
 	signedToken, err := u.CreateToken()
 	if err != nil {
-		res.New(http.StatusBadRequest).SetErrorMessage("Failed Creating Token").Error(w)
+		res.New(http.StatusInternalServerError).SetErrorMessage("Failed Creating Token").Error(w)
 		return
 	}
 
