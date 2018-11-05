@@ -246,6 +246,14 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	if u.Deleted != nil && *u.Deleted {
+		if serr := u.UnflagDeletion(s.DB); serr.Err != nil {
+			res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
+			return
+		}
+	}
+
 	//check the password
 	if err := bcrypt.CompareHashAndPassword([]byte(*u.Password), []byte(lr.Password)); err != nil {
 		res.New(http.StatusUnauthorized).SetErrorMessage("Wrong Password").Error(w)
