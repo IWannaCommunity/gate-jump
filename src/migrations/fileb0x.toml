@@ -1,0 +1,30 @@
+pkg = "migrations"
+dest = "src/api/migrations"
+fmt = false
+tags = "" # build tags
+
+[compression]
+    compress = false
+
+    # valid values are:
+    # -> "NoCompression"
+    # -> "BestSpeed"
+    # -> "BestCompression"
+    # -> "DefaultCompression" or ""
+    method = ""
+
+    # do we automatically decompress at runtime, false = decompress at runtime
+    keep = false
+
+clean = false
+output = "migrate.go"
+unexporTed = false
+spread = false
+lcf = true
+debug = false
+
+[[custom]]
+    files = ["src/migrations/00001_inital.sql"]
+    base = ""
+    prefix = ""
+    tags = ""
