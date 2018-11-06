@@ -249,7 +249,7 @@ func (s *Server) validateUser(w http.ResponseWriter, r *http.Request) {
 
 	if u.Deleted != nil && *u.Deleted {
 		if serr := u.UnflagDeletion(s.DB); serr.Err != nil {
-			res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
+			res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
 			return
 		}
 	}
