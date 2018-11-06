@@ -313,6 +313,6 @@ func (u *User) UnflagDeletion(db *sql.DB) *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "UPDATE users SET deleted=FALSE, date_deleted=NULL WHERE id=?"
 	serr.Args = append(serr.Args, u.ID)
-	_, serr.Err = db.Exec(serr.Query, serr.Args...)
+	_, serr.Err = db.Exec(serr.Query, serr.Args)
 	return &serr
 }
