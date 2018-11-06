@@ -1,20 +1,25 @@
 language: go
 
-addons:
-    homebrew:
-        taps:
-            - go-task/homebrew-tap
-        casks:
-            - go-task
-            
 matrix:
     include:
     - os: osx
       osx_image: xcode6.4
       go: "1.11.x"
+      addons:
+          homebrew:
+              taps:
+                  - go-task/homebrew-tap
+              casks:
+                  - go-task
     - os: osx
       osx_image: xcode6.4
       go: master
+      addons:
+          homebrew:
+              taps:
+                  - go-task/homebrew-tap
+              casks:
+                  - go-task
     - os: linux
       dist: precise
       sudo: required
