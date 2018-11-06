@@ -1,4 +1,6 @@
 # gate-jump
+![Travis CI Build Status](https://img.shields.io/travis/IWannaCommunity/gate-jump/master.svg?&style=flat-square&logo=travis)
+
 Central Authentication Service for Delfruit, IWM, and other fangame community services!
 
 ## Environment Setup
@@ -28,7 +30,7 @@ CREATE TABLE users (
     deleted BOOL NOT NULL DEFAULT FALSE,
     date_deleted DATETIME,
     PRIMARY KEY (id)
-) 
+)
 ```
 
 For more details on the `users` columns please look at `user.go` in the main directory of the project.
