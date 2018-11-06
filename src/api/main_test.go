@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	main "gate-jump/src/api"
+	main "github.com/IWannaCommunity/gate-jump/src/api"
 	"net/http"
 	"net/http/httptest"
 	"os"
