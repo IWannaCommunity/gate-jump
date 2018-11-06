@@ -14,7 +14,7 @@ func main() {
 
 	LoadConfig("config/config.json")
 
-	log.Info("Initializing Database")
+	log.Info("Connecting Database")
 	s := Server{LogFile: f}
 	s.Initialize(Config.Database.Username, Config.Database.Password, Config.Database.Dsn)
 

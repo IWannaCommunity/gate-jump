@@ -1,25 +1,37 @@
 language: go
 
+go:
+    - "1.11.x"
+    - master
+
 matrix:
     include:
     - os: osx
       osx_image: xcode6.4
       go: "1.11.x"
+      env: HOMEBREW_NO_AUTO_UPDATE=1
       addons:
           homebrew:
               taps:
                   - go-task/homebrew-tap
               casks:
                   - go-task
+              packages:
+                  - go-task
+              update: true
     - os: osx
       osx_image: xcode6.4
       go: master
+      env: HOMEBREW_NO_AUTO_UPDATE=1
       addons:
           homebrew:
               taps:
                   - go-task/homebrew-tap
               casks:
                   - go-task
+              packages:
+                  - go-task
+              update: true
     - os: linux
       dist: precise
       sudo: required
@@ -50,4 +62,4 @@ matrix:
           - sudo dpkg -i task_linux_amd64.deb
 
 script:
-    - task build
+- task build
