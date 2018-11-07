@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/IWannaCommunity/gate-jump/src/api/log"
+	"github.com/IWannaCommunity/gate-jump/src/api/settings"
 )
 
 func main() {
@@ -12,11 +13,13 @@ func main() {
 	log.Info("Setting up environment...")
 	log.Info("Loading Configuration")
 
-	LoadConfig("config/config.json")
+	settings.FromFile("config/config.json")
 
 	log.Info("Connecting Database")
 	s := Server{LogFile: f}
-	s.Initialize(Config.Database.Username, Config.Database.Password, Config.Database.Dsn)
+	s.Initialize(settings.Config.Database.Username,
+		settings.Config.Database.Password,
+		settings.Config.Database.Dsn)
 
 	log.Info("Initializing Routes")
 	s.InitializeRoutes()
