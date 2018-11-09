@@ -4,11 +4,12 @@ import (
 	"github.com/IWannaCommunity/gate-jump/src/api/log"
 	"github.com/IWannaCommunity/gate-jump/src/api/settings"
 	"github.com/IWannaCommunity/gate-jump/src/api/database"
+	"github.com/IWannaCommunity/gate-jump/src/api/routers"
 )
 
 func main() {
 
-	f := log.Init()
+	log.Init()
 	defer f.Close()
 
 	log.Info("Setting up environment...")
@@ -22,9 +23,7 @@ func main() {
 		settings.Database.Password,
 		settings.Database.Dsn)
 
-	/*log.Info("Initializing Routes")
-	s.InitializeRoutes()
-
 	log.Info("Starting the gate-jump server now! Ctrl+C to quit.")
-	s.Run(Config.Port, Config.SslPort)*/
+
+	routers.Serve(settings.Port, settings.SslPort)
 }
