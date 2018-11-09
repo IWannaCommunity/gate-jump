@@ -3,9 +3,10 @@ package res
 import (
 	"encoding/json"
 	"errors"
-	"github.com/IWannaCommunity/gate-jump/src/api/util"
-	"github.com/IWannaCommunity/gate-jump/src/api/log"
 	"net/http"
+
+	"github.com/IWannaCommunity/gate-jump/src/api/log"
+	"github.com/IWannaCommunity/gate-jump/src/api/util"
 )
 
 type Response struct {

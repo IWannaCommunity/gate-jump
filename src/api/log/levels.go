@@ -1,34 +1,34 @@
 package log
 
 import (
-    "log"
+	"log"
 )
 
 func Verbose(argv ...interface{}) {
-    log.Println("[VERBOSE]", argv)
+	log.Println("[VERBOSE]", argv)
 }
 
 func Debug(argv ...interface{}) {
-    log.Println("[DEBUG]", argv)
+	log.Println("[DEBUG]", argv)
 }
 
 func Info(argv ...interface{}) {
-    log.Println("[INFO]", argv)
+	log.Println("[INFO]", argv)
 }
 
 func Warning(argv ...interface{}) {
-    log.Println("[WARNING]", argv)
+	log.Println("[WARNING]", argv)
 }
 
 func Error(argv ...interface{}) {
-    log.Println("[ERROR]", argv)
+	log.Println("[ERROR]", argv)
 }
 
 func Fatal(argv ...interface{}) {
-    log.Println("[FATAL]", argv)
-    panic(argv)
+	log.Println("[FATAL]", argv)
+	panic(argv)
 }
 
 func Wtf(argv ...interface{}) {
-    log.Println("[WTF]", argv)
+	log.Println("[WTF]", argv)
 }
