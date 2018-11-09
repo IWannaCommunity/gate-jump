@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/IWannaCommunity/gate-jump/src/api/log"
 	"github.com/IWannaCommunity/gate-jump/src/api/settings"
+	"github.com/IWannaCommunity/gate-jump/src/api/database"
 )
 
 func main() {
@@ -16,14 +17,14 @@ func main() {
 	settings.FromFile("config/config.json")
 
 	log.Info("Connecting Database")
-	s := Server{LogFile: f}
-	s.Initialize(settings.Config.Database.Username,
-		settings.Config.Database.Password,
-		settings.Config.Database.Dsn)
 
-	log.Info("Initializing Routes")
+	database.Connect(settings.Database.Username,
+		settings.Database.Password,
+		settings.Database.Dsn)
+
+	/*log.Info("Initializing Routes")
 	s.InitializeRoutes()
 
 	log.Info("Starting the gate-jump server now! Ctrl+C to quit.")
-	s.Run(Config.Port, Config.SslPort)
+	s.Run(Config.Port, Config.SslPort)*/
 }
