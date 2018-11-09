@@ -4,4 +4,5 @@ tasks:
     build:
         cmds:
             - go version
+            - fileb0x src/migrations/fileb0x.toml
             - go build -v -i ./src/api/
