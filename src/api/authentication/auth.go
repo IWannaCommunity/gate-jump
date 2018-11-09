@@ -21,8 +21,8 @@ const (
 )
 
 type Context struct {
-	claims Claims
-	token  string
+	Claims Claims
+	Token  string
 }
 
 type Claims struct {
@@ -42,12 +42,12 @@ func JWTContext(next http.Handler) http.Handler {
 		tokenString := r.Header.Get("Authorization")
 
 		if tokenString == "" { // no token provided. public credential only
-			ctx := context.WithValue(r.Context(), CLAIMS, Context{claims: Claims{ID: 0}})
+			ctx := context.WithValue(r.Context(), CLAIMS, Context{Claims: Claims{ID: 0}})
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 		// parse token provided
-		token, err := jwt.ParseWithClaims(tokenString, &contextData.claims,
+		token, err := jwt.ParseWithClaims(tokenString, &contextData.Claims,
 			func(token *jwt.Token) (interface{}, error) {
 				return []byte(settings.JwtSecret), nil
 			})
@@ -64,8 +64,8 @@ func JWTContext(next http.Handler) http.Handler {
 			res.New(http.StatusInternalServerError).SetErrorMessage("Token Is Null").Error(w)
 			return
 		}
-		contextData.token = tokenString
-		contextData.claims = *token.Claims.(*Claims)
+		contextData.Token = tokenString
+		contextData.Claims = *token.Claims.(*Claims)
 
 		ctx := context.WithValue(r.Context(), CLAIMS, contextData)
 		next.ServeHTTP(w, r.WithContext(ctx))
