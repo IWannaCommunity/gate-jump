@@ -10,7 +10,7 @@ import (
 func main() {
 
 	log.Init()
-	defer f.Close()
+	defer log.Close()
 
 	log.Info("Setting up environment...")
 	log.Info("Loading Configuration")

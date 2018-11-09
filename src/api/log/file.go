@@ -7,7 +7,9 @@ import (
     "io"
 )
 
-func Init() *os.File {
+var File *os.File
+
+func Init() {
     // Make logs directory
     if _, err := os.Stat("logs"); os.IsNotExist(err) {
         os.Mkdir("logs", os.ModePerm)
@@ -22,5 +24,9 @@ func Init() *os.File {
 
     log.SetOutput(io.MultiWriter(os.Stdout, f))
 
-    return f
+    File = f
+}
+
+func Close() {
+    defer File.Close()
 }

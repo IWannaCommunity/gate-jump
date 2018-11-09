@@ -19,10 +19,9 @@ func Serve(port, sslport string) {
 		log.Fatal(http.ListenAndServeTLS(":"+sslport,
             settings.Https.CertFile,
             settings.Https.KeyFile,
-            handlers.LoggingHandler(s.LogFile, router)
-            ))
+            handlers.LoggingHandler(log.File, router)))
 	} else {
 		log.Info("HTTPS Credentials missing, running HTTP")
-		log.Fatal(http.ListenAndServe(":"+port, handlers.LoggingHandler(s.LogFile, router)))
+		log.Fatal(http.ListenAndServe(":"+port, handlers.LoggingHandler(log.File, router)))
 	}
 }
