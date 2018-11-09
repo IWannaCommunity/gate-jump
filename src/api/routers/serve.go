@@ -9,6 +9,7 @@ import (
     "github.com/IWannaCommunity/gate-jump/src/api/log"
     "github.com/IWannaCommunity/gate-jump/src/api/settings"
     "github.com/IWannaCommunity/gate-jump/src/api/res"
+    "github.com/IWannaCommunity/gate-jump/src/api/authentication"
 )
 
 var router *mux.Router
@@ -26,7 +27,7 @@ func Serve(port, sslport string) {
     router.HandleFunc("/user/{id:[0-9]+}", updateUser).Methods("PUT")
     router.HandleFunc("/user/{id:[0-9]+}", deleteUser).Methods("DELETE")
     router.Use(HTTPRecovery)
-    router.Use(JWTContext)
+    router.Use(authentication.JWTContext)
 
     if settings.Https.CertFile != "" && settings.Https.KeyFile != "" {
 		log.Info("HTTPS Credentials picked up, running HTTPS")
