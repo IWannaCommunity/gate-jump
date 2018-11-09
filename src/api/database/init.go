@@ -16,4 +16,6 @@ func Connect(user, password, dbname string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+    log.Debug(SetupUsers())
 }
