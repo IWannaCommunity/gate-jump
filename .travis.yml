@@ -16,6 +16,7 @@ matrix:
                   - go-task
               update: true
       before_script:
+          - go get -u -v github.com/UnnoTed/fileb0x
           - go install github.com/UnnoTed/fileb0x
     - os: osx
       osx_image: xcode6.4
@@ -31,6 +32,7 @@ matrix:
                   - go-task
               update: true
       before_script:
+          - go get -u -v github.com/UnnoTed/fileb0x
           - go install github.com/UnnoTed/fileb0x
     - os: linux
       dist: precise
@@ -46,6 +48,7 @@ matrix:
       before_script:
           - wget https://github.com/go-task/task/releases/download/v2.2.0/task_linux_amd64.deb
           - sudo dpkg -i task_linux_amd64.deb
+          - go get -u -v github.com/UnnoTed/fileb0x
           - go install github.com/UnnoTed/fileb0x
     - os: linux
       dist: precise
@@ -61,6 +64,7 @@ matrix:
       before_script:
           - wget https://github.com/go-task/task/releases/download/v2.2.0/task_linux_amd64.deb
           - sudo dpkg -i task_linux_amd64.deb
+          - go get -u -v github.com/UnnoTed/fileb0x
           - go install github.com/UnnoTed/fileb0x
 
 script:
