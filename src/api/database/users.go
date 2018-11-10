@@ -1,4 +1,4 @@
-package main
+package database
 
 import (
 	"database/sql"
@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/IWannaCommunity/gate-jump/src/api/res"
+	"github.com/IWannaCommunity/gate-jump/src/api/authentication"
+	"github.com/IWannaCommunity/gate-jump/src/api/settings"
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
@@ -66,9 +68,9 @@ type UserList struct {
 
 // SQL FUNCTIONS =================================================================================
 
-func (u *User) getUser(db *sql.DB, auth AuthLevel) *res.ServerError {
+func (u *User) GetUser(auth authentication.Level) *res.ServerError {
 	var serr res.ServerError
-	if auth > USER { // deleted search check
+	if auth > authentication.USER { // deleted search check
 		serr.Query = "SELECT * FROM users WHERE id=?"
 	} else {
 		serr.Query = "SELECT * FROM users WHERE id=? AND deleted=FALSE"
@@ -82,7 +84,7 @@ func (u *User) getUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 	return &serr
 }
 
-func (u *User) GetUserByName(db *sql.DB, auth AuthLevel) *res.ServerError {
+func (u *User) GetUserByName(auth authentication.Level) *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "SELECT * FROM users WHERE name=?"
 	serr.Args = append(serr.Args, u.Name)
@@ -94,7 +96,7 @@ func (u *User) GetUserByName(db *sql.DB, auth AuthLevel) *res.ServerError {
 	return &serr
 }
 
-func (u *User) GetUserByEmail(db *sql.DB, auth AuthLevel) *res.ServerError {
+func (u *User) GetUserByEmail(auth authentication.Level) *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "SELECT * FROM users WHERE email=?"
 	serr.Args = append(serr.Args, u.Email)
@@ -106,7 +108,7 @@ func (u *User) GetUserByEmail(db *sql.DB, auth AuthLevel) *res.ServerError {
 	return &serr
 }
 
-func (u *User) updateUser(db *sql.DB, auth AuthLevel) *res.ServerError {
+func (u *User) UpdateUser(auth authentication.Level) *res.ServerError {
 	var serr res.ServerError
 	//"UPDATE users SET name=?, password=?, email=?, country=?, locale=?, last_token=?, last_login=?, last_ip=? WHERE id=?"
 	serr.Query = "UPDATE users SET"
@@ -117,48 +119,48 @@ func (u *User) updateUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 	} else { // dont return if not edited
 		u.Name = nil
 	}
-	if u.Password != nil && (auth == USER || auth == ADMINUSER || auth == SERVER) {
+	if u.Password != nil && (auth == authentication.USER || auth == authentication.ADMINUSER || auth == authentication.SERVER) {
 		serr.Query += " password=?,"
 		serr.Args = append(serr.Args, u.Password) // hash handled in handler
 	}
 	u.Password = nil // never return password in payload
-	if u.Email != nil && (auth == USER || auth == ADMINUSER || auth == SERVER) {
+	if u.Email != nil && (auth == authentication.USER || auth == authentication.ADMINUSER || auth == authentication.SERVER) {
 		serr.Query += " email=?,"
 		serr.Args = append(serr.Args, u.Email)
 	} else {
 		u.Email = nil
 	}
-	if u.Country != nil && (auth == USER || auth == ADMINUSER || auth == SERVER) {
+	if u.Country != nil && (auth == authentication.USER || auth == authentication.ADMINUSER || auth == authentication.SERVER) {
 		serr.Query += " country=?,"
 		serr.Args = append(serr.Args, u.Country)
 	} else {
 		u.Country = nil
 	}
-	if u.Locale != nil && (auth == USER || auth == ADMINUSER || auth == SERVER) {
+	if u.Locale != nil && (auth == authentication.USER || auth == authentication.ADMINUSER || auth == authentication.SERVER) {
 		serr.Query += " locale=?,"
 		serr.Args = append(serr.Args, u.Locale)
 	} else {
 		u.Locale = nil
 	}
-	if u.Banned != nil && (auth == ADMIN) {
+	if u.Banned != nil && (auth == authentication.ADMIN) {
 		serr.Query += " banned=?,"
 		serr.Args = append(serr.Args, u.Banned)
 	} else {
 		u.Banned = nil
 	}
-	if u.LastToken != nil && (auth == SERVER) {
+	if u.LastToken != nil && (auth == authentication.SERVER) {
 		serr.Query += " last_token=?,"
 		serr.Args = append(serr.Args, u.LastToken)
 	} else {
 		u.LastToken = nil
 	}
-	if u.LastLogin != nil && (auth == SERVER) {
+	if u.LastLogin != nil && (auth == authentication.SERVER) {
 		serr.Query += " last_login=?,"
 		serr.Args = append(serr.Args, u.LastLogin)
 	} else {
 		u.LastLogin = nil
 	}
-	if u.LastIP != nil && (auth == SERVER) {
+	if u.LastIP != nil && (auth == authentication.SERVER) {
 		serr.Query += " last_ip=?,"
 		serr.Args = append(serr.Args, u.LastIP)
 	} else {
@@ -176,7 +178,7 @@ func (u *User) updateUser(db *sql.DB, auth AuthLevel) *res.ServerError {
 	return &serr
 }
 
-func (u *User) deleteUser(db *sql.DB) *res.ServerError {
+func (u *User) DeleteUser() *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "UPDATE users SET deleted=TRUE, date_deleted=? WHERE id=?"
 	serr.Args = append(serr.Args, time.Now(), u.ID)
@@ -184,7 +186,7 @@ func (u *User) deleteUser(db *sql.DB) *res.ServerError {
 	return &serr
 }
 
-func (u *User) createUser(db *sql.DB) *res.ServerError {
+func (u *User) CreateUser() *res.ServerError {
 	var serr res.ServerError
 	var result sql.Result
 	serr.Query = "INSERT INTO users(name, password, email) VALUES(?, ?, ?)"
@@ -197,7 +199,7 @@ func (u *User) createUser(db *sql.DB) *res.ServerError {
 	return nil
 }
 
-func getUsers(db *sql.DB, start, count int, auth AuthLevel) (*UserList, *res.ServerError) {
+func GetUsers(start, count int, auth authentication.Level) (*UserList, *res.ServerError) {
 	var serr res.ServerError
 	var rows *sql.Rows
 	serr.Query = "SELECT * FROM users  WHERE deleted=FALSE LIMIT ? OFFSET ?"
@@ -267,21 +269,21 @@ func (u *User) ScanAlls(rows *sql.Rows) error {
 }
 
 // applies read user data permissions of a fully retrieved user
-func (u *User) CleanDataRead(auth AuthLevel) {
+func (u *User) CleanDataRead(auth authentication.Level) {
 	switch auth {
-	case SERVER:
+	case authentication.SERVER:
 		// we dont want to stop the server from reading anything
-	case PUBLIC:
+	case authentication.PUBLIC:
 		u.Email = nil
 		fallthrough
-	case USER:
+	case authentication.USER:
 		u.LastIP = nil
 		u.DateDeleted = nil
 		u.Deleted = nil
 		fallthrough
-	case ADMINUSER:
+	case authentication.ADMINUSER:
 		fallthrough
-	case ADMIN:
+	case authentication.ADMIN:
 		fallthrough
 	default: // by default always remove password. this is here for security of passwords
 		u.Password = nil
@@ -291,7 +293,7 @@ func (u *User) CleanDataRead(auth AuthLevel) {
 
 func (u *User) CreateToken() (string, error) {
 	//create and sign the token
-	claims := Claims{
+	claims := authentication.Claims{
 		u.ID,
 		u.Name,
 		*u.Admin,
@@ -301,15 +303,15 @@ func (u *User) CreateToken() (string, error) {
 		*u.Banned,
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(), //expire in one hour
-			Issuer:    Config.Host + ":" + Config.Port,
+			Issuer:    settings.Host + ":" + settings.Port,
 			Subject:   strconv.FormatInt(u.ID, 10), //user id as string
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(Config.JwtSecret))
+	return token.SignedString([]byte(settings.JwtSecret))
 }
 
-func (u *User) UnflagDeletion(db *sql.DB) *res.ServerError {
+func (u *User) UnflagDeletion() *res.ServerError {
 	var serr res.ServerError
 	serr.Query = "UPDATE users SET deleted=FALSE, date_deleted=NULL WHERE id=?"
 	serr.Args = append(serr.Args, u.ID)
