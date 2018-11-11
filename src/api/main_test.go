@@ -2,18 +2,24 @@ package main_test
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	main "github.com/IWannaCommunity/gate-jump/src/api"
+	"gate-jump/src/api/settings"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"testing"
+	"time"
+
+	"github.com/gorilla/mux"
 )
 
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
-	s.Router.ServeHTTP(rr, req)
+	r.ServeHTTP(rr, req)
 
 	return rr
 }
@@ -25,7 +31,7 @@ func checkResponseCode(t *testing.T, expected, actual int) {
 }
 
 func ensureTableExists() {
-	if _, err := s.DB.Exec(tableCreationQuery); err != nil {
+	if _, err := s.Exec(tableCreationQuery); err != nil {
 		//TODO: if no result for SHOW TABLES LIKE 'yourtable'; then create
 		//for now we'll just run the query every time, if it doesn't exist it will make, if it does it will error but whatever
 		//log.Fatal(err)
@@ -33,8 +39,8 @@ func ensureTableExists() {
 }
 
 func clearTable() {
-	s.DB.Exec("DELETE FROM users")
-	s.DB.Exec("ALTER TABLE users AUTO_INCREMENT = 1")
+	s.Exec("DELETE FROM users")
+	s.Exec("ALTER TABLE users AUTO_INCREMENT = 1")
 }
 
 const tableCreationQuery = `CREATE TABLE users (
@@ -56,7 +62,8 @@ const tableCreationQuery = `CREATE TABLE users (
     PRIMARY KEY (id)
 )`
 
-var s main.Server
+var s *sql.DB
+var r *mux.Router
 
 // unmarshal will create a map from a json response, for quick and dirty testing
 func unmarshal(t *testing.T, responseBody *bytes.Buffer) map[string]interface{} {
@@ -68,16 +75,18 @@ func unmarshal(t *testing.T, responseBody *bytes.Buffer) map[string]interface{} 
 	return result
 }
 
-// TestMain is the main entrypoint all tests, and ensures the server is ready to go
-// every test will call this first
+// ensures that the server is running before any tests begin as well as an empty table is provided for testing
 func TestMain(m *testing.M) {
 	//init server
-	if err := main.LoadConfig("config/config.json"); err != nil {
-		panic(err)
+
+	settings.FromFile("config/config.json")
+
+	var err error
+	s, err = sql.Open("mysql", fmt.Sprintf("%s:%s@/%s?charset=utf8mb4&parseTime=True&interpolateParams=true", settings.Database.Username, settings.Database.Password, settings.Database.Dsn))
+	if err != nil {
+		log.Fatal(err)
 	}
-	s = main.Server{}
-	s.Initialize(main.Config.Database.Username, main.Config.Database.Password, main.Config.Database.Dsn)
-	s.InitializeRoutes()
+
 	ensureTableExists()
 	clearTable()
 
@@ -86,6 +95,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+// this should probably be baked into the testgetusers
 func TestEmptyTable(t *testing.T) {
 	clearTable()
 	req, _ := http.NewRequest("GET", "/user", nil)
@@ -159,14 +169,24 @@ func CreateUsers(count int) {
 	}
 }
 
+func UpdateUser(id int, country string, locale string, admin bool, banned bool, deleted bool) {
+	if deleted {
+		s.Exec("UPDATE users SET country=?, locale=?, admin=?, banned=?, deleted=true, date_deleted=? WHERE id=?", country, locale, admin, banned, time.Now(), id)
+	} else {
+		s.Exec("UPDATE users SET country=?, locale=?, admin=?, banned=?, deleted=false WHERE id=?", country, locale, admin, banned, id)
+	}
+}
+
 func TestLoginUser(t *testing.T) {
 	clearTable()
-	CreateUsers(1)
+	CreateUsers(2)
 	wrongRe := []byte(`{"BADREQUEST"}`)
 	wrongUP := []byte(`{"username":"wrongusername","password":"wrongpassword"}`)
 	wrongUs := []byte(`{"username":"wrongusername","password":"password1"}`)
 	wrongPa := []byte(`{"username":"user1","password":"wrongpassword"}`)
 	correct := []byte(`{"username":"user1","password":"password1"}`)
+	deleted := []byte(`{"username":"user2","password":"password2"}`)
+	UpdateUser(2, "", "", false, false, true)
 
 	// test bad request
 	req, _ := http.NewRequest("POST", "/login", bytes.NewBuffer(wrongRe))
@@ -244,6 +264,22 @@ func TestLoginUser(t *testing.T) {
 			t.Errorf("Expected something got '%v'", m["token"])
 		}
 	}
+
+	// test correct username correct password deleted true
+	req, _ = http.NewRequest("POST", "/login", bytes.NewBuffer(deleted))
+	response = executeRequest(req)
+	m = unmarshal(t, response.Body)
+	checkResponseCode(t, http.StatusOK, response.Code)
+	if m["success"] != true {
+		t.Errorf("Expected 'true' got '%v'", m["success"])
+	}
+	if m["error"] != nil {
+		t.Errorf("Expected 'nil' got '%v'", m["error"])
+	} else {
+		if m["token"] == "" {
+			t.Errorf("Expected something got '%v'", m["token"])
+		}
+	}
 }
 
 func loginUser(t *testing.T, username string, password string) string {
@@ -254,91 +290,371 @@ func loginUser(t *testing.T, username string, password string) string {
 	result := unmarshal(t, response.Body)
 	return result["token"].(string)
 }
+
 func TestGetUser(t *testing.T) {
 	clearTable()
+	CreateUsers(8)
+
+	delete_token := loginUser(t, "user2", "password2") // expected public permissions (must get this before setting deleted=true or else account restored)
+	banned_token := loginUser(t, "user3", "password3") // expected public permissions (must get this before setting banned=true or else can't login)
+
+	UpdateUser(1, "us", "en", false, false, false) // just a user
+	UpdateUser(2, "us", "en", false, false, true)  // deleted
+	UpdateUser(3, "us", "en", false, true, false)  // banned
+	UpdateUser(4, "us", "en", false, true, true)   // banned and deleted
+	UpdateUser(5, "us", "en", true, false, false)  // admin
+	UpdateUser(6, "us", "en", true, false, true)   // admin and deleted
+	UpdateUser(7, "us", "en", true, true, false)   // admin and banned
+	UpdateUser(8, "us", "en", true, true, true)    // admin and banned and deleted
+
+	auser_token := loginUser(t, "user1", "password1")  // expected public permissions except for user1
+	admini_token := loginUser(t, "user5", "password5") // expected admin permissions except for user5
+
+	log.Println(banned_token) // to prevent it from erorr but maintaining login
+	log.Println(admini_token) // to prevent it from error but maintaining login
+	log.Println(delete_token) // to prevent it from error but maintaining login
 
 	// test getting non existent user
-	req, _ := http.NewRequest("GET", "/user/1", nil)
+	req, _ := http.NewRequest("GET", "/user/99", nil)
 	response := executeRequest(req)
 	checkResponseCode(t, http.StatusNotFound, response.Code)
 	m := unmarshal(t, response.Body)
-	if m["success"] != false {
-		t.Errorf("Expected 'false' got '%v'", m["success"])
-	}
-	if val := m["error"].(map[string]interface{})["message"].(string); val != "User Not Found" {
+	if val := m["success"]; val != false {
+		t.Errorf("Expected 'false' got '%v'", val)
+	} else if val := m["error"].(map[string]interface{})["message"].(string); val != "User Not Found" {
 		t.Errorf("Expected 'User Not Found' got '%v'", val)
 	}
 
-	CreateUsers(1)
-
-	// test getting existing user
-	req, _ = http.NewRequest("GET", "/user/1", nil)
-	response = executeRequest(req)
-	checkResponseCode(t, http.StatusOK, response.Code)
-	m = unmarshal(t, response.Body)
-	if val := m["success"]; val != true {
-		t.Errorf("Expected 'true' got '%v'", val)
-	}
-	if val := m["user"]; val == nil {
-		t.Errorf("Expected something got '%v'", val)
-	} else {
-		if user := m["user"].(map[string]interface{}); user == nil {
-			t.Errorf("Expected something got '%v'", user)
-		} else {
-			if user["id"].(float64) != 1.0 {
-				t.Errorf("Expected '1' got '%v'", user["id"])
+	// auser check (user checking other records including their own)
+	for i := 1; i <= 8; i++ {
+		// check public creds
+		istr := strconv.Itoa(i)
+		req, _ = http.NewRequest("GET", "/user/"+istr, nil)
+		req.Header.Set("Authorization", auser_token)
+		response = executeRequest(req)
+		m = unmarshal(t, response.Body)
+		switch i {
+		case 1: // user is checking themself so should have user perms for viewing data
+			checkResponseCode(t, http.StatusOK, response.Code)
+			if val := m["success"]; val != true {
+				t.Errorf("Expected 'true' got '%v'", val)
+			} else {
+				user := m["user"].(map[string]interface{})
+				if user == nil {
+					t.Errorf("Expected something got '%v'", val)
+				} else {
+					if val := user["id"].(float64); val != float64(i) {
+						t.Errorf("Expected '%d' got '%v'", i, val)
+					}
+					if val := user["name"].(string); val != "user"+istr {
+						t.Errorf("Expected 'user%d' got '%v'", i, val)
+					}
+					if val := user["password"]; val != nil {
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if val := user["email"].(string); val != "email"+istr+"@website.com" {
+						t.Errorf("Expected 'email%d@website.com' got '%v'", i, val)
+					}
+					if val := user["country"].(string); val != "us" {
+						t.Errorf("Expected 'us' got '%v'", val)
+					}
+					if val := user["locale"].(string); val != "en" {
+						t.Errorf("Expected 'en' got '%v'", val)
+					}
+					if val := user["date_created"].(string); val == "" {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["verified"]; val == nil {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["banned"]; val == nil {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["admin"]; val == nil {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["last_token"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if i == 1 || i == 3 || i == 5 { // these users have logged in so they have last_login set.
+						if val := user["last_login"].(string); val == "" {
+							t.Errorf("Expected something got '%v'", val)
+						}
+					} else { // these users have not logged in so they have last_login set to nil
+						if val := user["last_login"]; val != nil {
+							t.Errorf("Expected '<nil>' got '%v'", val)
+						}
+					}
+					if val := user["last_ip"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if val := user["deleted"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if val := user["date_deleted"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+				}
 			}
-			if val := user["name"].(string); val != "user1" {
-				t.Errorf("Expected 'user1' got '%v'", val)
+		case 2: // user is checking a deleted user so should not be able to see anything
+			fallthrough
+		case 4:
+			fallthrough
+		case 6:
+			fallthrough
+		case 8:
+			checkResponseCode(t, http.StatusNotFound, response.Code)
+			if val := m["success"]; val != false {
+				t.Errorf("Expected 'false' got '%v'", val)
+			} else if val := m["error"].(map[string]interface{})["message"].(string); val != "User Not Found" {
+				t.Errorf("Expected 'User Not Found' got '%v'", val)
 			}
-			if val := user["country"].(string); val != "us" {
-				t.Errorf("Expected 'us' got '%v'", val)
-			}
-			if val := user["locale"].(string); val != "en" {
-				t.Errorf("Expected 'en' got '%v'", val)
+		case 3: // user is checking other users. this should be public
+			fallthrough
+		case 5:
+			fallthrough
+		case 7:
+			checkResponseCode(t, http.StatusOK, response.Code)
+			log.Println(m)
+			if val := m["success"]; val != true {
+				t.Errorf("Expected 'true' got '%v'", val)
+			} else {
+				user := m["user"].(map[string]interface{})
+				if user == nil {
+					t.Errorf("Expected something got '%v'", val)
+				} else {
+					if val := user["id"].(float64); val != float64(i) {
+						t.Errorf("Expected '%d' got '%v'", i, val)
+					}
+					if val := user["name"].(string); val != "user"+istr {
+						t.Errorf("Expected 'user%d' got '%v'", i, val)
+					}
+					if val := user["password"]; val != nil {
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if val := user["email"]; val != nil {
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if val := user["country"].(string); val != "us" {
+						t.Errorf("Expected 'us' got '%v'", val)
+					}
+					if val := user["locale"].(string); val != "en" {
+						t.Errorf("Expected 'en' got '%v'", val)
+					}
+					if val := user["date_created"].(string); val == "" {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["verified"]; val == nil {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["banned"]; val == nil {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["admin"]; val == nil {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["last_token"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if i == 1 || i == 3 || i == 5 { // these users have logged in so they have last_login set.
+						if val := user["last_login"].(string); val == "" {
+							t.Errorf("Expected something got '%v'", val)
+						}
+					} else { // these users have not logged in so they have last_login set to nil
+						if val := user["last_login"]; val != nil {
+							t.Errorf("Expected '<nil>' got '%v'", val)
+						}
+					}
+					if val := user["last_ip"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if val := user["deleted"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if val := user["date_deleted"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+				}
 			}
 		}
 	}
+
+	// banned_token
+	for i := 1; i <= 8; i++ {
+		// check public creds
+		istr := strconv.Itoa(i)
+		req, _ = http.NewRequest("GET", "/user/"+istr, nil)
+		req.Header.Set("Authorization", auser_token)
+		response = executeRequest(req)
+		m = unmarshal(t, response.Body)
+		switch i {
+		case 1: // user is checking themself so should have user perms for viewing data
+			checkResponseCode(t, http.StatusOK, response.Code)
+			if val := m["success"]; val != true {
+				t.Errorf("Expected 'true' got '%v'", val)
+			} else {
+				user := m["user"].(map[string]interface{})
+				if user == nil {
+					t.Errorf("Expected something got '%v'", val)
+				} else {
+					if val := user["id"].(float64); val != float64(i) {
+						t.Errorf("Expected '%d' got '%v'", i, val)
+					}
+					if val := user["name"].(string); val != "user"+istr {
+						t.Errorf("Expected 'user%d' got '%v'", i, val)
+					}
+					if val := user["password"]; val != nil {
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if val := user["email"].(string); val != "email"+istr+"@website.com" {
+						t.Errorf("Expected 'email%d@website.com' got '%v'", i, val)
+					}
+					if val := user["country"].(string); val != "us" {
+						t.Errorf("Expected 'us' got '%v'", val)
+					}
+					if val := user["locale"].(string); val != "en" {
+						t.Errorf("Expected 'en' got '%v'", val)
+					}
+					if val := user["date_created"].(string); val == "" {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["verified"]; val == nil {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["banned"]; val == nil {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["admin"]; val == nil {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["last_token"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if i == 1 || i == 3 || i == 5 { // these users have logged in so they have last_login set.
+						if val := user["last_login"].(string); val == "" {
+							t.Errorf("Expected something got '%v'", val)
+						}
+					} else { // these users have not logged in so they have last_login set to nil
+						if val := user["last_login"]; val != nil {
+							t.Errorf("Expected '<nil>' got '%v'", val)
+						}
+					}
+					if val := user["last_ip"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if val := user["deleted"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if val := user["date_deleted"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+				}
+			}
+		case 2: // user is checking a deleted user so should not be able to see anything
+			fallthrough
+		case 4:
+			fallthrough
+		case 6:
+			fallthrough
+		case 8:
+			checkResponseCode(t, http.StatusNotFound, response.Code)
+			if val := m["success"]; val != false {
+				t.Errorf("Expected 'false' got '%v'", val)
+			} else if val := m["error"].(map[string]interface{})["message"].(string); val != "User Not Found" {
+				t.Errorf("Expected 'User Not Found' got '%v'", val)
+			}
+		case 3: // user is checking other users. this should be public
+			fallthrough
+		case 5:
+			fallthrough
+		case 7:
+			checkResponseCode(t, http.StatusOK, response.Code)
+			log.Println(m)
+			if val := m["success"]; val != true {
+				t.Errorf("Expected 'true' got '%v'", val)
+			} else {
+				user := m["user"].(map[string]interface{})
+				if user == nil {
+					t.Errorf("Expected something got '%v'", val)
+				} else {
+					if val := user["id"].(float64); val != float64(i) {
+						t.Errorf("Expected '%d' got '%v'", i, val)
+					}
+					if val := user["name"].(string); val != "user"+istr {
+						t.Errorf("Expected 'user%d' got '%v'", i, val)
+					}
+					if val := user["password"]; val != nil {
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if val := user["email"]; val != nil {
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if val := user["country"].(string); val != "us" {
+						t.Errorf("Expected 'us' got '%v'", val)
+					}
+					if val := user["locale"].(string); val != "en" {
+						t.Errorf("Expected 'en' got '%v'", val)
+					}
+					if val := user["date_created"].(string); val == "" {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["verified"]; val == nil {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["banned"]; val == nil {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["admin"]; val == nil {
+						t.Errorf("Expected something got '%v'", val)
+					}
+					if val := user["last_token"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if i == 1 || i == 3 || i == 5 { // these users have logged in so they have last_login set.
+						if val := user["last_login"].(string); val == "" {
+							t.Errorf("Expected something got '%v'", val)
+						}
+					} else { // these users have not logged in so they have last_login set to nil
+						if val := user["last_login"]; val != nil {
+							t.Errorf("Expected '<nil>' got '%v'", val)
+						}
+					}
+					if val := user["last_ip"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if val := user["deleted"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+					if val := user["date_deleted"]; val != nil { // admin only
+						t.Errorf("Expected '<nil>' got '%v'", val)
+					}
+				}
+			}
+		}
+	}
+
 }
 
-func TestUpdateUserNoAuth(t *testing.T) {
-	// check if auth is required
-	payload := []byte(`{"name":"test user - updated name","password":"54321","email":"newemail@website.com","country":"jp","locale":"jp"}`)
-	req, _ := http.NewRequest("PUT", "/user/1", bytes.NewBuffer(payload))
+func TestOldToken(t *testing.T) {
+	// confirm that old tokens are rejected by default
+	clearTable()
+	CreateUsers(1)
+
+	old_token := loginUser(t, "user1", "password1") // get a token
+	_ = loginUser(t, "user1", "password1")          // get server to update the last_token field to something new
+
+	req, _ := http.NewRequest("GET", "/user/1", nil)
+	req.Header.Set("Authorization", old_token)
 	response := executeRequest(req)
 	checkResponseCode(t, http.StatusUnauthorized, response.Code)
+	m := unmarshal(t, response.Body)
+	log.Println(m)
+	if val := m["success"]; val != false {
+		t.Errorf("Expected 'false' got '%v'", val)
+	}
 }
 
 func TestUpdateUser(t *testing.T) {
-	payload := []byte(`{"name":"test user - updated name","password":"54321","email":"newemail@website.com","country":"jp","locale":"en"}`)
-	req, _ := http.NewRequest("PUT", "/user/1", bytes.NewBuffer(payload))
-	token := loginUser(t, "test user", "12345")
-	req.Header.Set("Authorization", token)
-	response := executeRequest(req)
-	checkResponseCode(t, http.StatusOK, response.Code)
-	m := unmarshal(t, response.Body)
-	if m["success"] != true {
-		t.Errorf("Expected 'true' got '%v'", m["success"])
-	} else {
-		if val := m["user"].(map[string]interface{})["id"]; val != 1.0 {
-			t.Errorf("Expected '1' got '%v'", val)
-		}
-		if val := m["user"].(map[string]interface{})["name"]; val != "test user - updated name" {
-			t.Errorf("Expected 'test user - updated name' got '%v'", val)
-		}
-		if val := m["user"].(map[string]interface{})["password"]; val != nil {
-			t.Errorf("Expected '<nil>' got '%v'", val)
-		}
-		if val := m["user"].(map[string]interface{})["email"]; val != "newemail@website.com" {
-			t.Errorf("Expected 'newemail@website.com' got '%v'", val)
-		}
-		if val := m["user"].(map[string]interface{})["country"]; val != "jp" {
-			t.Errorf("Expected 'jp' got '%v'", val)
-		}
-		if val := m["user"].(map[string]interface{})["locale"]; val != "en" {
-			t.Errorf("Expected 'en' got '%v'", val)
-		}
-	}
 }
 
 func TestDeleteUserNoAuth(t *testing.T) {
