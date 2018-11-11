@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/IWannaCommunity/gate-jump/src/api/database"
 	"github.com/IWannaCommunity/gate-jump/src/api/log"
+	"github.com/IWannaCommunity/gate-jump/src/api/routers"
 	"github.com/IWannaCommunity/gate-jump/src/api/settings"
 )
 
@@ -16,9 +17,15 @@ func main() {
 
 	settings.FromFile("config/config.json")
 
-	log.Info("Initializing Database and Router")
+	log.Info("Connecting to Database")
 
-	_, _ = database.InitServer()
+	database.Connect(settings.Database.Username,
+		settings.Database.Password,
+		settings.Database.Dsn)
+
+	log.Info("Setting Up Routes")
+
+	routers.Serve(settings.Port, settings.SslPort)
 
 	log.Info("The gate-jump server has started! Ctrl+C to quit.")
 

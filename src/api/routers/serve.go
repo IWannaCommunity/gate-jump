@@ -14,7 +14,7 @@ import (
 
 var router *mux.Router
 
-func Serve(port, sslport string) *mux.Router {
+func Serve(port, sslport string) {
 	router = mux.NewRouter()
 
 	router.HandleFunc("/", getAlive).Methods("GET")
@@ -40,7 +40,6 @@ func Serve(port, sslport string) *mux.Router {
 		log.Fatal(http.ListenAndServe(":"+port, handlers.LoggingHandler(log.File, router)))
 	}
 
-	return router
 }
 
 func HTTPRecovery(next http.Handler) http.Handler {
