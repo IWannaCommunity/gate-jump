@@ -2,8 +2,10 @@ package util
 
 import (
 	"reflect"
+	"regexp"
 	"runtime"
 	"strconv"
+	"unicode"
 )
 
 func GetFunctionName(i interface{}) string {
@@ -55,4 +57,8 @@ func IsValidPassword(s string) bool { // https://stackoverflow.com/a/25837334
 	}
 	return true
 }
-	}
+
+func IsValidEmail(s string) bool { // http://www.golangprograms.com/regular-expression-to-validate-email-address.html
+	re := regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	return re.MatchString(s)
+}
