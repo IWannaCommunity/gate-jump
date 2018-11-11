@@ -16,13 +16,10 @@ func main() {
 
 	settings.FromFile("config/config.json")
 
-	log.Info("Connecting Database")
+	log.Info("Initializing Database and Router")
 
-	database.Connect(settings.Database.Username,
-		settings.Database.Password,
-		settings.Database.Dsn)
+	_, _ = database.InitServer()
 
-	log.Info("Starting the gate-jump server now! Ctrl+C to quit.")
+	log.Info("The gate-jump server has started! Ctrl+C to quit.")
 
-	routers.Serve(settings.Port, settings.SslPort)
 }
