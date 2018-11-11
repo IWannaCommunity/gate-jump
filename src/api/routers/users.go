@@ -3,13 +3,15 @@ package routers
 import (
 	"database/sql"
 	"encoding/json"
+	"gate-jump/src/api/util"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/IWannaCommunity/gate-jump/src/api/res"
-	"github.com/IWannaCommunity/gate-jump/src/api/database"
 	"github.com/IWannaCommunity/gate-jump/src/api/authentication"
+	"github.com/IWannaCommunity/gate-jump/src/api/database"
+	"github.com/IWannaCommunity/gate-jump/src/api/res"
+	"github.com/IWannaCommunity/gate-jump/src/api/util"
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -112,6 +114,11 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	checkuser := u
+
+	if util.IsNumeric(*checkuser.Name) { // dont allow
+		res.New(http.StatusNoContent).SetErrorMessage("A Username Can't Be All Numbers").Error(w) // uncertain about 204 return
+		return
+	}
 
 	//check if user with name already exists; if not, we will get an ErrNoRows which is what we want
 	if serr := checkuser.GetUserByName(authentication.SERVER); serr.Err == nil {
