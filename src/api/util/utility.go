@@ -30,6 +30,13 @@ func IsNumeric(s string) bool { // https://stackoverflow.com/a/45686455
 	return err == nil
 }
 
+func IsValidUsername(s string) bool {
+	if IsNumeric(s) {
+		return false
+	}
+	return true
+}
+
 func IsValidPassword(s string) bool { // https://stackoverflow.com/a/25837334
 
 	if len(s) < 8 {
