@@ -107,7 +107,7 @@ func getUsers(w http.ResponseWriter, r *http.Request) {
 func createUser(w http.ResponseWriter, r *http.Request) {
 	var u database.User
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&u); err != nil || u.Name == nil || u.Password == nil {
+	if err := decoder.Decode(&u); err != nil || u.Name == nil || u.Password == nil || u.Email == nil {
 		res.New(http.StatusBadRequest).SetErrorMessage("Invalid Request Payload").Error(w)
 		return
 	}
