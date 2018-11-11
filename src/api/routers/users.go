@@ -124,6 +124,11 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !util.IsValidPassword(*checkuser.Password) {
+		res.New(http.StatusNoContent).SetErrorMessage("Invalid Password Format").Error(w)
+		return
+	}
+
 	//check if user with name already exists; if not, we will get an ErrNoRows which is what we want
 	if serr := checkuser.GetUserByName(authentication.SERVER); serr.Err == nil {
 		res.New(http.StatusConflict).SetErrorMessage("User Already Exists").Error(w)
