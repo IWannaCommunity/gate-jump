@@ -23,7 +23,7 @@ func MyCaller() string {
 	return fun.Name()
 }
 
-func IsNumeric(s string) bool {
+func IsNumeric(s string) bool { // https://stackoverflow.com/a/45686455
 	_, err := strconv.ParseFloat(s, 64)
 	return err == nil
 }
