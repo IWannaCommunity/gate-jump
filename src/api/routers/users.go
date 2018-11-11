@@ -11,7 +11,6 @@ import (
 	"github.com/IWannaCommunity/gate-jump/src/api/authentication"
 	"github.com/IWannaCommunity/gate-jump/src/api/database"
 	"github.com/IWannaCommunity/gate-jump/src/api/res"
-	"github.com/IWannaCommunity/gate-jump/src/api/util"
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -117,6 +116,11 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 
 	if util.IsNumeric(*checkuser.Name) { // dont allow
 		res.New(http.StatusNoContent).SetErrorMessage("A Username Can't Be All Numbers").Error(w) // uncertain about 204 return
+		return
+	}
+
+	if !util.IsValidEmail(*checkuser.Email) {
+		res.New(http.StatusNoContent).SetErrorMessage("Invalid Email Format").Error(w)
 		return
 	}
 
