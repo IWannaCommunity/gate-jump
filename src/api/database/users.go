@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/IWannaCommunity/gate-jump/src/api/res"
 	"github.com/IWannaCommunity/gate-jump/src/api/authentication"
+	"github.com/IWannaCommunity/gate-jump/src/api/res"
 	"github.com/IWannaCommunity/gate-jump/src/api/settings"
 	jwt "github.com/dgrijalva/jwt-go"
 )
