@@ -1,10 +1,9 @@
 package main
 
 import (
+	"github.com/IWannaCommunity/gate-jump/src/api/database"
 	"github.com/IWannaCommunity/gate-jump/src/api/log"
 	"github.com/IWannaCommunity/gate-jump/src/api/settings"
-	"github.com/IWannaCommunity/gate-jump/src/api/database"
-	"github.com/IWannaCommunity/gate-jump/src/api/routers"
 )
 
 func main() {
