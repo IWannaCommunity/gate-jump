@@ -114,8 +114,8 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 
 	checkuser := u
 
-	if util.IsNumeric(*checkuser.Name) { // dont allow
-		res.New(http.StatusNoContent).SetErrorMessage("A Username Can't Be All Numbers").Error(w) // uncertain about 204 return
+	if !util.IsValidUsername(*checkuser.Name) {
+		res.New(http.StatusNoContent).SetErrorMessage("Invalid Username Format").Error(w)
 		return
 	}
 
