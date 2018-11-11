@@ -27,3 +27,32 @@ func IsNumeric(s string) bool {
 	_, err := strconv.ParseFloat(s, 64)
 	return err == nil
 }
+
+func IsValidPassword(s string) bool { // https://stackoverflow.com/a/25837334
+
+	if len(s) < 8 {
+		return false
+	}
+
+	numberCount := 0
+	upperCount := 0
+	specialCount := 0
+	letterCount := 0
+
+	for _, s := range s {
+		switch {
+		case unicode.IsNumber(s): // number
+			numberCount++
+		case unicode.IsUpper(s): // uppercase
+			upperCount++
+		case unicode.IsPunct(s) || unicode.IsSymbol(s): // special
+			specialCount++
+		case unicode.IsLetter(s) || s == ' ': // letter
+			letterCount++
+		default: // decline anything else
+			return false
+		}
+	}
+	return true
+}
+	}
