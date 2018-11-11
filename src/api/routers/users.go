@@ -3,7 +3,6 @@ package routers
 import (
 	"database/sql"
 	"encoding/json"
-	"gate-jump/src/api/util"
 	"net/http"
 	"strconv"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/IWannaCommunity/gate-jump/src/api/authentication"
 	"github.com/IWannaCommunity/gate-jump/src/api/database"
 	"github.com/IWannaCommunity/gate-jump/src/api/res"
+	"github.com/IWannaCommunity/gate-jump/src/api/util"
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
