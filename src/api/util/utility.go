@@ -3,6 +3,7 @@ package util
 import (
 	"reflect"
 	"runtime"
+	"strconv"
 )
 
 func GetFunctionName(i interface{}) string {
@@ -20,4 +21,9 @@ func MyCaller() string {
 		return "n/a"
 	}
 	return fun.Name()
+}
+
+func IsNumeric(s string) bool {
+	_, err := strconv.ParseFloat(s, 64)
+	return err == nil
 }
