@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/IWannaCommunity/gate-jump/src/api/database"
 	"github.com/stretchr/testify/assert"
@@ -155,19 +156,20 @@ func TestCreateUser(t *testing.T) {
 	method := "POST"
 	route := "/register"
 
-	var badRequests [8][]byte // only valid request should be one that contains name, email, and password
+	var badRequests [9][]byte // only valid request should be one that contains name, email, and password
 
-	badRequests[0] = []byte(`sdfdrslkjgnm4momgom!!!`)                                                          // jibberish
-	badRequests[1] = []byte(`{"password":"12345678","email":"email@website.com"}`)                             // missing name
-	badRequests[2] = []byte(`{"name":"test_user","email":"email@website.com"}`)                                // missing password
-	badRequests[3] = []byte(`{"name":"test_user","password":"12345678"}`)                                      // missing email
-	badRequests[4] = []byte(`{"name":"test_user","password":"12345678","country":"us","locale":"en"}`)         // extra
-	badRequests[5] = []byte(`{"name":"12356","password":"12345678","email":"email@website.com"}`)              // invalid username (all numerics)
-	badRequests[6] = []byte(`{"name":"test_user","password":"12345","email":"email@website.com"}`)             // invalid password (less than 8 characters)
-	badRequests[7] = []byte(`{"name":"test_user","password":"12345678","email":"email"}`)                      // invalid email (non-email format)
-	mainUser := []byte(`{"name":"test_user","password":"12345678","email":"email@website.com"}`)               // valid request
-	duplicateName := []byte(`{"name":"test_user","password":"12345678","email":"email@someotherwebsite.com"}`) // name == mainUser.Name
-	duplicateEmail := []byte(`{"name":"some_other_user","password":"12345678","email":"email@website.com"}`)   // email == mainUser.Email
+	badRequests[0] = []byte(`sdfdrslkjgnm4momgom!!!`)                                                             // jibberish
+	badRequests[1] = []byte(`{"password":"12345678","email":"email@website.com"}`)                                // missing name
+	badRequests[2] = []byte(`{"name":"test_user","email":"email@website.com"}`)                                   // missing password
+	badRequests[3] = []byte(`{"name":"test_user","password":"12345678"}`)                                         // missing email
+	badRequests[4] = []byte(`{"name":"test_user","password":"12345678","country":"us","locale":"en"}`)            // extra
+	badRequests[5] = []byte(`{"name":"12356","password":"12345678","email":"email@website.com"}`)                 // invalid username (all numerics)
+	badRequests[6] = []byte(`{"name":"test_user@website.com","password":"12345678","email":"email@website.com"}`) // invalid username (its an email)
+	badRequests[7] = []byte(`{"name":"test_user","password":"12345","email":"email@website.com"}`)                // invalid password (less than 8 characters)
+	badRequests[8] = []byte(`{"name":"test_user","password":"12345678","email":"email"}`)                         // invalid email (non-email format)
+	mainUser := []byte(`{"name":"test_user","password":"12345678","email":"email@website.com"}`)                  // valid request
+	duplicateName := []byte(`{"name":"test_user","password":"12345678","email":"email@someotherwebsite.com"}`)    // name == mainUser.Name
+	duplicateEmail := []byte(`{"name":"some_other_user","password":"12345678","email":"email@website.com"}`)      // email == mainUser.Email
 
 	// test bad request
 	for i, badRequest := range badRequests {
@@ -178,11 +180,13 @@ func TestCreateUser(t *testing.T) {
 			assert.Falsef(t, r.Success, "badRequest: %d", i)
 			if assert.NotNilf(t, r.Error, "badRequest: %d", i) {
 				switch i {
-				case 5: // invalid username
+				case 5:
+					fallthrough
+				case 6: // invalid username
 					assert.Equalf(t, "Invalid Username Format", r.Error.Message, "badRequest: %d", i)
-				case 6:
-					assert.Equalf(t, "Invalid Password Format", r.Error.Message, "badRequest: %d", i)
 				case 7:
+					assert.Equalf(t, "Invalid Password Format", r.Error.Message, "badRequest: %d", i)
+				case 8:
 					assert.Equalf(t, "Invalid Email Format", r.Error.Message, "badRequest: %d", i)
 				default:
 					assert.Equalf(t, "Invalid Request Payload", r.Error.Message, "badRequest: %d", i)
