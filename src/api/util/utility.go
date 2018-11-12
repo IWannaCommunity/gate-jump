@@ -37,7 +37,7 @@ func IsValidUsername(s string) bool {
 	return true
 }
 
-func IsValidPassword(s string) bool { // https://stackoverflow.com/a/25837334
+func IsValidPassword(s string) bool { // https://stackoverflow.com/a/25840157
 
 	if len(s) < 8 {
 		return false
