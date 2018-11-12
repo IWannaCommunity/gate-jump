@@ -265,17 +265,16 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	//check the password
+	if err := bcrypt.CompareHashAndPassword([]byte(*u.Password), []byte(lr.Password)); err != nil {
+		res.New(http.StatusUnauthorized).SetErrorMessage("Wrong Password").Error(w)
+		return
+	}
 	if u.Deleted != nil && *u.Deleted {
 		if serr := u.UnflagDeletion(); serr.Err != nil {
 			res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 			return
 		}
-	}
-
-	//check the password
-	if err := bcrypt.CompareHashAndPassword([]byte(*u.Password), []byte(lr.Password)); err != nil {
-		res.New(http.StatusUnauthorized).SetErrorMessage("Wrong Password").Error(w)
-		return
 	}
 
 	signedToken, err := u.CreateToken()
