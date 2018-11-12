@@ -270,6 +270,14 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 		res.New(http.StatusUnauthorized).SetErrorMessage("Wrong Password").Error(w)
 		return
 	}
+
+	// check if they are banned
+	if u.Banned != nil && *u.Banned {
+		res.New(http.StatusUnauthorized).SetErrorMessage("Account Banned").Error(w)
+		return
+	}
+
+	// check if they are deleted, if so undelete them
 	if u.Deleted != nil && *u.Deleted {
 		if serr := u.UnflagDeletion(); serr.Err != nil {
 			res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
