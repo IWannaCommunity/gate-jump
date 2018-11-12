@@ -245,7 +245,7 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 	var lr LoginRequest
 
 	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&lr); err != nil {
+	if err := decoder.Decode(&lr); err != nil || lr.Username == "" || lr.Password == "" {
 		res.New(http.StatusBadRequest).SetErrorMessage("Invalid Request Payload").Error(w)
 		return
 	}
