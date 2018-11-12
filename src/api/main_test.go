@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"gate-jump/src/api/settings"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/IWannaCommunity/gate-jump/src/api/settings"
 	"github.com/gorilla/mux"
 )
 
@@ -39,8 +39,8 @@ func ensureTableExists() {
 }
 
 func clearTable() {
-	s.Exec("DELETE FROM users")
-	s.Exec("ALTER TABLE users AUTO_INCREMENT = 1")
+	db.Exec("DELETE FROM users")
+	db.Exec("ALTER TABLE users AUTO_INCREMENT = 1")
 }
 
 const tableCreationQuery = `CREATE TABLE users (
