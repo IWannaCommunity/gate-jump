@@ -152,7 +152,7 @@ func TestCreateUser(t *testing.T) {
 		code, r, err = request(method, route, badRequest)
 		if assert.NoError(t, err) {
 
-			assert.Equalf(t, http.StatusBadRequest, code, "expected statusbadrequest", "; badRequest: %d", i)
+			assert.Equalf(t, http.StatusBadRequest, code, "excpected badrequest code; badRequest: %d", i)
 			assert.Falsef(t, r.Success, "badRequest: %d", i)
 			if assert.NotNilf(t, r.Error, "badRequest: %d", i) {
 				switch i {
