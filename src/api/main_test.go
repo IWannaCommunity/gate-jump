@@ -1,22 +1,6 @@
 package main_test
 
-import (
-	"bytes"
-	"database/sql"
-	"encoding/json"
-	"fmt"
-	"log"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"strconv"
-	"testing"
-	"time"
-
-	"github.com/IWannaCommunity/gate-jump/src/api/settings"
-	"github.com/gorilla/mux"
-)
-
+/*
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
 	r.ServeHTTP(rr, req)
@@ -169,7 +153,7 @@ func CreateUsers(count int) {
 	}
 }
 
-func UpdateUser(id int, country string, locale string, admin bool, banned bool, deleted bool) {
+func updateUser(id int, country string, locale string, admin bool, banned bool, deleted bool) {
 	if deleted {
 		s.Exec("UPDATE users SET country=?, locale=?, admin=?, banned=?, deleted=true, date_deleted=? WHERE id=?", country, locale, admin, banned, time.Now(), id)
 	} else {
@@ -719,3 +703,4 @@ func TestGetUsers(t *testing.T) {
 		}
 	}
 }
+*/
