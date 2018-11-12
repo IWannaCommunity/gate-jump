@@ -173,8 +173,6 @@ func TestCreateUser(t *testing.T) {
 		}
 	}
 
-	// test invalid username
-
 	// test creating a user
 	code, r, err = request(method, route, mainUser)
 	if assert.NoError(t, err) {
