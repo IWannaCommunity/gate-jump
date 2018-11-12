@@ -83,6 +83,28 @@ func unmarshal(responseBody *bytes.Buffer) (*Payload, error) {
 	return &p, nil
 }
 
+// createUsers creates x amount of users with name:user{i}; password:password{i}; and email:email{i}@website.com
+func create(count int) {
+	clearTable()
+	if count < 1 {
+		count = 1
+	}
+
+	for i := 1; i < count+1; i++ {
+		newUser := []byte(fmt.Sprintf(`{"name":"user%d","password":"password%d","email":"email%d@website.com"}`, i, i, i))
+		req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(newUser))
+		_ = executeRequest(req)
+	}
+}
+
+func update(id int, country string, locale string, admin bool, banned bool, deleted bool) {
+	if deleted {
+		db.Exec("UPDATE users SET country=?, locale=?, admin=?, banned=?, deleted=true, date_deleted=? WHERE id=?", country, locale, admin, banned, time.Now(), id)
+	} else {
+		db.Exec("UPDATE users SET country=?, locale=?, admin=?, banned=?, deleted=false WHERE id=?", country, locale, admin, banned, id)
+	}
+}
+
 func TestMain(m *testing.M) {
 	var err error
 	// initialize the database for testing
