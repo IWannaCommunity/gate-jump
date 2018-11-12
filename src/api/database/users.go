@@ -68,7 +68,7 @@ type UserList struct {
 
 // SQL FUNCTIONS =================================================================================
 
-func (u *User) GetUser(auth authentication.Level) *res.ServerError {
+func (u *User) GetUser(auth authentication.Level) res.ServerError {
 	var serr res.ServerError
 	if auth > authentication.USER { // deleted search check
 		serr.Query = "SELECT * FROM users WHERE id=?"
@@ -78,37 +78,37 @@ func (u *User) GetUser(auth authentication.Level) *res.ServerError {
 	serr.Args = append(serr.Args, u.ID)
 	serr.Err = u.ScanAll(db.QueryRow(serr.Query, serr.Args...))
 	if serr.Err != nil {
-		return &serr
+		return serr
 	}
 	u.CleanDataRead(auth)
-	return &serr
+	return serr
 }
 
-func (u *User) GetUserByName(auth authentication.Level) *res.ServerError {
+func (u *User) GetUserByName(auth authentication.Level) res.ServerError {
 	var serr res.ServerError
 	serr.Query = "SELECT * FROM users WHERE name=?"
 	serr.Args = append(serr.Args, u.Name)
 	serr.Err = u.ScanAll(db.QueryRow(serr.Query, serr.Args...))
 	if serr.Err != nil {
-		return &serr
+		return serr
 	}
 	u.CleanDataRead(auth)
-	return &serr
+	return serr
 }
 
-func (u *User) GetUserByEmail(auth authentication.Level) *res.ServerError {
+func (u *User) GetUserByEmail(auth authentication.Level) res.ServerError {
 	var serr res.ServerError
 	serr.Query = "SELECT * FROM users WHERE email=?"
 	serr.Args = append(serr.Args, u.Email)
 	serr.Err = u.ScanAll(db.QueryRow(serr.Query, serr.Args...))
 	if serr.Err != nil {
-		return &serr
+		return serr
 	}
 	u.CleanDataRead(auth)
-	return &serr
+	return serr
 }
 
-func (u *User) UpdateUser(auth authentication.Level) *res.ServerError {
+func (u *User) UpdateUser(auth authentication.Level) res.ServerError {
 	var serr res.ServerError
 	//"UPDATE users SET name=?, password=?, email=?, country=?, locale=?, last_token=?, last_login=?, last_ip=? WHERE id=?"
 	serr.Query = "UPDATE users SET"
@@ -168,38 +168,38 @@ func (u *User) UpdateUser(auth authentication.Level) *res.ServerError {
 	}
 
 	if len(serr.Args) == 0 {
-		return &serr // there were no sections to update so return empty user
+		return serr // there were no sections to update so return empty user
 	}
 
 	serr.Query = serr.Query[:len(serr.Query)-1] + " WHERE id=?" // remove last comma of query and add WHERE condition
 	serr.Args = append(serr.Args, u.ID)
 
 	_, serr.Err = db.Exec(serr.Query, serr.Args...)
-	return &serr
+	return serr
 }
 
-func (u *User) DeleteUser() *res.ServerError {
+func (u *User) DeleteUser() res.ServerError {
 	var serr res.ServerError
 	serr.Query = "UPDATE users SET deleted=TRUE, date_deleted=? WHERE id=?"
 	serr.Args = append(serr.Args, time.Now(), u.ID)
 	_, serr.Err = db.Exec(serr.Query, serr.Args...)
-	return &serr
+	return serr
 }
 
-func (u *User) CreateUser() *res.ServerError {
+func (u *User) CreateUser() res.ServerError {
 	var serr res.ServerError
 	var result sql.Result
 	serr.Query = "INSERT INTO users(name, password, email) VALUES(?, ?, ?)"
 	serr.Args = append(serr.Args, u.Name, u.Password, u.Email)
 	result, serr.Err = db.Exec(serr.Query, serr.Args...)
 	if serr.Err != nil {
-		return &serr
+		return serr
 	}
 	u.ID, _ = result.LastInsertId() // we confirmed that there will be no error
-	return nil
+	return serr
 }
 
-func GetUsers(start, count int, auth authentication.Level) (*UserList, *res.ServerError) {
+func GetUsers(start, count int, auth authentication.Level) (*UserList, res.ServerError) {
 	var serr res.ServerError
 	var rows *sql.Rows
 	serr.Query = "SELECT * FROM users  WHERE deleted=FALSE LIMIT ? OFFSET ?"
@@ -207,7 +207,7 @@ func GetUsers(start, count int, auth authentication.Level) (*UserList, *res.Serv
 	rows, serr.Err = db.Query(serr.Query, serr.Args...)
 
 	if serr.Err != nil {
-		return nil, &serr
+		return nil, serr
 	}
 
 	defer rows.Close()
@@ -217,19 +217,20 @@ func GetUsers(start, count int, auth authentication.Level) (*UserList, *res.Serv
 	for rows.Next() {
 		var u User
 		if serr.Err = u.ScanAlls(rows); serr.Err != nil {
-			return nil, &serr
+			return nil, serr
 		}
 		u.CleanDataRead(auth)
 		users = append(users, u)
 	}
 
-	return &UserList{Users: users, StartIndex: start, TotalItems: len(users)}, nil
+	return &UserList{Users: users, StartIndex: start, TotalItems: len(users)}, serr
 }
 
 // HELPER FUNCTIONS ==============================================================================
 
 // scans all user data into the user struct
 func (u *User) ScanAll(row *sql.Row) error {
+
 	return row.Scan(
 		&u.ID,
 		&u.Name,
@@ -311,10 +312,10 @@ func (u *User) CreateToken() (string, error) {
 	return token.SignedString([]byte(settings.JwtSecret))
 }
 
-func (u *User) UnflagDeletion() *res.ServerError {
+func (u *User) UnflagDeletion() res.ServerError {
 	var serr res.ServerError
 	serr.Query = "UPDATE users SET deleted=FALSE, date_deleted=NULL WHERE id=?"
 	serr.Args = append(serr.Args, u.ID)
 	_, serr.Err = db.Exec(serr.Query, serr.Args...)
-	return &serr
+	return serr
 }
