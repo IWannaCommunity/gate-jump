@@ -115,17 +115,17 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	checkuser := u
 
 	if !util.IsValidUsername(*checkuser.Name) {
-		res.New(http.StatusNoContent).SetErrorMessage("Invalid Username Format").Error(w)
+		res.New(http.StatusBadRequest).SetErrorMessage("Invalid Username Format").Error(w)
 		return
 	}
 
 	if !util.IsValidEmail(*checkuser.Email) {
-		res.New(http.StatusNoContent).SetErrorMessage("Invalid Email Format").Error(w)
+		res.New(http.StatusBadRequest).SetErrorMessage("Invalid Email Format").Error(w)
 		return
 	}
 
 	if !util.IsValidPassword(*checkuser.Password) {
-		res.New(http.StatusNoContent).SetErrorMessage("Invalid Password Format").Error(w)
+		res.New(http.StatusBadRequest).SetErrorMessage("Invalid Password Format").Error(w)
 		return
 	}
 
