@@ -48,7 +48,7 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 		case sql.ErrNoRows:
 			res.New(http.StatusNotFound).SetErrorMessage("User Not Found").Error(w)
 		default:
-			res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+			res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		}
 		return
 	}
@@ -67,7 +67,7 @@ func getUserByName(w http.ResponseWriter, r *http.Request) {
 		case sql.ErrNoRows:
 			res.New(http.StatusNotFound).SetErrorMessage("User Not Found").Error(w)
 		default:
-			res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+			res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		}
 		return
 	}
@@ -94,8 +94,8 @@ func getUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	users, serr := database.GetUsers(start, count, auth)
-	if serr != nil {
-		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+	if serr.Err != nil {
+		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
 	}
 
@@ -131,10 +131,10 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 
 	//check if user with name already exists; if not, we will get an ErrNoRows which is what we want
 	if serr := checkuser.GetUserByName(authentication.SERVER); serr.Err == nil {
-		res.New(http.StatusConflict).SetErrorMessage("User Already Exists").Error(w)
+		res.New(http.StatusConflict).SetErrorMessage("Username Already Exists").Error(w)
 		return
 	} else if serr.Err != sql.ErrNoRows {
-		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
 	}
 	// check if user with email already exists; if not, we will get an ErrNoRows which is what we want
@@ -142,7 +142,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		res.New(http.StatusConflict).SetErrorMessage("Email Already In Use").Error(w)
 		return
 	} else if serr.Err != sql.ErrNoRows {
-		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
 	}
 
@@ -154,8 +154,8 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	}
 	*u.Password = string(hashpwd)
 
-	if serr := u.CreateUser(); serr != nil {
-		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+	if serr := u.CreateUser(); serr.Err != nil {
+		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
 	}
 
@@ -206,7 +206,7 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 
 	serr := u.UpdateUser(auth)
 	if serr.Err != nil {
-		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
 	}
 
@@ -234,7 +234,7 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if serr := u.DeleteUser(); serr.Err != nil {
-		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
 	}
 	res.New(http.StatusAccepted).JSON(w)
@@ -260,14 +260,14 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 			res.New(http.StatusUnauthorized).SetErrorMessage("User Doesn't Exist").Error(w)
 			return
 		} else if serr.Err != nil {
-			res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+			res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 			return
 		}
 	}
 
 	if u.Deleted != nil && *u.Deleted {
 		if serr := u.UnflagDeletion(); serr.Err != nil {
-			res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+			res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 			return
 		}
 	}
@@ -288,7 +288,7 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 	u.LastLogin = &[]time.Time{time.Now()}[0] // how to get pointer from function call (its gross): goo.gl/9BXtsj
 	u.LastIP = &r.RemoteAddr
 	if serr := u.UpdateUser(authentication.SERVER); serr.Err != nil {
-		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
 	}
 
@@ -301,7 +301,7 @@ func refreshUser(w http.ResponseWriter, r *http.Request) {
 	var u database.User
 	u.ID = claims.ID
 	if serr := u.GetUser(authentication.SERVER); serr.Err != nil {
-		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
 	}
 
@@ -319,7 +319,7 @@ func refreshUser(w http.ResponseWriter, r *http.Request) {
 
 	// update information
 	if serr := u.UpdateUser(authentication.SERVER); serr.Err != nil {
-		res.New(http.StatusInternalServerError).SetInternalError(serr).Error(w)
+		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
 	}
 
@@ -342,7 +342,7 @@ func getAuthLevel(r *http.Request, u1 *database.User) (authentication.Level, *re
 	if serr.Err == sql.ErrNoRows { // claims user wasn't found
 		return authentication.PUBLIC, res.New(http.StatusUnauthorized).SetErrorMessage("Token's User Doesn't Exist")
 	} else if serr.Err != nil {
-		return authentication.PUBLIC, res.New(http.StatusInternalServerError).SetInternalError(serr)
+		return authentication.PUBLIC, res.New(http.StatusInternalServerError).SetInternalError(&serr)
 	}
 	if u2.LastToken == nil || ctx.Token != *u2.LastToken { // confirm the token is actually the last token used by the user
 		return authentication.PUBLIC, res.New(http.StatusUnauthorized).SetErrorMessage("Token's User And Found User's Last Token Are Not The Same")
