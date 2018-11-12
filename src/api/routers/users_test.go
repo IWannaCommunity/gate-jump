@@ -93,8 +93,7 @@ func create(count int) {
 
 	for i := 1; i < count+1; i++ {
 		newUser := []byte(fmt.Sprintf(`{"name":"user%d","password":"password%d","email":"email%d@website.com"}`, i, i, i))
-		req, _ := http.NewRequest("POST", "/register", bytes.NewBuffer(newUser))
-		_ = executeRequest(req)
+		_, _, _ = request("POST", "/register", newUser)
 	}
 }
 
