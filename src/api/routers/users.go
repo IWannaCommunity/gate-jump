@@ -114,7 +114,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 
 	checkuser := u
 
-	if !util.IsValidUsername(*checkuser.Name) {
+	if !util.IsValidUsername(*checkuser.Name) || util.IsValidEmail(*checkuser.Name) {
 		res.New(http.StatusBadRequest).SetErrorMessage("Invalid Username Format").Error(w)
 		return
 	}
