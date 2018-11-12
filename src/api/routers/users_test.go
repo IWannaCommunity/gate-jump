@@ -103,6 +103,28 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func TestAlive(t *testing.T) {
+	clearTable()
+	var code int
+	var r *Payload
+	var err error
+	method := "GET"
+	route := "/"
+
+	code, r, err = request(method, route, nil)
+	if assert.NoError(t, err) {
+
+		assert.Equal(t, http.StatusOK, code, "expected statusok")
+		assert.True(t, r.Success)
+
+		assert.Nil(t, r.Error)
+		assert.Nil(t, r.Token)
+		assert.Nil(t, r.User)
+		assert.Nil(t, r.UserList)
+
+	}
+}
+
 func TestCreateUser(t *testing.T) {
 	clearTable()
 	var code int
