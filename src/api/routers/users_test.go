@@ -238,3 +238,123 @@ func TestCreateUser(t *testing.T) {
 		assert.Nil(t, r.UserList)
 	}
 }
+
+func TestLoginUser(t *testing.T) {
+	clearTable()
+	create(3)
+	update(2, "us", "en", false, false, true) // deleted
+	update(3, "us", "en", false, true, false) // banned
+	var code int
+	var r *Payload
+	var err error
+	method := "POST"
+	route := "/login"
+
+	var badRequests [7][]byte // only valid requests are ones that have a correct username and password
+
+	badRequests[0] = []byte(`{"BADREQUEST"}`)                                                        // wrong format lol
+	badRequests[1] = []byte(`{"password":"wrongpassword"}`)                                          // missing username
+	badRequests[2] = []byte(`{"username":"wrongusername"}`)                                          // missing password
+	badRequests[3] = []byte(`{"username":"wrongusername","password":"wrongpassword","county":"us"}`) // extra info
+	badRequests[4] = []byte(`{"username":"wrongusername","password":"wrongpassword"}`)               // wrong 	username 	wrong password
+	badRequests[5] = []byte(`{"username":"wrongusername","password":"password1"}`)                   // wrong 	username 	correct password
+	badRequests[6] = []byte(`{"username":"user1","password":"wrongpassword"}`)                       // correct 	username 	wrong password
+	correct := []byte(`{"username":"user1","password":"password1"}`)                                 // correct 	username 	correct password
+	deleted := []byte(`{"username":"user2","password":"password2"}`)                                 // deleted account
+	banned := []byte(`{"username":"user3","password":"password3"}`)                                  // banned account
+
+	for i, badRequest := range badRequests {
+		code, r, err = request(method, route, badRequest)
+		if assert.NoError(t, err) {
+
+			switch i {
+			case 0:
+				fallthrough
+			case 1:
+				fallthrough
+			case 2:
+				assert.Equalf(t, http.StatusBadRequest, code, "expected badrequest code; badRequest: %d", i)
+			default:
+				assert.Equalf(t, http.StatusUnauthorized, code, "expected unauthorized code; badRequest: %d", i)
+			}
+			assert.Falsef(t, r.Success, "badRequest: %d", i)
+			if assert.NotNilf(t, r.Error, "badRequest: %d", i) {
+				switch i {
+				case 0:
+					fallthrough
+				case 1:
+					fallthrough
+				case 2:
+					assert.Equalf(t, "Invalid Request Payload", r.Error.Message, "badRequest: %d", i)
+				case 3: // extra info, we dont care
+					fallthrough
+				case 4: // wrong username wrong password
+					fallthrough
+				case 5: // wrong
+					assert.Equalf(t, "User Doesn't Exist", r.Error.Message, "badRequest: %d", i)
+				case 6:
+					assert.Equalf(t, "Wrong Password", r.Error.Message, "badRequest: %d", i)
+				default:
+					assert.Truef(t, false, "badRequest: %d", i)
+					return // shouldn't occur
+				}
+			}
+
+			assert.Nilf(t, r.Token, "badRequest: %d", i)
+			assert.Nilf(t, r.User, "badRequest: %d", i)
+			assert.Nilf(t, r.UserList, "badRequest: %d", i)
+		}
+	}
+
+	// correct username correct password; not banned; not deleted
+	code, r, err = request(method, route, correct)
+	if assert.NoError(t, err) {
+		assert.Equal(t, http.StatusOK, code, "expected OK")
+		if assert.True(t, r.Success) {
+			assert.NotNil(t, r.Token)
+		}
+
+		assert.Nil(t, r.Error)
+		assert.Nil(t, r.User)
+		assert.Nil(t, r.UserList)
+	}
+
+	// correct username correct password; not banned; deleted
+	code, r, err = request(method, route, deleted)
+	if assert.NoError(t, err) {
+		assert.Equal(t, http.StatusOK, code, "expected OK")
+		if assert.True(t, r.Success) {
+			assert.NotNil(t, r.Token)
+		}
+
+		assert.Nil(t, r.Error)
+		assert.Nil(t, r.User)
+		assert.Nil(t, r.UserList)
+	}
+
+	// correct username correct password; banned; not deleted
+	code, r, err = request(method, route, banned)
+	if assert.NoError(t, err) {
+		assert.Equal(t, http.StatusUnauthorized, code, "expected unauthorized")
+		if assert.False(t, r.Success) {
+			if assert.NotNil(t, r.Error) {
+				assert.Equal(t, "Account Banned", r.Error.Message)
+			}
+		}
+
+		assert.Nil(t, r.Token)
+		assert.Nil(t, r.User)
+		assert.Nil(t, r.UserList)
+	}
+}
+
+func TestGetUser(t *testing.T) {
+	/*
+		clearTable()
+		var code int
+		var r *Payload
+		var err error
+		method := "GET"
+		route := "/user/" // add # to any request
+	*/
+}
