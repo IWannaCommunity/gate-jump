@@ -304,9 +304,23 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 
 func refreshUser(w http.ResponseWriter, r *http.Request) {
 	// get user
-	claims := r.Context().Value(authentication.CLAIMS).(authentication.Claims) // claims at this point are validated so refresh is allowed
+	ctx := r.Context().Value(authentication.CLAIMS).(authentication.Context) // claims at this point are validated so refresh is allowed
+	claims := ctx.Claims
+
 	var u database.User
 	u.ID = claims.ID
+
+	auth, response := getAuthLevel(r, &u)
+	if response != nil {
+		response.Error(w)
+		return
+	}
+
+	if !(auth == authentication.USER || auth == authentication.ADMINUSER) {
+		res.New(http.StatusUnauthorized).SetErrorMessage("Invalid Token Provided").Error(w)
+		return
+	}
+
 	if serr := u.GetUser(authentication.SERVER); serr.Err != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
