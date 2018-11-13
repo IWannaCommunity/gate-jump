@@ -371,7 +371,47 @@ func TestLoginUser(t *testing.T) {
 }
 
 func TestRefresh(t *testing.T) {
-	t.Error("Not Implemented")
+
+	clearTable()
+	create(1)
+	var code int
+	var r *Payload
+	var err error
+	method := "POST"
+	route := "/refresh"
+
+	var badRequests []string
+
+	badRequests = append(badRequests,
+		"badtoken")
+
+	goodToken := login("user1", "password1")
+
+	for i, token := range badRequests {
+		code, r, err = request(method, route, nil, token)
+		if assert.NoErrorf(t, err, "badRequest %d", i) {
+			assert.Equalf(t, http.StatusUnauthorized, code, "expected unauthorized", "badRequest %d", i)
+			assert.Falsef(t, r.Success, "badRequest %d", i)
+			if assert.NotNilf(t, r.Error, "badRequest %d", i) {
+				assert.Equalf(t, "Invalid Token Provided", r.Error.Message, "badRequest %d", i)
+			}
+
+			assert.Nil(t, r.Token, "badRequest %d", i)
+			assert.Nil(t, r.User, "badRequest %d", i)
+			assert.Nil(t, r.UserList, "badRequest %d", i)
+		}
+	}
+
+	code, r, err = request(method, route, nil, goodToken)
+	if assert.NoError(t, err) {
+		assert.Equal(t, http.StatusOK, code, "expected OK")
+		assert.True(t, r.Success)
+		assert.NotNil(t, r.Token)
+
+		assert.Nil(t, r.Error)
+		assert.Nil(t, r.User)
+		assert.Nil(t, r.UserList)
+	}
 }
 
 func TestGetUser(t *testing.T) {
