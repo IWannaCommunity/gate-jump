@@ -9,10 +9,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/IWannaCommunity/gate-jump/src/api/database"
+	"github.com/IWannaCommunity/gate-jump/src/api/res"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -38,16 +40,11 @@ const tableCreationQuery = `CREATE TABLE users (
 )`
 
 type Payload struct {
-	Success  bool          `json:"success"`
-	Error    *PayloadError `json:"error,omitempty"`
-	Token    *string       `json:"token,omitempty"`
-	User     interface{}   `json:"user,omitempty"`
-	UserList interface{}   `json:"userList,omitempty"`
-}
-
-type PayloadError struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
+	Success  bool               `json:"success"`
+	Error    *res.ResponseError `json:"error,omitempty"`
+	Token    *string            `json:"token,omitempty"`
+	User     *database.User     `json:"user,omitempty"`
+	UserList *database.UserList `json:"userList,omitempty"`
 }
 
 func clearTable() {
