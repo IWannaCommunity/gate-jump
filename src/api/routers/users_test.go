@@ -58,8 +58,17 @@ func ensureTableExists() {
 	db.Exec(tableCreationQuery)
 }
 
-func request(method string, url string, body []byte) (int, *Payload, error) {
-	req, _ := http.NewRequest(method, url, bytes.NewBuffer(body))
+func request(method string, url string, body interface{}, token interface{}) (int, *Payload, error) {
+	var bodyByte []byte
+
+	if body != nil {
+		bodyByte = []byte(body.(string))
+	}
+
+	req, _ := http.NewRequest(method, url, bytes.NewBuffer(bodyByte))
+	if token != nil {
+		req.Header.Set("Authorization", token.(string))
+	}
 	response := executeRequest(req)
 	p, err := unmarshal(response.Body)
 	if err != nil {
