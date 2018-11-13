@@ -82,8 +82,9 @@ func (r *Response) Error(w http.ResponseWriter) {
 				"SELECT * FROM users WHERE id=?" << ({<nil>})
 				Message: Invalid sql syntax check something something
 		*/
-		log.Error("\n\tInternal Server Error (%d) in Function: %s()\n\t\"%s\" << %v\n\tMessage: %s",
-			r.Code, r.Function, r.InternalError.Query, r.InternalError.Args, r.InternalError.Err.Error())
+		log.Error(
+			fmt.Sprintf("\n\tInternal Server Error (%d) in Function: %s()\n\t\"%s\" << %v\n\tMessage: %s",
+				r.Code, r.Function, r.InternalError.Query, r.InternalError.Args, r.InternalError.Err.Error()))
 	}
 	r.Payload.Success = false
 	if r.Payload.Error == nil {
