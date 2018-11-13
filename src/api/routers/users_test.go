@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -100,8 +101,8 @@ func create(count int) {
 	}
 
 	for i := 1; i < count+1; i++ {
-		newUser := []byte(fmt.Sprintf(`{"name":"user%d","password":"password%d","email":"email%d@website.com"}`, i, i, i))
-		_, _, _ = request("POST", "/register", newUser)
+		newUser := fmt.Sprintf(`{"name":"user%d","password":"password%d","email":"email%d@website.com"}`, i, i, i)
+		_, _, _ = request("POST", "/register", newUser, nil)
 	}
 }
 
@@ -111,6 +112,14 @@ func update(id int, country string, locale string, admin bool, banned bool, dele
 	} else {
 		db.Exec("UPDATE users SET country=?, locale=?, admin=?, banned=?, deleted=false WHERE id=?", country, locale, admin, banned, id)
 	}
+}
+
+func login(username string, password string) string {
+	_, r, _ := request("POST", "/login", fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password), nil)
+	if r.Token == nil {
+		return ""
+	}
+	return *r.Token
 }
 
 func TestMain(m *testing.M) {
@@ -141,7 +150,7 @@ func TestAlive(t *testing.T) {
 	method := "GET"
 	route := "/"
 
-	code, r, err = request(method, route, nil)
+	code, r, err = request(method, route, nil, nil)
 	if assert.NoError(t, err) {
 
 		assert.Equal(t, http.StatusOK, code, "expected statusok")
@@ -163,24 +172,25 @@ func TestCreateUser(t *testing.T) {
 	method := "POST"
 	route := "/register"
 
-	var badRequests [9][]byte // only valid request should be one that contains name, email, and password
+	var badRequests []string // only valid request should be one that contains name, email, and password
 
-	badRequests[0] = []byte(`sdfdrslkjgnm4momgom!!!`)                                                             // jibberish
-	badRequests[1] = []byte(`{"password":"12345678","email":"email@website.com"}`)                                // missing name
-	badRequests[2] = []byte(`{"name":"test_user","email":"email@website.com"}`)                                   // missing password
-	badRequests[3] = []byte(`{"name":"test_user","password":"12345678"}`)                                         // missing email
-	badRequests[4] = []byte(`{"name":"test_user","password":"12345678","country":"us","locale":"en"}`)            // extra
-	badRequests[5] = []byte(`{"name":"12356","password":"12345678","email":"email@website.com"}`)                 // invalid username (all numerics)
-	badRequests[6] = []byte(`{"name":"test_user@website.com","password":"12345678","email":"email@website.com"}`) // invalid username (its an email)
-	badRequests[7] = []byte(`{"name":"test_user","password":"12345","email":"email@website.com"}`)                // invalid password (less than 8 characters)
-	badRequests[8] = []byte(`{"name":"test_user","password":"12345678","email":"email"}`)                         // invalid email (non-email format)
-	mainUser := []byte(`{"name":"test_user","password":"12345678","email":"email@website.com"}`)                  // valid request
-	duplicateName := []byte(`{"name":"test_user","password":"12345678","email":"email@someotherwebsite.com"}`)    // name == mainUser.Name
-	duplicateEmail := []byte(`{"name":"some_other_user","password":"12345678","email":"email@website.com"}`)      // email == mainUser.Email
+	badRequests = append(badRequests,
+		`sdfdrslkjgnm4momgom!!!`,                                                             // jibberish
+		`{"password":"12345678","email":"email@website.com"}`,                                // missing name
+		`{"name":"test_user","email":"email@website.com"}`,                                   // missing password
+		`{"name":"test_user","password":"12345678"}`,                                         // missing email
+		`{"name":"test_user","password":"12345678","country":"us","locale":"en"}`,            // extra
+		`{"name":"12356","password":"12345678","email":"email@website.com"}`,                 // invalid username (all numerics)
+		`{"name":"test_user@website.com","password":"12345678","email":"email@website.com"}`, // invalid username (its an email)
+		`{"name":"test_user","password":"12345","email":"email@website.com"}`,                // invalid password (less than 8 characters)
+		`{"name":"test_user","password":"12345678","email":"email"}`)                         // invalid email (non-email format)
+	mainUser := `{"name":"test_user","password":"12345678","email":"email@website.com"}`               // valid request
+	duplicateName := `{"name":"test_user","password":"12345678","email":"email@someotherwebsite.com"}` // name == mainUser.Name
+	duplicateEmail := `{"name":"some_other_user","password":"12345678","email":"email@website.com"}`   // email == mainUser.Email
 
 	// test bad request
 	for i, badRequest := range badRequests {
-		code, r, err = request(method, route, badRequest)
+		code, r, err = request(method, route, badRequest, nil)
 		if assert.NoError(t, err) {
 
 			assert.Equalf(t, http.StatusBadRequest, code, "excpected badrequest code; badRequest: %d", i)
@@ -207,7 +217,7 @@ func TestCreateUser(t *testing.T) {
 	}
 
 	// test creating a user
-	code, r, err = request(method, route, mainUser)
+	code, r, err = request(method, route, mainUser, nil)
 	if assert.NoError(t, err) {
 
 		assert.Equal(t, http.StatusCreated, code, "expected statusok")
@@ -220,7 +230,7 @@ func TestCreateUser(t *testing.T) {
 	}
 
 	// test duplicate username
-	code, r, err = request(method, route, duplicateName)
+	code, r, err = request(method, route, duplicateName, nil)
 	if assert.NoError(t, err) {
 
 		assert.Equal(t, http.StatusConflict, code, "expected statusconflict")
@@ -235,7 +245,7 @@ func TestCreateUser(t *testing.T) {
 	}
 
 	// test duplicate email
-	code, r, err = request(method, route, duplicateEmail)
+	code, r, err = request(method, route, duplicateEmail, nil)
 	if assert.NoError(t, err) {
 
 		assert.Equal(t, http.StatusConflict, code, "expected statusconflict")
@@ -261,21 +271,22 @@ func TestLoginUser(t *testing.T) {
 	method := "POST"
 	route := "/login"
 
-	var badRequests [7][]byte // only valid requests are ones that have a correct username and password
+	var badRequests []string // only valid requests are ones that have a correct username and password
 
-	badRequests[0] = []byte(`{"BADREQUEST"}`)                                                        // wrong format lol
-	badRequests[1] = []byte(`{"password":"wrongpassword"}`)                                          // missing username
-	badRequests[2] = []byte(`{"username":"wrongusername"}`)                                          // missing password
-	badRequests[3] = []byte(`{"username":"wrongusername","password":"wrongpassword","county":"us"}`) // extra info
-	badRequests[4] = []byte(`{"username":"wrongusername","password":"wrongpassword"}`)               // wrong 	username 	wrong password
-	badRequests[5] = []byte(`{"username":"wrongusername","password":"password1"}`)                   // wrong 	username 	correct password
-	badRequests[6] = []byte(`{"username":"user1","password":"wrongpassword"}`)                       // correct 	username 	wrong password
-	correct := []byte(`{"username":"user1","password":"password1"}`)                                 // correct 	username 	correct password
-	deleted := []byte(`{"username":"user2","password":"password2"}`)                                 // deleted account
-	banned := []byte(`{"username":"user3","password":"password3"}`)                                  // banned account
+	badRequests = append(badRequests,
+		`{"BADREQUEST"}`,               // wrong format lol
+		`{"password":"wrongpassword"}`, // missing username
+		`{"username":"wrongusername"}`, // missing password
+		`{"username":"wrongusername","password":"wrongpassword","county":"us"}`, // extra info
+		`{"username":"wrongusername","password":"wrongpassword"}`,               // wrong 	username 	wrong password
+		`{"username":"wrongusername","password":"password1"}`,                   // wrong 	username 	correct password
+		`{"username":"user1","password":"wrongpassword"}`)                       // correct 	username 	wrong password
+	correct := `{"username":"user1","password":"password1"}` // correct 	username 	correct password
+	deleted := `{"username":"user2","password":"password2"}` // deleted account
+	banned := `{"username":"user3","password":"password3"}`  // banned account
 
 	for i, badRequest := range badRequests {
-		code, r, err = request(method, route, badRequest)
+		code, r, err = request(method, route, badRequest, nil)
 		if assert.NoError(t, err) {
 
 			switch i {
@@ -318,7 +329,7 @@ func TestLoginUser(t *testing.T) {
 	}
 
 	// correct username correct password; not banned; not deleted
-	code, r, err = request(method, route, correct)
+	code, r, err = request(method, route, correct, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, code, "expected OK")
 		if assert.True(t, r.Success) {
@@ -331,7 +342,7 @@ func TestLoginUser(t *testing.T) {
 	}
 
 	// correct username correct password; not banned; deleted
-	code, r, err = request(method, route, deleted)
+	code, r, err = request(method, route, deleted, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, code, "expected OK")
 		if assert.True(t, r.Success) {
@@ -344,7 +355,7 @@ func TestLoginUser(t *testing.T) {
 	}
 
 	// correct username correct password; banned; not deleted
-	code, r, err = request(method, route, banned)
+	code, r, err = request(method, route, banned, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusUnauthorized, code, "expected unauthorized")
 		if assert.False(t, r.Success) {
