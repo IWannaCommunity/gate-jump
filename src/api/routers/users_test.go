@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -351,13 +350,26 @@ func TestLoginUser(t *testing.T) {
 	}
 }
 
+func TestRefresh(t *testing.T) {
+	t.Error("Not Implemented")
+}
+
 func TestGetUser(t *testing.T) {
-	/*
-		clearTable()
-		var code int
-		var r *Payload
-		var err error
-		method := "GET"
-		route := "/user/" // add # to any request
-	*/
+	t.Error("Not Implemented")
+}
+
+func TestGetUsers(t *testing.T) {
+	t.Error("Not Implemented")
+}
+
+func TestGetUserByName(t *testing.T) {
+	t.Error("Not Implemented")
+}
+
+func TestUpdateUser(t *testing.T) {
+	t.Error("Not Implemented")
+}
+
+func TestDeleteUser(t *testing.T) {
+	t.Error("Not Implemented")
 }
