@@ -351,9 +351,6 @@ func getAuthLevel(r *http.Request, u1 *database.User) (authentication.Level, *re
 	} else if serr.Err != nil {
 		return authentication.PUBLIC, res.New(http.StatusInternalServerError).SetInternalError(&serr)
 	}
-	if u2.LastToken == nil || ctx.Token != *u2.LastToken { // confirm the token is actually the last token used by the user
-		return authentication.PUBLIC, res.New(http.StatusUnauthorized).SetErrorMessage("Token's User And Found User's Last Token Are Not The Same")
-	}
 
 	// we assume the username of the claimed user and the found user (u2) is the same because we searched by name
 	if u2.Banned != nil && *u2.Banned { // fuck this guy in particular
