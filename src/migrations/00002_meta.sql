@@ -1,0 +1,3 @@
+CREATE TABLE meta (
+    db_version SMALLINT UNSIGNED NOT NULL DEFAULT 0
+)
