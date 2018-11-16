@@ -32,7 +32,7 @@ func doesTableExist(name string) (error, bool) {
     return err, true
 }
 
-func SetupUsers() error {
+func setupSchema(filename string) error {
     err, exists := doesTableExist("users")
 
     if err != nil {
@@ -40,9 +40,10 @@ func SetupUsers() error {
     }
 
     if exists == false {
-        f, err := migrations.ReadFile("src/migrations/00001_inital.sql")
+        f, err := migrations.ReadFile("src/migrations/")
         buf := new(strings.Builder)
         buf.Write(f)
+        buf.Write(filename)
 
         stmt, err := db.Prepare(buf.String())
 

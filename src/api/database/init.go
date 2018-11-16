@@ -17,5 +17,6 @@ func Connect(user, password, dbname string) {
 		log.Fatal(err)
 	}
 
-	log.Debug(SetupUsers())
+	log.Debug(setupSchema("00001_inital.sql"))
+	log.Debug(setupSchema("00002_meta.sql"))
 }
