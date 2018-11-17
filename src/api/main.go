@@ -23,6 +23,10 @@ func main() {
 		settings.Database.Password,
 		settings.Database.Dsn)
 
+	log.Info("Initalizing Database")
+
+	database.Init()
+
 	log.Info("Setting Up Routes")
 
 	routers.Serve(settings.Port, settings.SslPort)

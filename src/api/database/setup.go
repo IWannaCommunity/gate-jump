@@ -33,30 +33,22 @@ func doesTableExist(name string) (error, bool) {
 }
 
 func setupSchema(filename string) error {
-    err, exists := doesTableExist("users")
+    f, err := migrations.ReadFile("src/migrations/"+filename)
+    buf := new(strings.Builder)
+    buf.Write(f)
+
+    stmt, err := db.Prepare(buf.String())
 
     if err != nil {
         return err
     }
 
-    if exists == false {
-        f, err := migrations.ReadFile("src/migrations/")
-        buf := new(strings.Builder)
-        buf.Write(f)
-        buf.Write(filename)
+    _, err = stmt.Exec()
 
-        stmt, err := db.Prepare(buf.String())
-
-        if err != nil {
-            return err
-        }
-
-        _, err = stmt.Exec()
-
-        //TODO: Probably should return the result, and the error if it's not nil
+    if err != nil {
         return err
     }
 
-    //TODO: Probably should return an error about how there was nothing to do, instead of nil
+    //TODO: Probably should return the result, and the error if it's not nil
     return nil
 }
