@@ -73,13 +73,14 @@ func createFormValue(key string, value string) []string {
 
 func request(method string, apiUrl string, jsonPayload interface{}, token interface{}, formPayload [][]string) (int, *Payload, error) {
 	var reader io.Reader
+	form := url.Values{}
+	butItWasMeAForm := false
 
 	// init reader
 	if jsonPayload != nil {
 		reader = bytes.NewBuffer([]byte(jsonPayload.(string)))
 	} else if formPayload != nil {
-
-		form := url.Values{}
+		butItWasMeAForm = true
 		for _, pair := range formPayload {
 			form.Add(pair[0], pair[1])
 		}
@@ -87,6 +88,9 @@ func request(method string, apiUrl string, jsonPayload interface{}, token interf
 	}
 
 	req, _ := http.NewRequest(method, apiUrl, reader)
+	if butItWasMeAForm {
+		req.Form = form
+	}
 
 	if token != nil {
 		req.Header.Set("Authorization", token.(string))
