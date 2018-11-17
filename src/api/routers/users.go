@@ -62,7 +62,7 @@ func getUserByName(w http.ResponseWriter, r *http.Request) {
 
 	u := database.User{Name: &name}
 
-	if serr := u.GetUser(authentication.PUBLIC); serr.Err != nil {
+	if serr := u.GetUserByName(authentication.PUBLIC); serr.Err != nil {
 		switch serr.Err {
 		case sql.ErrNoRows:
 			res.New(http.StatusNotFound).SetErrorMessage("User Not Found").Error(w)
