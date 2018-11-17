@@ -5,11 +5,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -56,14 +59,35 @@ func ensureTableExists() {
 	db.Exec(tableCreationQuery)
 }
 
-func request(method string, url string, body interface{}, token interface{}) (int, *Payload, error) {
-	var bodyByte []byte
+func createFormValueSet(pairs ...[]string) [][]string {
+	var formValueSet [][]string
+	for _, pair := range pairs {
+		formValueSet = append(formValueSet, pair)
+	}
+	return formValueSet
+}
 
-	if body != nil {
-		bodyByte = []byte(body.(string))
+func createFormValue(key string, value string) []string {
+	return []string{key, value}
+}
+
+func request(method string, apiUrl string, jsonPayload interface{}, token interface{}, formPayload [][]string) (int, *Payload, error) {
+	var reader io.Reader
+
+	// init reader
+	if jsonPayload != nil {
+		reader = bytes.NewBuffer([]byte(jsonPayload.(string)))
+	} else if formPayload != nil {
+
+		form := url.Values{}
+		for _, pair := range formPayload {
+			form.Add(pair[0], pair[1])
+		}
+		reader = strings.NewReader(form.Encode())
 	}
 
-	req, _ := http.NewRequest(method, url, bytes.NewBuffer(bodyByte))
+	req, _ := http.NewRequest(method, apiUrl, reader)
+
 	if token != nil {
 		req.Header.Set("Authorization", token.(string))
 	}
@@ -99,7 +123,7 @@ func create(count int) {
 
 	for i := 1; i < count+1; i++ {
 		newUser := fmt.Sprintf(`{"name":"user%d","password":"password%d","email":"email%d@website.com"}`, i, i, i)
-		_, _, _ = request("POST", "/register", newUser, nil)
+		_, _, _ = request("POST", "/register", newUser, nil, nil)
 	}
 }
 
@@ -112,7 +136,7 @@ func update(id int, country string, locale string, admin bool, banned bool, dele
 }
 
 func login(username string, password string) string {
-	_, r, _ := request("POST", "/login", fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password), nil)
+	_, r, _ := request("POST", "/login", fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password), nil, nil)
 	if r.Token == nil {
 		return ""
 	}
@@ -147,7 +171,7 @@ func TestAlive(t *testing.T) {
 	method := "GET"
 	route := "/"
 
-	code, r, err = request(method, route, nil, nil)
+	code, r, err = request(method, route, nil, nil, nil)
 	if assert.NoError(t, err) {
 
 		assert.Equal(t, http.StatusOK, code, "expected statusok")
@@ -187,7 +211,7 @@ func TestCreateUser(t *testing.T) {
 
 	// test bad request
 	for i, badRequest := range badRequests {
-		code, r, err = request(method, route, badRequest, nil)
+		code, r, err = request(method, route, badRequest, nil, nil)
 		if assert.NoError(t, err) {
 
 			assert.Equalf(t, http.StatusBadRequest, code, "excpected badrequest code; badRequest: %d", i)
@@ -214,7 +238,7 @@ func TestCreateUser(t *testing.T) {
 	}
 
 	// test creating a user
-	code, r, err = request(method, route, mainUser, nil)
+	code, r, err = request(method, route, mainUser, nil, nil)
 	if assert.NoError(t, err) {
 
 		assert.Equal(t, http.StatusCreated, code, "expected statusok")
@@ -227,7 +251,7 @@ func TestCreateUser(t *testing.T) {
 	}
 
 	// test duplicate username
-	code, r, err = request(method, route, duplicateName, nil)
+	code, r, err = request(method, route, duplicateName, nil, nil)
 	if assert.NoError(t, err) {
 
 		assert.Equal(t, http.StatusConflict, code, "expected statusconflict")
@@ -242,7 +266,7 @@ func TestCreateUser(t *testing.T) {
 	}
 
 	// test duplicate email
-	code, r, err = request(method, route, duplicateEmail, nil)
+	code, r, err = request(method, route, duplicateEmail, nil, nil)
 	if assert.NoError(t, err) {
 
 		assert.Equal(t, http.StatusConflict, code, "expected statusconflict")
@@ -283,7 +307,7 @@ func TestLoginUser(t *testing.T) {
 	banned := `{"username":"user3","password":"password3"}`  // banned account
 
 	for i, badRequest := range badRequests {
-		code, r, err = request(method, route, badRequest, nil)
+		code, r, err = request(method, route, badRequest, nil, nil)
 		if assert.NoError(t, err) {
 
 			switch i {
@@ -326,7 +350,7 @@ func TestLoginUser(t *testing.T) {
 	}
 
 	// correct username correct password; not banned; not deleted
-	code, r, err = request(method, route, correct, nil)
+	code, r, err = request(method, route, correct, nil, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, code, "expected OK")
 		if assert.True(t, r.Success) {
@@ -339,7 +363,7 @@ func TestLoginUser(t *testing.T) {
 	}
 
 	// correct username correct password; not banned; deleted
-	code, r, err = request(method, route, deleted, nil)
+	code, r, err = request(method, route, deleted, nil, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, code, "expected OK")
 		if assert.True(t, r.Success) {
@@ -352,7 +376,7 @@ func TestLoginUser(t *testing.T) {
 	}
 
 	// correct username correct password; banned; not deleted
-	code, r, err = request(method, route, banned, nil)
+	code, r, err = request(method, route, banned, nil, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusUnauthorized, code, "expected unauthorized")
 		if assert.False(t, r.Success) {
@@ -385,7 +409,7 @@ func TestRefresh(t *testing.T) {
 	goodToken := login("user1", "password1")
 
 	for i, token := range badRequests {
-		code, r, err = request(method, route, nil, token)
+		code, r, err = request(method, route, nil, token, nil)
 		if assert.NoErrorf(t, err, "badRequest %d", i) {
 			assert.Equalf(t, http.StatusUnauthorized, code, "expected unauthorized", "badRequest %d", i)
 			assert.Falsef(t, r.Success, "badRequest %d", i)
@@ -399,7 +423,7 @@ func TestRefresh(t *testing.T) {
 		}
 	}
 
-	code, r, err = request(method, route, nil, goodToken)
+	code, r, err = request(method, route, nil, goodToken, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, code, "expected OK")
 		assert.True(t, r.Success)
@@ -440,7 +464,7 @@ func TestGetUser(t *testing.T) {
 	adminToken := login("user10", "password10")
 
 	// search for nonexisting user
-	code, r, err = request(method, route+"99", nil, nil)
+	code, r, err = request(method, route+"99", nil, nil, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusNotFound, code)
 		assert.False(t, r.Success)
@@ -454,7 +478,7 @@ func TestGetUser(t *testing.T) {
 	}
 
 	// search self (user)
-	code, r, err = request(method, route+"9", nil, userToken)
+	code, r, err = request(method, route+"9", nil, userToken, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, code)
 		assert.True(t, r.Success)
@@ -482,7 +506,7 @@ func TestGetUser(t *testing.T) {
 	}
 
 	// search self (admin)
-	code, r, err = request(method, route+"9", nil, adminToken)
+	code, r, err = request(method, route+"9", nil, adminToken, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, code)
 		assert.True(t, r.Success)
@@ -510,7 +534,7 @@ func TestGetUser(t *testing.T) {
 	}
 	// search as non-token user
 	for id := 1; id <= 8; id++ {
-		code, r, err = request(method, route+strconv.Itoa(id), nil, nil)
+		code, r, err = request(method, route+strconv.Itoa(id), nil, nil, nil)
 		if assert.NoError(t, err, "request %d", id) {
 			switch id {
 			case 1: // regular user
@@ -562,7 +586,7 @@ func TestGetUser(t *testing.T) {
 
 	// search as public user
 	for id := 1; id <= 8; id++ {
-		code, r, err = request(method, route+strconv.Itoa(id), nil, userToken)
+		code, r, err = request(method, route+strconv.Itoa(id), nil, userToken, nil)
 		if assert.NoError(t, err, "request %d", id) {
 			switch id {
 			case 1: // regular user
@@ -606,7 +630,7 @@ func TestGetUser(t *testing.T) {
 		}
 
 		for id := 1; id <= 8; id++ {
-			code, r, err = request(method, route+strconv.Itoa(id), nil, adminToken)
+			code, r, err = request(method, route+strconv.Itoa(id), nil, adminToken, nil)
 			if assert.NoError(t, err, "request %d", id) {
 				assert.Equalf(t, http.StatusOK, code, "request %d", id)
 				assert.True(t, r.Success, "request %d", id)
