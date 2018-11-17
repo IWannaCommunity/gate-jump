@@ -80,8 +80,10 @@ func getUsers(w http.ResponseWriter, r *http.Request) {
 	count, _ := strconv.Atoi(r.FormValue("count"))
 	start, _ := strconv.Atoi(r.FormValue("start"))
 
-	if count > 10 || count < 1 {
+	if count > 50 {
 		count = 50
+	} else if count < 0 {
+		count = 0
 	}
 	if start < 0 {
 		start = 0
