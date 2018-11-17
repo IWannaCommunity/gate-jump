@@ -61,9 +61,9 @@ type User struct {
 }
 
 type UserList struct {
-	StartIndex int    `json:"startIndex"` // starting index
-	TotalItems int    `json:"totalItems"` // how many items are returned
-	Users      []User `json:"users"`      // user array
+	StartIndex int    `json:"startIndex"`      // starting index
+	TotalItems int    `json:"totalItems"`      // how many items are returned
+	Users      []User `json:"users,omitempty"` // user array
 }
 
 // SQL FUNCTIONS =================================================================================
