@@ -678,7 +678,112 @@ func TestGetUser(t *testing.T) {
 }
 
 func TestGetUsers(t *testing.T) {
-	t.Error("Not Implemented")
+	clearTable()
+
+	var code int
+	var r *Payload
+	var err error
+	method := "GET"
+	route := "/user" // add id to the end of this
+
+	var offsetList []string
+	var limitList []string
+	//var payloads []string
+	var formValues [][][]string
+	var start int
+	var count int
+
+	maxCreated := 75 // max amount of users created during testing
+	defaultFormValue := [][]string{createFormValue("start", "0"), createFormValue("count", "10")}
+
+	offsetList = append(offsetList, "-1", "0", "100") // -1: error; 0: good; 100: error?;
+	limitList = append(limitList, "-1", "0", "100")   // -1: ret1; 0: ret1; 100: ret50;
+	for _, offset := range offsetList {
+		for _, limit := range limitList {
+			formValues = append(formValues,
+				[][]string{createFormValue("start", offset), createFormValue("count", limit)},
+			)
+		}
+	}
+
+	// test empty table
+	code, r, err = request(method, route, nil, nil, defaultFormValue)
+	if assert.NoError(t, err) {
+		assert.Equal(t, http.StatusOK, code)
+		assert.True(t, r.Success)
+		if assert.NotNil(t, r.UserList) {
+			assert.Equal(t, 0, r.UserList.StartIndex)
+			assert.Equal(t, 0, r.UserList.TotalItems)
+			assert.Nil(t, r.UserList.Users)
+		}
+
+		assert.Nil(t, r.Token)
+		assert.Nil(t, r.User)
+		assert.Nil(t, r.Error)
+	}
+
+	// test bad request
+	code, r, err = request(method, route, nil, nil, nil)
+	if assert.NoError(t, err) {
+		assert.Equal(t, http.StatusOK, code)
+		assert.True(t, r.Success)
+		if assert.NotNil(t, r.UserList) {
+			assert.Equal(t, 0, r.UserList.StartIndex)
+			assert.Equal(t, 0, r.UserList.TotalItems)
+			assert.Nil(t, r.UserList.Users)
+		}
+
+		assert.Nil(t, r.Token)
+		assert.Nil(t, r.User)
+		assert.Nil(t, r.Error)
+	}
+
+	create(maxCreated)
+
+	// test all offsets
+	for i, form := range formValues {
+		startGiven, _ := strconv.Atoi(formValues[i][0][1]) // look at first form value in set i
+		countGiven, _ := strconv.Atoi(formValues[i][1][1]) // look at second form value in set i
+
+		// determine what getUsers should be using
+		if startGiven < 0 {
+			start = 0
+		} else {
+			start = startGiven
+		}
+		if countGiven < 0 {
+			count = 0
+		} else if countGiven > 50 {
+			count = 50
+		} else {
+			count = countGiven
+		}
+
+		// find out how many users should actually get returned
+		if count > maxCreated-start {
+			count = maxCreated - start
+			if count < 0 {
+				count = 0
+			}
+		}
+
+		code, r, err = request(method, route, nil, nil, form)
+		assert.Equalf(t, http.StatusOK, code, "{start: %d; count: %d}", startGiven, countGiven)
+		assert.Truef(t, r.Success, "{start: %d; count: %d}", startGiven, countGiven)
+		if assert.NotNilf(t, r.UserList, "{start: %d; count: %d}", startGiven, countGiven) {
+			assert.Equalf(t, start, r.UserList.StartIndex, "{start: %d; count: %d}", startGiven, countGiven)
+			assert.Equalf(t, count, r.UserList.TotalItems, "{start: %d; count: %d}", startGiven, countGiven)
+			if count > 0 {
+				assert.NotNilf(t, r.UserList.Users, "{start: %d; count: %d}", startGiven, countGiven)
+			} else {
+				assert.Nilf(t, r.UserList.Users, "{start: %d; count: %d}", startGiven, countGiven)
+			}
+
+			assert.Nilf(t, r.Token, "{start: %d; count: %d}", startGiven, countGiven)
+			assert.Nilf(t, r.User, "{start: %d; count: %d}", startGiven, countGiven)
+			assert.Nilf(t, r.Error, "{start: %d; count: %d}", startGiven, countGiven)
+		}
+	}
 }
 
 func TestGetUserByName(t *testing.T) {
