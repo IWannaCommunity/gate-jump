@@ -86,7 +86,11 @@ func (u *User) GetUser(auth authentication.Level) res.ServerError {
 
 func (u *User) GetUserByName(auth authentication.Level) res.ServerError {
 	var serr res.ServerError
-	serr.Query = "SELECT * FROM users WHERE name=?"
+	if auth > authentication.USER { // deleted search check
+		serr.Query = "SELECT * FROM users WHERE id=?"
+	} else {
+		serr.Query = "SELECT * FROM users WHERE id=? AND deleted=FALSE"
+	}
 	serr.Args = append(serr.Args, u.Name)
 	serr.Err = u.ScanAll(db.QueryRow(serr.Query, serr.Args...))
 	if serr.Err != nil {
