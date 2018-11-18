@@ -20,10 +20,8 @@ func Connect(user, password, dbname string) {
 	}
 }
 
-
 func Init() error {
 	err, exists := doesTableExist("meta")
-
 	if err != nil {
 		return err
 	}
@@ -31,15 +29,22 @@ func Init() error {
 	// If the meta database does not exist, setup the first two schemas
 	if exists == false {
 		err := setupSchema("00001_inital.sql")
-		log.Error(err)
+		if err != nil {
+			return err
+		}
 
 		err = setupSchema("00002_meta.sql")
-		log.Error(err)
+		if err != nil {
+			return err
+		}
 
 		result, err := db.Exec(`INSERT INTO meta ( db_version ) VALUES ( ? );`, version)
+		if err != nil {
+			return err
+		}
+
 		log.Info(result.LastInsertId())
 		log.Info(result.RowsAffected())
-		log.Error(err)
 
 		return nil
 	}
