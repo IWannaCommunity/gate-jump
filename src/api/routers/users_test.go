@@ -462,8 +462,8 @@ func TestGetUser(t *testing.T) {
 	update(7, "us", "en", true, true, false)   // admin and banned
 	update(8, "us", "en", true, true, true)    // admin and banned and deleted
 
-	update(9, "us", "en", true, false, false) // user perms for login
-	update(10, "us", "en", true, true, true)  // admin user for login
+	update(9, "us", "en", false, false, false) // user perms for login
+	update(10, "us", "en", true, false, false) // admin user for login
 	userToken := login("user9", "password9")
 	adminToken := login("user10", "password10")
 
