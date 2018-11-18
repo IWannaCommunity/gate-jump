@@ -25,7 +25,10 @@ func main() {
 
 	log.Info("Initalizing Database")
 
-	database.Init()
+	err := database.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	log.Info("Setting Up Routes")
 
