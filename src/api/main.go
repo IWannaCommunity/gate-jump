@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+	var err error
 
 	log.Init()
 	defer log.Close()
@@ -15,7 +16,10 @@ func main() {
 	log.Info("Setting up environment...")
 	log.Info("Loading Configuration")
 
-	settings.FromFile("config/config.json")
+	err = settings.FromFile("config/config.json")
+	if err != nil {
+		log.Fatal("Failed loading configuration: ", err)
+	}
 
 	log.Info("Connecting to Database")
 
@@ -25,9 +29,9 @@ func main() {
 
 	log.Info("Initalizing Database")
 
-	err := database.Init()
+	err = database.Init()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed Initalizing Database: ", err)
 	}
 
 	log.Info("Setting Up Routes")
