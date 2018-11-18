@@ -5,30 +5,30 @@ import (
 )
 
 func Verbose(argv ...interface{}) {
-	log.Println("[VERBOSE]", argv)
+	log.Println("[VERBOSE]\t", argv)
 }
 
 func Debug(argv ...interface{}) {
-	log.Println("[DEBUG]", argv)
+	log.Println("[DEBUG]\t", argv)
 }
 
 func Info(argv ...interface{}) {
-	log.Println("[INFO]", argv)
+	log.Println("[INFO]\t", argv)
 }
 
 func Warning(argv ...interface{}) {
-	log.Println("[WARNING]", argv)
+	log.Println("[WARNING]\t", argv)
 }
 
 func Error(argv ...interface{}) {
-	log.Println("[ERROR]", argv)
+	log.Println("[ERROR]\t", argv)
 }
 
 func Fatal(argv ...interface{}) {
-	log.Println("[FATAL]", argv)
+	log.Println("[FATAL]\t", argv)
 	panic(argv)
 }
 
 func Wtf(argv ...interface{}) {
-	log.Println("[WTF]", argv)
+	log.Println("[WTF]\t", argv)
 }
