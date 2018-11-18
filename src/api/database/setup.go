@@ -30,7 +30,7 @@ func doesTableExist(name string) (error, bool) {
 	}
 
 	//TODO: this should be it's own error through errors.New but I'm lazy
-	return err, true
+	return nil, true
 }
 
 func setupSchema(filename string) error {
