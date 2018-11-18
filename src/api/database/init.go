@@ -8,7 +8,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-const version uint = 2
+const version uint8 = 2
 
 var db *sql.DB
 
@@ -51,11 +51,12 @@ func Init() error {
 
 	// Run other migrations if required
 	rows := db.QueryRow(`SELECT * FROM meta LIMIT 1`)
-	current := make(map[string]uint)
+	current := *new(uint8)
 	rows.Scan(&current) // TODO: error check this
-	log.Debug("Reported db version", current["db_version"])
 
-	if current["db_version"] != version {
+	log.Debug("Reported db version", current)
+
+	if current != version {
 		//TODO: do something in the future when we have more than two migration schemas
 	}
 
