@@ -27,11 +27,11 @@ func main() {
 		settings.Database.Password,
 		settings.Database.Dsn)
 
-	log.Info("Initalizing Database")
+	log.Info("Initializing Database")
 
 	err = database.Init()
 	if err != nil {
-		log.Fatal("Failed Initalizing Database: ", err)
+		log.Fatal("Failed Initializing Database: ", err)
 	}
 
 	log.Info("Setting Up Routes")
