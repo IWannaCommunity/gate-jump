@@ -5,8 +5,8 @@ import (
 )
 
 //Bench reports the time it took for a function to return
-func Bench(route string, start time.Time) {
+func Bench(start time.Time, route, ipaddr string, code int) {
 	elapsed := time.Since(start)
 
-	Info("%s took %s", route, elapsed)
+	Info("%s took %s and returned %s from %s", route, elapsed, code, ipaddr)
 }

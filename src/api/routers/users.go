@@ -9,6 +9,7 @@ import (
 
 	"github.com/IWannaCommunity/gate-jump/src/api/authentication"
 	"github.com/IWannaCommunity/gate-jump/src/api/database"
+	"github.com/IWannaCommunity/gate-jump/src/api/log"
 	"github.com/IWannaCommunity/gate-jump/src/api/res"
 	"github.com/IWannaCommunity/gate-jump/src/api/util"
 	"github.com/gorilla/mux"
@@ -23,6 +24,7 @@ type LoginRequest struct {
 
 // is the server alive
 func getAlive(w http.ResponseWriter, r *http.Request) {
+	defer log.Bench(time.Now(), "api/v0", r.RemoteAddr, http.StatusOK)
 	res.New(http.StatusOK).JSON(w)
 }
 
