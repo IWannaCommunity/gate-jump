@@ -442,7 +442,7 @@ func TestRefresh(t *testing.T) {
 func TestGetUser(t *testing.T) {
 
 	clearTable()
-	create(11)
+	create(10)
 	var code int
 	var r *Payload
 	var err error
