@@ -141,6 +141,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
 	}
+
 	// check if user with email already exists; if not, we will get an ErrNoRows which is what we want
 	if serr := checkuser.GetUserByEmail(authentication.SERVER); serr.Err == nil {
 		res.New(http.StatusConflict).SetErrorMessage("Email Already In Use").Error(w)
@@ -259,14 +260,12 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 	u.Name = &lr.Username
 
 	//get the user; if no user by that name, return 401, if other error, 500
-	if serr := u.GetUserByName(authentication.SERVER); serr.Err != nil {
-		if serr.Err == sql.ErrNoRows {
-			res.New(http.StatusUnauthorized).SetErrorMessage("User Doesn't Exist").Error(w)
-			return
-		} else if serr.Err != nil {
-			res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
-			return
-		}
+	if serr := u.GetUserByName(authentication.SERVER); serr.Err == sql.ErrNoRows {
+		res.New(http.StatusUnauthorized).SetErrorMessage("User Doesn't Exist").Error(w)
+		return
+	} else if serr.Err != nil {
+		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
+		return
 	}
 
 	//check the password
