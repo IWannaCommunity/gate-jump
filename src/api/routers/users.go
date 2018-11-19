@@ -268,15 +268,15 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//check the password
-	if err := bcrypt.CompareHashAndPassword([]byte(*u.Password), []byte(lr.Password)); err != nil {
-		res.New(http.StatusUnauthorized).SetErrorMessage("Wrong Password").Error(w)
-		return
-	}
-
 	// check if they are banned
 	if u.Banned != nil && *u.Banned {
 		res.New(http.StatusUnauthorized).SetErrorMessage("Account Banned").Error(w)
+		return
+	}
+
+	//check the password
+	if err := bcrypt.CompareHashAndPassword([]byte(*u.Password), []byte(lr.Password)); err != nil {
+		res.New(http.StatusUnauthorized).SetErrorMessage("Wrong Password").Error(w)
 		return
 	}
 
