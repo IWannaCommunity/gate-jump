@@ -787,7 +787,114 @@ func TestGetUsers(t *testing.T) {
 }
 
 func TestGetUserByName(t *testing.T) {
-	t.Error("Not Implemented")
+	clearTable()
+	create(10)
+	var code int
+	var r *Payload
+	var err error
+	method := "GET"
+	route := "/user/" // add id to the end of this
+
+	for i := 1; i <= 8; i++ { // give every user a last-login for tokens and last login date stuff
+		_ = login("user"+strconv.Itoa(i), "password"+strconv.Itoa(i))
+	}
+
+	update(1, "us", "en", false, false, false) // just a user
+	update(2, "us", "en", false, false, true)  // deleted
+	update(3, "us", "en", false, true, false)  // banned
+	update(4, "us", "en", false, true, true)   // banned and deleted
+	update(5, "us", "en", true, false, false)  // admin
+	update(6, "us", "en", true, false, true)   // admin and deleted
+	update(7, "us", "en", true, true, false)   // admin and banned
+	update(8, "us", "en", true, true, true)    // admin and banned and deleted
+
+	update(9, "us", "en", true, false, false) // user perms for login
+	update(10, "us", "en", true, true, true)  // admin user for login
+	userToken := login("user9", "password9")
+	adminToken := login("user10", "password10")
+
+	// search for nonexisting user
+	code, r, err = request(method, route+"ParagusRants", nil, nil, nil)
+	if assert.NoError(t, err) {
+		assert.Equal(t, http.StatusNotFound, code)
+		assert.False(t, r.Success)
+		if assert.NotNil(t, r.Error) {
+			assert.Equal(t, "User Not Found", r.Error.Message)
+		}
+
+		assert.Nil(t, r.Token)
+		assert.Nil(t, r.User)
+		assert.Nil(t, r.UserList)
+	}
+
+	// search as non-token user and admin (should all be public)
+	for i := 0; i < 3; i++ {
+		var token interface{}
+		var requestingUser string
+		switch i {
+		case 0:
+			token = nil
+			requestingUser = "non-user"
+		case 1:
+			token = userToken
+			requestingUser = "user"
+		case 2:
+			token = adminToken
+			requestingUser = "admin"
+		}
+		for id := 1; id <= 10; id++ {
+			name := "user" + strconv.Itoa(id)
+			code, r, err = request(method, route+name, nil, token, nil)
+			if assert.NoError(t, err, "request %s; requester %s", name, requestingUser) {
+				switch id {
+				case 1: // regular user
+					fallthrough
+				case 3: // banned
+					fallthrough
+				case 5: // admin
+					fallthrough
+				case 7: // admin and banned
+					assert.Equalf(t, http.StatusOK, code, "request %s; requester %s", name, requestingUser)
+					assert.True(t, r.Success, "request %s; requester %s", name, requestingUser)
+					if assert.NotNilf(t, r.User, "request %s; requester %s", name, requestingUser) {
+						assert.NotNilf(t, r.User.ID, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.User.Name, "request %s; requester %s", name, requestingUser)
+						assert.Nilf(t, r.User.Password, "request %s; requester %s", name, requestingUser)
+						assert.Nilf(t, r.User.Email, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.User.Country, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.User.Locale, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.User.DateCreated, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.User.Verified, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.User.Banned, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.User.Admin, "request %s; requester %s", name, requestingUser)
+						assert.Nilf(t, r.User.LastToken, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.User.LastLogin, "request %s; requester %s", name, requestingUser)
+						assert.Nilf(t, r.User.LastIP, "request %s; requester %s", name, requestingUser)
+						assert.Nilf(t, r.User.Deleted, "request %s; requester %s", name, requestingUser)
+						assert.Nilf(t, r.User.DateDeleted, "request %s; requester %s", name, requestingUser)
+					}
+					assert.Nilf(t, r.Error, "request %s; requester %s", name, requestingUser)
+				case 2: // deleted
+					fallthrough
+				case 4: // banned and deleted
+					fallthrough
+				case 6: // admin and deleted
+					fallthrough
+				case 8: // admin and banned and deleted
+					assert.Equalf(t, http.StatusNotFound, code, "request %s; requester %s", name, requestingUser)
+					assert.Falsef(t, r.Success, "request %s; requester %s", name, requestingUser)
+					if assert.NotNilf(t, r.Error, "request %s; requester %s", name, requestingUser) {
+						assert.Equal(t, "User Not Found", r.Error.Message, "request %s; requester %s", name, requestingUser)
+					}
+					assert.Nilf(t, r.User, "request %s; requester %s", name, requestingUser)
+				}
+				assert.Nilf(t, r.Token, "request %s; requester %s", name, requestingUser)
+				assert.Nilf(t, r.UserList, "request %s; requester %s", name, requestingUser)
+			}
+
+		}
+	}
+
 }
 
 func TestUpdateUser(t *testing.T) {
