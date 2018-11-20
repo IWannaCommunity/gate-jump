@@ -42,6 +42,12 @@ const tableCreationQuery = `CREATE TABLE users (
     PRIMARY KEY (id)
 )`
 
+type TestPayload struct {
+	Code     int
+	Error    error
+	Response Payload
+}
+
 type Payload struct {
 	Success  bool               `json:"success"`
 	Error    *res.ResponseError `json:"error,omitempty"`
@@ -71,7 +77,7 @@ func createFormValue(key string, value string) []string {
 	return []string{key, value}
 }
 
-func request(method string, apiUrl string, jsonPayload interface{}, token interface{}, formPayload [][]string) (int, *Payload, error) {
+func request(method string, apiUrl string, jsonPayload interface{}, token interface{}, formPayload [][]string) TestPayload {
 	var reader io.Reader
 	form := url.Values{}
 	butItWasMeAForm := false
@@ -98,9 +104,9 @@ func request(method string, apiUrl string, jsonPayload interface{}, token interf
 	response := executeRequest(req)
 	p, err := unmarshal(response.Body)
 	if err != nil {
-		return 0, nil, err
+		return TestPayload{Error: err}
 	}
-	return response.Code, p, nil
+	return TestPayload{Code: response.Code, Response: *p, Error: nil}
 }
 
 func executeRequest(req *http.Request) *httptest.ResponseRecorder {
@@ -127,7 +133,7 @@ func create(count int) {
 
 	for i := 1; i < count+1; i++ {
 		newUser := fmt.Sprintf(`{"name":"user%d","password":"password%d","email":"email%d@website.com"}`, i, i, i)
-		_, _, _ = request("POST", "/register", newUser, nil, nil)
+		_ = request("POST", "/register", newUser, nil, nil)
 	}
 }
 
@@ -140,11 +146,11 @@ func update(id int, country string, locale string, admin bool, banned bool, dele
 }
 
 func login(username string, password string) string {
-	_, r, _ := request("POST", "/login", fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password), nil, nil)
-	if r.Token == nil {
+	r := request("POST", "/login", fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password), nil, nil)
+	if r.Response.Error != nil {
 		return ""
 	}
-	return *r.Token
+	return *r.Response.Token
 }
 
 func TestMain(m *testing.M) {
@@ -170,21 +176,21 @@ func TestMain(m *testing.M) {
 func TestAlive(t *testing.T) {
 	clearTable()
 	var code int
-	var r *Payload
+	var r TestPayload
 	var err error
 	method := "GET"
 	route := "/"
 
-	code, r, err = request(method, route, nil, nil, nil)
+	r = request(method, route, nil, nil, nil)
 	if assert.NoError(t, err) {
 
 		assert.Equal(t, http.StatusOK, code, "expected statusok")
-		assert.True(t, r.Success)
+		assert.True(t, r.Response.Success)
 
-		assert.Nil(t, r.Error)
-		assert.Nil(t, r.Token)
-		assert.Nil(t, r.User)
-		assert.Nil(t, r.UserList)
+		assert.Nil(t, r.Response.Error)
+		assert.Nil(t, r.Response.Token)
+		assert.Nil(t, r.Response.User)
+		assert.Nil(t, r.Response.UserList)
 
 	}
 }
@@ -192,7 +198,7 @@ func TestAlive(t *testing.T) {
 func TestCreateUser(t *testing.T) {
 	clearTable()
 	var code int
-	var r *Payload
+	var r TestPayload
 	var err error
 	method := "POST"
 	route := "/register"
@@ -215,73 +221,73 @@ func TestCreateUser(t *testing.T) {
 
 	// test bad request
 	for i, badRequest := range badRequests {
-		code, r, err = request(method, route, badRequest, nil, nil)
+		r = request(method, route, badRequest, nil, nil)
 		if assert.NoError(t, err) {
 
 			assert.Equalf(t, http.StatusBadRequest, code, "excpected badrequest code; badRequest: %d", i)
-			assert.Falsef(t, r.Success, "badRequest: %d", i)
-			if assert.NotNilf(t, r.Error, "badRequest: %d", i) {
+			assert.Falsef(t, r.Response.Success, "badRequest: %d", i)
+			if assert.NotNilf(t, r.Response.Error, "badRequest: %d", i) {
 				switch i {
 				case 5:
 					fallthrough
 				case 6: // invalid username
-					assert.Equalf(t, "Invalid Username Format", r.Error.Message, "badRequest: %d", i)
+					assert.Equalf(t, "Invalid Username Format", r.Response.Error.Message, "badRequest: %d", i)
 				case 7:
-					assert.Equalf(t, "Invalid Password Format", r.Error.Message, "badRequest: %d", i)
+					assert.Equalf(t, "Invalid Password Format", r.Response.Error.Message, "badRequest: %d", i)
 				case 8:
-					assert.Equalf(t, "Invalid Email Format", r.Error.Message, "badRequest: %d", i)
+					assert.Equalf(t, "Invalid Email Format", r.Response.Error.Message, "badRequest: %d", i)
 				default:
-					assert.Equalf(t, "Invalid Request Payload", r.Error.Message, "badRequest: %d", i)
+					assert.Equalf(t, "Invalid Request Payload", r.Response.Error.Message, "badRequest: %d", i)
 				}
 			}
 
-			assert.Nilf(t, r.Token, "badRequest: %d", i)
-			assert.Nilf(t, r.User, "badRequest: %d", i)
-			assert.Nilf(t, r.UserList, "badRequest: %d", i)
+			assert.Nilf(t, r.Response.Token, "badRequest: %d", i)
+			assert.Nilf(t, r.Response.User, "badRequest: %d", i)
+			assert.Nilf(t, r.Response.UserList, "badRequest: %d", i)
 		}
 	}
 
 	// test creating a user
-	code, r, err = request(method, route, mainUser, nil, nil)
+	r = request(method, route, mainUser, nil, nil)
 	if assert.NoError(t, err) {
 
 		assert.Equal(t, http.StatusCreated, code, "expected statusok")
-		assert.True(t, r.Success)
+		assert.True(t, r.Response.Success)
 
-		assert.Nil(t, r.Error)
-		assert.Nil(t, r.Token)
-		assert.Nil(t, r.User)
-		assert.Nil(t, r.UserList)
+		assert.Nil(t, r.Response.Error)
+		assert.Nil(t, r.Response.Token)
+		assert.Nil(t, r.Response.User)
+		assert.Nil(t, r.Response.UserList)
 	}
 
 	// test duplicate username
-	code, r, err = request(method, route, duplicateName, nil, nil)
+	r = request(method, route, duplicateName, nil, nil)
 	if assert.NoError(t, err) {
 
 		assert.Equal(t, http.StatusConflict, code, "expected statusconflict")
-		assert.False(t, r.Success)
-		if assert.NotNil(t, r.Error) {
-			assert.Equal(t, "Username Already Exists", r.Error.Message)
+		assert.False(t, r.Response.Success)
+		if assert.NotNil(t, r.Response.Error) {
+			assert.Equal(t, "Username Already Exists", r.Response.Error.Message)
 		}
 
-		assert.Nil(t, r.Token)
-		assert.Nil(t, r.User)
-		assert.Nil(t, r.UserList)
+		assert.Nil(t, r.Response.Token)
+		assert.Nil(t, r.Response.User)
+		assert.Nil(t, r.Response.UserList)
 	}
 
 	// test duplicate email
-	code, r, err = request(method, route, duplicateEmail, nil, nil)
+	r = request(method, route, duplicateEmail, nil, nil)
 	if assert.NoError(t, err) {
 
 		assert.Equal(t, http.StatusConflict, code, "expected statusconflict")
-		assert.False(t, r.Success)
-		if assert.NotNil(t, r.Error) {
-			assert.Equal(t, "Email Already In Use", r.Error.Message)
+		assert.False(t, r.Response.Success)
+		if assert.NotNil(t, r.Response.Error) {
+			assert.Equal(t, "Email Already In Use", r.Response.Error.Message)
 		}
 
-		assert.Nil(t, r.Token)
-		assert.Nil(t, r.User)
-		assert.Nil(t, r.UserList)
+		assert.Nil(t, r.Response.Token)
+		assert.Nil(t, r.Response.User)
+		assert.Nil(t, r.Response.UserList)
 	}
 }
 
@@ -291,7 +297,7 @@ func TestLoginUser(t *testing.T) {
 	update(2, "us", "en", false, false, true) // deleted
 	update(3, "us", "en", false, true, false) // banned
 	var code int
-	var r *Payload
+	var r TestPayload
 	var err error
 	method := "POST"
 	route := "/login"
@@ -311,7 +317,7 @@ func TestLoginUser(t *testing.T) {
 	banned := `{"username":"user3","password":"password3"}`  // banned account
 
 	for i, badRequest := range badRequests {
-		code, r, err = request(method, route, badRequest, nil, nil)
+		r = request(method, route, badRequest, nil, nil)
 		if assert.NoError(t, err) {
 
 			switch i {
@@ -324,74 +330,74 @@ func TestLoginUser(t *testing.T) {
 			default:
 				assert.Equalf(t, http.StatusUnauthorized, code, "expected unauthorized code; badRequest: %d", i)
 			}
-			assert.Falsef(t, r.Success, "badRequest: %d", i)
-			if assert.NotNilf(t, r.Error, "badRequest: %d", i) {
+			assert.Falsef(t, r.Response.Success, "badRequest: %d", i)
+			if assert.NotNilf(t, r.Response.Error, "badRequest: %d", i) {
 				switch i {
 				case 0:
 					fallthrough
 				case 1:
 					fallthrough
 				case 2:
-					assert.Equalf(t, "Invalid Request Payload", r.Error.Message, "badRequest: %d", i)
+					assert.Equalf(t, "Invalid Request Payload", r.Response.Error.Message, "badRequest: %d", i)
 				case 3: // extra info, we dont care
 					fallthrough
 				case 4: // wrong username wrong password
 					fallthrough
 				case 5: // wrong
-					assert.Equalf(t, "User Doesn't Exist", r.Error.Message, "badRequest: %d", i)
+					assert.Equalf(t, "User Doesn't Exist", r.Response.Error.Message, "badRequest: %d", i)
 				case 6:
-					assert.Equalf(t, "Wrong Password", r.Error.Message, "badRequest: %d", i)
+					assert.Equalf(t, "Wrong Password", r.Response.Error.Message, "badRequest: %d", i)
 				default:
 					assert.Truef(t, false, "badRequest: %d", i)
 					return // shouldn't occur
 				}
 			}
 
-			assert.Nilf(t, r.Token, "badRequest: %d", i)
-			assert.Nilf(t, r.User, "badRequest: %d", i)
-			assert.Nilf(t, r.UserList, "badRequest: %d", i)
+			assert.Nilf(t, r.Response.Token, "badRequest: %d", i)
+			assert.Nilf(t, r.Response.User, "badRequest: %d", i)
+			assert.Nilf(t, r.Response.UserList, "badRequest: %d", i)
 		}
 	}
 
 	// correct username correct password; not banned; not deleted
-	code, r, err = request(method, route, correct, nil, nil)
+	r = request(method, route, correct, nil, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, code, "expected OK")
-		if assert.True(t, r.Success) {
-			assert.NotNil(t, r.Token)
+		if assert.True(t, r.Response.Success) {
+			assert.NotNil(t, r.Response.Token)
 		}
 
-		assert.Nil(t, r.Error)
-		assert.Nil(t, r.User)
-		assert.Nil(t, r.UserList)
+		assert.Nil(t, r.Response.Error)
+		assert.Nil(t, r.Response.User)
+		assert.Nil(t, r.Response.UserList)
 	}
 
 	// correct username correct password; not banned; deleted
-	code, r, err = request(method, route, deleted, nil, nil)
+	r = request(method, route, deleted, nil, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, code, "expected OK")
-		if assert.True(t, r.Success) {
-			assert.NotNil(t, r.Token)
+		if assert.True(t, r.Response.Success) {
+			assert.NotNil(t, r.Response.Token)
 		}
 
-		assert.Nil(t, r.Error)
-		assert.Nil(t, r.User)
-		assert.Nil(t, r.UserList)
+		assert.Nil(t, r.Response.Error)
+		assert.Nil(t, r.Response.User)
+		assert.Nil(t, r.Response.UserList)
 	}
 
 	// correct username correct password; banned; not deleted
-	code, r, err = request(method, route, banned, nil, nil)
+	r = request(method, route, banned, nil, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusUnauthorized, code, "expected unauthorized")
-		if assert.False(t, r.Success) {
-			if assert.NotNil(t, r.Error) {
-				assert.Equal(t, "Account Banned", r.Error.Message)
+		if assert.False(t, r.Response.Success) {
+			if assert.NotNil(t, r.Response.Error) {
+				assert.Equal(t, "Account Banned", r.Response.Error.Message)
 			}
 		}
 
-		assert.Nil(t, r.Token)
-		assert.Nil(t, r.User)
-		assert.Nil(t, r.UserList)
+		assert.Nil(t, r.Response.Token)
+		assert.Nil(t, r.Response.User)
+		assert.Nil(t, r.Response.UserList)
 	}
 }
 
@@ -400,7 +406,7 @@ func TestRefresh(t *testing.T) {
 	clearTable()
 	create(1)
 	var code int
-	var r *Payload
+	var r TestPayload
 	var err error
 	method := "POST"
 	route := "/refresh"
@@ -413,29 +419,29 @@ func TestRefresh(t *testing.T) {
 	goodToken := login("user1", "password1")
 
 	for i, token := range badRequests {
-		code, r, err = request(method, route, nil, token, nil)
+		r = request(method, route, nil, token, nil)
 		if assert.NoErrorf(t, err, "badRequest %d", i) {
 			assert.Equalf(t, http.StatusUnauthorized, code, "expected unauthorized", "badRequest %d", i)
-			assert.Falsef(t, r.Success, "badRequest %d", i)
-			if assert.NotNilf(t, r.Error, "badRequest %d", i) {
-				assert.Equalf(t, "Invalid Token Provided", r.Error.Message, "badRequest %d", i)
+			assert.Falsef(t, r.Response.Success, "badRequest %d", i)
+			if assert.NotNilf(t, r.Response.Error, "badRequest %d", i) {
+				assert.Equalf(t, "Invalid Token Provided", r.Response.Error.Message, "badRequest %d", i)
 			}
 
-			assert.Nil(t, r.Token, "badRequest %d", i)
-			assert.Nil(t, r.User, "badRequest %d", i)
-			assert.Nil(t, r.UserList, "badRequest %d", i)
+			assert.Nil(t, r.Response.Token, "badRequest %d", i)
+			assert.Nil(t, r.Response.User, "badRequest %d", i)
+			assert.Nil(t, r.Response.UserList, "badRequest %d", i)
 		}
 	}
 
-	code, r, err = request(method, route, nil, goodToken, nil)
+	r = request(method, route, nil, goodToken, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, code, "expected OK")
-		assert.True(t, r.Success)
-		assert.NotNil(t, r.Token)
+		assert.True(t, r.Response.Success)
+		assert.NotNil(t, r.Response.Token)
 
-		assert.Nil(t, r.Error)
-		assert.Nil(t, r.User)
-		assert.Nil(t, r.UserList)
+		assert.Nil(t, r.Response.Error)
+		assert.Nil(t, r.Response.User)
+		assert.Nil(t, r.Response.UserList)
 	}
 }
 
@@ -444,7 +450,7 @@ func TestGetUser(t *testing.T) {
 	clearTable()
 	create(10)
 	var code int
-	var r *Payload
+	var r TestPayload
 	var err error
 	method := "GET"
 	route := "/user/" // add id to the end of this
@@ -468,77 +474,77 @@ func TestGetUser(t *testing.T) {
 	adminToken := login("user10", "password10")
 
 	// search for nonexisting user
-	code, r, err = request(method, route+"99", nil, nil, nil)
+	r = request(method, route+"99", nil, nil, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusNotFound, code)
-		assert.False(t, r.Success)
-		if assert.NotNil(t, r.Error) {
-			assert.Equal(t, "User Not Found", r.Error.Message)
+		assert.False(t, r.Response.Success)
+		if assert.NotNil(t, r.Response.Error) {
+			assert.Equal(t, "User Not Found", r.Response.Error.Message)
 		}
 
-		assert.Nil(t, r.Token)
-		assert.Nil(t, r.User)
-		assert.Nil(t, r.UserList)
+		assert.Nil(t, r.Response.Token)
+		assert.Nil(t, r.Response.User)
+		assert.Nil(t, r.Response.UserList)
 	}
 
 	// search self (user)
-	code, r, err = request(method, route+"9", nil, userToken, nil)
+	r = request(method, route+"9", nil, userToken, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, code)
-		assert.True(t, r.Success)
-		if assert.NotNil(t, r.User) {
-			assert.NotNil(t, r.User.ID)
-			assert.NotNil(t, r.User.Name)
-			assert.Nil(t, r.User.Password)
-			assert.NotNil(t, r.User.Email)
-			assert.NotNil(t, r.User.Country)
-			assert.NotNil(t, r.User.Locale)
-			assert.NotNil(t, r.User.DateCreated)
-			assert.NotNil(t, r.User.Verified)
-			assert.NotNil(t, r.User.Banned)
-			assert.NotNil(t, r.User.Admin)
-			assert.Nil(t, r.User.LastToken)
-			assert.NotNil(t, r.User.LastLogin)
-			assert.Nil(t, r.User.LastIP)
-			assert.Nil(t, r.User.Deleted)
-			assert.Nil(t, r.User.DateDeleted)
+		assert.True(t, r.Response.Success)
+		if assert.NotNil(t, r.Response.User) {
+			assert.NotNil(t, r.Response.User.ID)
+			assert.NotNil(t, r.Response.User.Name)
+			assert.Nil(t, r.Response.User.Password)
+			assert.NotNil(t, r.Response.User.Email)
+			assert.NotNil(t, r.Response.User.Country)
+			assert.NotNil(t, r.Response.User.Locale)
+			assert.NotNil(t, r.Response.User.DateCreated)
+			assert.NotNil(t, r.Response.User.Verified)
+			assert.NotNil(t, r.Response.User.Banned)
+			assert.NotNil(t, r.Response.User.Admin)
+			assert.Nil(t, r.Response.User.LastToken)
+			assert.NotNil(t, r.Response.User.LastLogin)
+			assert.Nil(t, r.Response.User.LastIP)
+			assert.Nil(t, r.Response.User.Deleted)
+			assert.Nil(t, r.Response.User.DateDeleted)
 		}
 
-		assert.Nil(t, r.Error)
-		assert.Nil(t, r.Token)
-		assert.Nil(t, r.UserList)
+		assert.Nil(t, r.Response.Error)
+		assert.Nil(t, r.Response.Token)
+		assert.Nil(t, r.Response.UserList)
 	}
 
 	// search self (admin)
-	code, r, err = request(method, route+"9", nil, adminToken, nil)
+	r = request(method, route+"9", nil, adminToken, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, code)
-		assert.True(t, r.Success)
-		if assert.NotNil(t, r.User) {
-			assert.NotNil(t, r.User.ID)
-			assert.NotNil(t, r.User.Name)
-			assert.Nil(t, r.User.Password)
-			assert.NotNil(t, r.User.Email)
-			assert.NotNil(t, r.User.Country)
-			assert.NotNil(t, r.User.Locale)
-			assert.NotNil(t, r.User.DateCreated)
-			assert.NotNil(t, r.User.Verified)
-			assert.NotNil(t, r.User.Banned)
-			assert.NotNil(t, r.User.Admin)
-			assert.Nil(t, r.User.LastToken)
-			assert.NotNil(t, r.User.LastLogin)
-			assert.NotNil(t, r.User.LastIP)
-			assert.NotNil(t, r.User.Deleted)
-			assert.Nil(t, r.User.DateDeleted) // because he wasn't deleted dur
+		assert.True(t, r.Response.Success)
+		if assert.NotNil(t, r.Response.User) {
+			assert.NotNil(t, r.Response.User.ID)
+			assert.NotNil(t, r.Response.User.Name)
+			assert.Nil(t, r.Response.User.Password)
+			assert.NotNil(t, r.Response.User.Email)
+			assert.NotNil(t, r.Response.User.Country)
+			assert.NotNil(t, r.Response.User.Locale)
+			assert.NotNil(t, r.Response.User.DateCreated)
+			assert.NotNil(t, r.Response.User.Verified)
+			assert.NotNil(t, r.Response.User.Banned)
+			assert.NotNil(t, r.Response.User.Admin)
+			assert.Nil(t, r.Response.User.LastToken)
+			assert.NotNil(t, r.Response.User.LastLogin)
+			assert.NotNil(t, r.Response.User.LastIP)
+			assert.NotNil(t, r.Response.User.Deleted)
+			assert.Nil(t, r.Response.User.DateDeleted) // because he wasn't deleted dur
 		}
 
-		assert.Nil(t, r.Error)
-		assert.Nil(t, r.Token)
-		assert.Nil(t, r.UserList)
+		assert.Nil(t, r.Response.Error)
+		assert.Nil(t, r.Response.Token)
+		assert.Nil(t, r.Response.UserList)
 	}
 	// search as non-token user
 	for id := 1; id <= 8; id++ {
-		code, r, err = request(method, route+strconv.Itoa(id), nil, nil, nil)
+		r = request(method, route+strconv.Itoa(id), nil, nil, nil)
 		if assert.NoError(t, err, "request %d", id) {
 			switch id {
 			case 1: // regular user
@@ -549,25 +555,25 @@ func TestGetUser(t *testing.T) {
 				fallthrough
 			case 7: // admin and banned
 				assert.Equalf(t, http.StatusOK, code, "request %d", id)
-				assert.True(t, r.Success, "request %d", id)
-				if assert.NotNilf(t, r.User, "request %d", id) {
-					assert.NotNilf(t, r.User.ID, "request %d", id)
-					assert.NotNilf(t, r.User.Name, "request %d", id)
-					assert.Nilf(t, r.User.Password, "request %d", id)
-					assert.Nilf(t, r.User.Email, "request %d", id)
-					assert.NotNilf(t, r.User.Country, "request %d", id)
-					assert.NotNilf(t, r.User.Locale, "request %d", id)
-					assert.NotNilf(t, r.User.DateCreated, "request %d", id)
-					assert.NotNilf(t, r.User.Verified, "request %d", id)
-					assert.NotNilf(t, r.User.Banned, "request %d", id)
-					assert.NotNilf(t, r.User.Admin, "request %d", id)
-					assert.Nilf(t, r.User.LastToken, "request %d", id)
-					assert.NotNilf(t, r.User.LastLogin, "request %d", id)
-					assert.Nilf(t, r.User.LastIP, "request %d", id)
-					assert.Nilf(t, r.User.Deleted, "request %d", id)
-					assert.Nilf(t, r.User.DateDeleted, "request %d", id)
+				assert.True(t, r.Response.Success, "request %d", id)
+				if assert.NotNilf(t, r.Response.User, "request %d", id) {
+					assert.NotNilf(t, r.Response.User.ID, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Name, "request %d", id)
+					assert.Nilf(t, r.Response.User.Password, "request %d", id)
+					assert.Nilf(t, r.Response.User.Email, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Country, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Locale, "request %d", id)
+					assert.NotNilf(t, r.Response.User.DateCreated, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Verified, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Banned, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Admin, "request %d", id)
+					assert.Nilf(t, r.Response.User.LastToken, "request %d", id)
+					assert.NotNilf(t, r.Response.User.LastLogin, "request %d", id)
+					assert.Nilf(t, r.Response.User.LastIP, "request %d", id)
+					assert.Nilf(t, r.Response.User.Deleted, "request %d", id)
+					assert.Nilf(t, r.Response.User.DateDeleted, "request %d", id)
 				}
-				assert.Nilf(t, r.Error, "request %d", id)
+				assert.Nilf(t, r.Response.Error, "request %d", id)
 			case 2: // deleted
 				fallthrough
 			case 4: // banned and deleted
@@ -576,21 +582,21 @@ func TestGetUser(t *testing.T) {
 				fallthrough
 			case 8: // admin and banned and deleted
 				assert.Equalf(t, http.StatusNotFound, code, "request %d", id)
-				assert.Falsef(t, r.Success, "request %d", id)
-				if assert.NotNilf(t, r.Error, "request %d", id) {
-					assert.Equal(t, "User Not Found", r.Error.Message, "request %d", id)
+				assert.Falsef(t, r.Response.Success, "request %d", id)
+				if assert.NotNilf(t, r.Response.Error, "request %d", id) {
+					assert.Equal(t, "User Not Found", r.Response.Error.Message, "request %d", id)
 				}
-				assert.Nilf(t, r.User, "request %d", id)
+				assert.Nilf(t, r.Response.User, "request %d", id)
 			}
-			assert.Nilf(t, r.Token, "request %d", id)
-			assert.Nilf(t, r.UserList, "request %d", id)
+			assert.Nilf(t, r.Response.Token, "request %d", id)
+			assert.Nilf(t, r.Response.UserList, "request %d", id)
 		}
 
 	}
 
 	// search as public user
 	for id := 1; id <= 8; id++ {
-		code, r, err = request(method, route+strconv.Itoa(id), nil, userToken, nil)
+		r = request(method, route+strconv.Itoa(id), nil, userToken, nil)
 		if assert.NoError(t, err, "request %d", id) {
 			switch id {
 			case 1: // regular user
@@ -602,57 +608,57 @@ func TestGetUser(t *testing.T) {
 			case 7: // admin and banned
 
 				assert.Equalf(t, http.StatusOK, code, "request %d", id)
-				assert.True(t, r.Success, "request %d", id)
-				if assert.NotNilf(t, r.User, "request %d", id) {
-					assert.NotNilf(t, r.User.ID, "request %d", id)
-					assert.NotNilf(t, r.User.Name, "request %d", id)
-					assert.Nilf(t, r.User.Password, "request %d", id)
-					assert.Nilf(t, r.User.Email, "request %d", id)
-					assert.NotNilf(t, r.User.Country, "request %d", id)
-					assert.NotNilf(t, r.User.Locale, "request %d", id)
-					assert.NotNilf(t, r.User.DateCreated, "request %d", id)
-					assert.NotNilf(t, r.User.Verified, "request %d", id)
-					assert.NotNilf(t, r.User.Banned, "request %d", id)
-					assert.NotNilf(t, r.User.Admin, "request %d", id)
-					assert.Nilf(t, r.User.LastToken, "request %d", id)
-					assert.NotNilf(t, r.User.LastLogin, "request %d", id)
-					assert.Nilf(t, r.User.LastIP, "request %d", id)
-					assert.Nilf(t, r.User.Deleted, "request %d", id)
-					assert.Nilf(t, r.User.DateDeleted, "request %d", id)
+				assert.True(t, r.Response.Success, "request %d", id)
+				if assert.NotNilf(t, r.Response.User, "request %d", id) {
+					assert.NotNilf(t, r.Response.User.ID, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Name, "request %d", id)
+					assert.Nilf(t, r.Response.User.Password, "request %d", id)
+					assert.Nilf(t, r.Response.User.Email, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Country, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Locale, "request %d", id)
+					assert.NotNilf(t, r.Response.User.DateCreated, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Verified, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Banned, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Admin, "request %d", id)
+					assert.Nilf(t, r.Response.User.LastToken, "request %d", id)
+					assert.NotNilf(t, r.Response.User.LastLogin, "request %d", id)
+					assert.Nilf(t, r.Response.User.LastIP, "request %d", id)
+					assert.Nilf(t, r.Response.User.Deleted, "request %d", id)
+					assert.Nilf(t, r.Response.User.DateDeleted, "request %d", id)
 				}
-				assert.Nilf(t, r.Error, "request %d", id)
+				assert.Nilf(t, r.Response.Error, "request %d", id)
 			default: // deleted users
 				assert.Equalf(t, http.StatusNotFound, code, "request %d", id)
-				assert.Falsef(t, r.Success, "request %d", id)
-				if assert.NotNilf(t, r.Error, "request %d", id) {
-					assert.Equal(t, "User Not Found", r.Error.Message, "request %d", id)
+				assert.Falsef(t, r.Response.Success, "request %d", id)
+				if assert.NotNilf(t, r.Response.Error, "request %d", id) {
+					assert.Equal(t, "User Not Found", r.Response.Error.Message, "request %d", id)
 				}
-				assert.Nilf(t, r.User, "request %d", id)
+				assert.Nilf(t, r.Response.User, "request %d", id)
 			}
-			assert.Nilf(t, r.Token, "request %d", id)
-			assert.Nilf(t, r.UserList, "request %d", id)
+			assert.Nilf(t, r.Response.Token, "request %d", id)
+			assert.Nilf(t, r.Response.UserList, "request %d", id)
 		}
 
 		for id := 1; id <= 8; id++ {
-			code, r, err = request(method, route+strconv.Itoa(id), nil, adminToken, nil)
+			r = request(method, route+strconv.Itoa(id), nil, adminToken, nil)
 			if assert.NoError(t, err, "request %d", id) {
 				assert.Equalf(t, http.StatusOK, code, "request %d", id)
-				assert.True(t, r.Success, "request %d", id)
-				if assert.NotNilf(t, r.User, "request %d", id) {
-					assert.NotNilf(t, r.User.ID, "request %d", id)
-					assert.NotNilf(t, r.User.Name, "request %d", id)
-					assert.Nilf(t, r.User.Password, "request %d", id)
-					assert.NotNilf(t, r.User.Email, "request %d", id)
-					assert.NotNilf(t, r.User.Country, "request %d", id)
-					assert.NotNilf(t, r.User.Locale, "request %d", id)
-					assert.NotNilf(t, r.User.DateCreated, "request %d", id)
-					assert.NotNilf(t, r.User.Verified, "request %d", id)
-					assert.NotNilf(t, r.User.Banned, "request %d", id)
-					assert.NotNilf(t, r.User.Admin, "request %d", id)
-					assert.Nilf(t, r.User.LastToken, "request %d", id)
-					assert.NotNilf(t, r.User.LastLogin, "request %d", id)
-					assert.NotNilf(t, r.User.LastIP, "request %d", id)
-					assert.NotNilf(t, r.User.Deleted, "request %d", id)
+				assert.True(t, r.Response.Success, "request %d", id)
+				if assert.NotNilf(t, r.Response.User, "request %d", id) {
+					assert.NotNilf(t, r.Response.User.ID, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Name, "request %d", id)
+					assert.Nilf(t, r.Response.User.Password, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Email, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Country, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Locale, "request %d", id)
+					assert.NotNilf(t, r.Response.User.DateCreated, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Verified, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Banned, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Admin, "request %d", id)
+					assert.Nilf(t, r.Response.User.LastToken, "request %d", id)
+					assert.NotNilf(t, r.Response.User.LastLogin, "request %d", id)
+					assert.NotNilf(t, r.Response.User.LastIP, "request %d", id)
+					assert.NotNilf(t, r.Response.User.Deleted, "request %d", id)
 					switch id {
 					case 2: // deleted
 						fallthrough
@@ -661,15 +667,15 @@ func TestGetUser(t *testing.T) {
 					case 6: // admin and deleted
 						fallthrough
 					case 8: // admin and banned and deleted
-						assert.NotNilf(t, r.User.DateDeleted, "request %d", id)
+						assert.NotNilf(t, r.Response.User.DateDeleted, "request %d", id)
 					default:
-						assert.Nilf(t, r.User.DateDeleted, "request %d", id)
+						assert.Nilf(t, r.Response.User.DateDeleted, "request %d", id)
 					}
 				}
 
-				assert.Nilf(t, r.Error, "request %d", id)
-				assert.Nilf(t, r.Token, "request %d", id)
-				assert.Nilf(t, r.UserList, "request %d", id)
+				assert.Nilf(t, r.Response.Error, "request %d", id)
+				assert.Nilf(t, r.Response.Token, "request %d", id)
+				assert.Nilf(t, r.Response.UserList, "request %d", id)
 			}
 		}
 
@@ -681,7 +687,7 @@ func TestGetUsers(t *testing.T) {
 	clearTable()
 
 	var code int
-	var r *Payload
+	var r TestPayload
 	var err error
 	method := "GET"
 	route := "/user" // add id to the end of this
@@ -707,35 +713,35 @@ func TestGetUsers(t *testing.T) {
 	}
 
 	// test empty table
-	code, r, err = request(method, route, nil, nil, defaultFormValue)
+	r = request(method, route, nil, nil, defaultFormValue)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, code)
-		assert.True(t, r.Success)
-		if assert.NotNil(t, r.UserList) {
-			assert.Equal(t, 0, r.UserList.StartIndex)
-			assert.Equal(t, 0, r.UserList.TotalItems)
-			assert.Nil(t, r.UserList.Users)
+		assert.True(t, r.Response.Success)
+		if assert.NotNil(t, r.Response.UserList) {
+			assert.Equal(t, 0, r.Response.UserList.StartIndex)
+			assert.Equal(t, 0, r.Response.UserList.TotalItems)
+			assert.Nil(t, r.Response.UserList.Users)
 		}
 
-		assert.Nil(t, r.Token)
-		assert.Nil(t, r.User)
-		assert.Nil(t, r.Error)
+		assert.Nil(t, r.Response.Token)
+		assert.Nil(t, r.Response.User)
+		assert.Nil(t, r.Response.Error)
 	}
 
 	// test bad request
-	code, r, err = request(method, route, nil, nil, nil)
+	r = request(method, route, nil, nil, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusOK, code)
-		assert.True(t, r.Success)
-		if assert.NotNil(t, r.UserList) {
-			assert.Equal(t, 0, r.UserList.StartIndex)
-			assert.Equal(t, 0, r.UserList.TotalItems)
-			assert.Nil(t, r.UserList.Users)
+		assert.True(t, r.Response.Success)
+		if assert.NotNil(t, r.Response.UserList) {
+			assert.Equal(t, 0, r.Response.UserList.StartIndex)
+			assert.Equal(t, 0, r.Response.UserList.TotalItems)
+			assert.Nil(t, r.Response.UserList.Users)
 		}
 
-		assert.Nil(t, r.Token)
-		assert.Nil(t, r.User)
-		assert.Nil(t, r.Error)
+		assert.Nil(t, r.Response.Token)
+		assert.Nil(t, r.Response.User)
+		assert.Nil(t, r.Response.Error)
 	}
 
 	create(maxCreated)
@@ -767,21 +773,21 @@ func TestGetUsers(t *testing.T) {
 			}
 		}
 
-		code, r, err = request(method, route, nil, nil, form)
+		r = request(method, route, nil, nil, form)
 		assert.Equalf(t, http.StatusOK, code, "{start: %d; count: %d}", startGiven, countGiven)
-		assert.Truef(t, r.Success, "{start: %d; count: %d}", startGiven, countGiven)
-		if assert.NotNilf(t, r.UserList, "{start: %d; count: %d}", startGiven, countGiven) {
-			assert.Equalf(t, start, r.UserList.StartIndex, "{start: %d; count: %d}", startGiven, countGiven)
-			assert.Equalf(t, count, r.UserList.TotalItems, "{start: %d; count: %d}", startGiven, countGiven)
+		assert.Truef(t, r.Response.Success, "{start: %d; count: %d}", startGiven, countGiven)
+		if assert.NotNilf(t, r.Response.UserList, "{start: %d; count: %d}", startGiven, countGiven) {
+			assert.Equalf(t, start, r.Response.UserList.StartIndex, "{start: %d; count: %d}", startGiven, countGiven)
+			assert.Equalf(t, count, r.Response.UserList.TotalItems, "{start: %d; count: %d}", startGiven, countGiven)
 			if count > 0 {
-				assert.NotNilf(t, r.UserList.Users, "{start: %d; count: %d}", startGiven, countGiven)
+				assert.NotNilf(t, r.Response.UserList.Users, "{start: %d; count: %d}", startGiven, countGiven)
 			} else {
-				assert.Nilf(t, r.UserList.Users, "{start: %d; count: %d}", startGiven, countGiven)
+				assert.Nilf(t, r.Response.UserList.Users, "{start: %d; count: %d}", startGiven, countGiven)
 			}
 
-			assert.Nilf(t, r.Token, "{start: %d; count: %d}", startGiven, countGiven)
-			assert.Nilf(t, r.User, "{start: %d; count: %d}", startGiven, countGiven)
-			assert.Nilf(t, r.Error, "{start: %d; count: %d}", startGiven, countGiven)
+			assert.Nilf(t, r.Response.Token, "{start: %d; count: %d}", startGiven, countGiven)
+			assert.Nilf(t, r.Response.User, "{start: %d; count: %d}", startGiven, countGiven)
+			assert.Nilf(t, r.Response.Error, "{start: %d; count: %d}", startGiven, countGiven)
 		}
 	}
 }
@@ -790,7 +796,7 @@ func TestGetUserByName(t *testing.T) {
 	clearTable()
 	create(10)
 	var code int
-	var r *Payload
+	var r TestPayload
 	var err error
 	method := "GET"
 	route := "/user/" // add id to the end of this
@@ -814,17 +820,17 @@ func TestGetUserByName(t *testing.T) {
 	adminToken := login("user10", "password10")
 
 	// search for nonexisting user
-	code, r, err = request(method, route+"ParagusRants", nil, nil, nil)
+	r = request(method, route+"ParagusRants", nil, nil, nil)
 	if assert.NoError(t, err) {
 		assert.Equal(t, http.StatusNotFound, code)
-		assert.False(t, r.Success)
-		if assert.NotNil(t, r.Error) {
-			assert.Equal(t, "User Not Found", r.Error.Message)
+		assert.False(t, r.Response.Success)
+		if assert.NotNil(t, r.Response.Error) {
+			assert.Equal(t, "User Not Found", r.Response.Error.Message)
 		}
 
-		assert.Nil(t, r.Token)
-		assert.Nil(t, r.User)
-		assert.Nil(t, r.UserList)
+		assert.Nil(t, r.Response.Token)
+		assert.Nil(t, r.Response.User)
+		assert.Nil(t, r.Response.UserList)
 	}
 
 	// search as non-token user and admin (should all be public)
@@ -844,7 +850,7 @@ func TestGetUserByName(t *testing.T) {
 		}
 		for id := 1; id <= 10; id++ {
 			name := "user" + strconv.Itoa(id)
-			code, r, err = request(method, route+name, nil, token, nil)
+			r = request(method, route+name, nil, token, nil)
 			if assert.NoError(t, err, "request %s; requester %s", name, requestingUser) {
 				switch id {
 				case 1: // regular user
@@ -855,25 +861,25 @@ func TestGetUserByName(t *testing.T) {
 					fallthrough
 				case 7: // admin and banned
 					assert.Equalf(t, http.StatusOK, code, "request %s; requester %s", name, requestingUser)
-					assert.True(t, r.Success, "request %s; requester %s", name, requestingUser)
-					if assert.NotNilf(t, r.User, "request %s; requester %s", name, requestingUser) {
-						assert.NotNilf(t, r.User.ID, "request %s; requester %s", name, requestingUser)
-						assert.NotNilf(t, r.User.Name, "request %s; requester %s", name, requestingUser)
-						assert.Nilf(t, r.User.Password, "request %s; requester %s", name, requestingUser)
-						assert.Nilf(t, r.User.Email, "request %s; requester %s", name, requestingUser)
-						assert.NotNilf(t, r.User.Country, "request %s; requester %s", name, requestingUser)
-						assert.NotNilf(t, r.User.Locale, "request %s; requester %s", name, requestingUser)
-						assert.NotNilf(t, r.User.DateCreated, "request %s; requester %s", name, requestingUser)
-						assert.NotNilf(t, r.User.Verified, "request %s; requester %s", name, requestingUser)
-						assert.NotNilf(t, r.User.Banned, "request %s; requester %s", name, requestingUser)
-						assert.NotNilf(t, r.User.Admin, "request %s; requester %s", name, requestingUser)
-						assert.Nilf(t, r.User.LastToken, "request %s; requester %s", name, requestingUser)
-						assert.NotNilf(t, r.User.LastLogin, "request %s; requester %s", name, requestingUser)
-						assert.Nilf(t, r.User.LastIP, "request %s; requester %s", name, requestingUser)
-						assert.Nilf(t, r.User.Deleted, "request %s; requester %s", name, requestingUser)
-						assert.Nilf(t, r.User.DateDeleted, "request %s; requester %s", name, requestingUser)
+					assert.True(t, r.Response.Success, "request %s; requester %s", name, requestingUser)
+					if assert.NotNilf(t, r.Response.User, "request %s; requester %s", name, requestingUser) {
+						assert.NotNilf(t, r.Response.User.ID, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.Response.User.Name, "request %s; requester %s", name, requestingUser)
+						assert.Nilf(t, r.Response.User.Password, "request %s; requester %s", name, requestingUser)
+						assert.Nilf(t, r.Response.User.Email, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.Response.User.Country, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.Response.User.Locale, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.Response.User.DateCreated, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.Response.User.Verified, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.Response.User.Banned, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.Response.User.Admin, "request %s; requester %s", name, requestingUser)
+						assert.Nilf(t, r.Response.User.LastToken, "request %s; requester %s", name, requestingUser)
+						assert.NotNilf(t, r.Response.User.LastLogin, "request %s; requester %s", name, requestingUser)
+						assert.Nilf(t, r.Response.User.LastIP, "request %s; requester %s", name, requestingUser)
+						assert.Nilf(t, r.Response.User.Deleted, "request %s; requester %s", name, requestingUser)
+						assert.Nilf(t, r.Response.User.DateDeleted, "request %s; requester %s", name, requestingUser)
 					}
-					assert.Nilf(t, r.Error, "request %s; requester %s", name, requestingUser)
+					assert.Nilf(t, r.Response.Error, "request %s; requester %s", name, requestingUser)
 				case 2: // deleted
 					fallthrough
 				case 4: // banned and deleted
@@ -882,14 +888,14 @@ func TestGetUserByName(t *testing.T) {
 					fallthrough
 				case 8: // admin and banned and deleted
 					assert.Equalf(t, http.StatusNotFound, code, "request %s; requester %s", name, requestingUser)
-					assert.Falsef(t, r.Success, "request %s; requester %s", name, requestingUser)
-					if assert.NotNilf(t, r.Error, "request %s; requester %s", name, requestingUser) {
-						assert.Equal(t, "User Not Found", r.Error.Message, "request %s; requester %s", name, requestingUser)
+					assert.Falsef(t, r.Response.Success, "request %s; requester %s", name, requestingUser)
+					if assert.NotNilf(t, r.Response.Error, "request %s; requester %s", name, requestingUser) {
+						assert.Equal(t, "User Not Found", r.Response.Error.Message, "request %s; requester %s", name, requestingUser)
 					}
-					assert.Nilf(t, r.User, "request %s; requester %s", name, requestingUser)
+					assert.Nilf(t, r.Response.User, "request %s; requester %s", name, requestingUser)
 				}
-				assert.Nilf(t, r.Token, "request %s; requester %s", name, requestingUser)
-				assert.Nilf(t, r.UserList, "request %s; requester %s", name, requestingUser)
+				assert.Nilf(t, r.Response.Token, "request %s; requester %s", name, requestingUser)
+				assert.Nilf(t, r.Response.UserList, "request %s; requester %s", name, requestingUser)
 			}
 
 		}
@@ -903,4 +909,99 @@ func TestUpdateUser(t *testing.T) {
 
 func TestDeleteUser(t *testing.T) {
 	t.Error("Not Implemented")
+}
+
+func checkPUBLICCredentials(t *testing.T, r TestPayload, tokenType string, route string) { // same as ADMINUSER
+	message := "PUBLIC credential test failed with token type '%s' @ route '%s'. %s"
+	if assert.NoErrorf(t, r.Error, message, tokenType, route, "Error with processing API request") {
+		// test working expected results
+		assert.Equal(t, http.StatusOK, r.Code, message, tokenType, route, "Expected http.StatusOK")
+		assert.True(t, r.Response.Success, message, tokenType, route, "Expected a successful API request")
+		if assert.Nilf(t, r.Response.Error, message, tokenType, route, "Expected no error") {
+			assert.NotNilf(t, r.Response.User.ID, message, tokenType, route, "Expected ID")                   // Always NotNil
+			assert.NotNilf(t, r.Response.User.Name, message, tokenType, route, "Expected Name")               // Always NotNil
+			assert.Nilf(t, r.Response.User.Password, message, tokenType, route, "GOT PASSWORD?!")             // Always Nil
+			assert.Nilf(t, r.Response.User.Email, message, tokenType, route, "GOT EMAIL?!")                   // Depends on Token (USER+ can read this)
+			assert.NotNilf(t, r.Response.User.Country, message, tokenType, route, "Expected Country")         // Always NotNil (unless not set, it is always set in tests)
+			assert.NotNilf(t, r.Response.User.Locale, message, tokenType, route, "Expected Locale")           // Always NotNil (unless not set, it is always set in tests)
+			assert.NotNilf(t, r.Response.User.DateCreated, message, tokenType, route, "Expected DateCreated") // Always NotNil
+			assert.NotNilf(t, r.Response.User.Verified, message, tokenType, route, "Expected Verified")       // Always NotNil
+			assert.NotNilf(t, r.Response.User.Banned, message, tokenType, route, "Expected Banned")           // Always NotNil
+			assert.NotNilf(t, r.Response.User.Admin, message, tokenType, route, "Expected Admin")             // Always NotNil
+			assert.Nilf(t, r.Response.User.LastToken, message, tokenType, route, "GOT LASTTOKEN!?")           // Always Nil
+			assert.NotNilf(t, r.Response.User.LastLogin, message, tokenType, route, "Expected LastLogin")     // Always NotNil
+			assert.Nilf(t, r.Response.User.LastIP, message, tokenType, route, "GOT LASTIP?!")                 // Depends on Token (ADMINUSER+ can read this)
+			assert.Nilf(t, r.Response.User.Deleted, message, tokenType, route, "GOT DELETED?!")               // Depends on Token (ADMINUSER+ can read this)
+			assert.Nilf(t, r.Response.User.DateDeleted, message, tokenType, route, "GOT DATEDELETED?!")       // Child of Deleted
+		}
+		assert.Nilf(t, r.Response.Token, message, tokenType, route, "GOT TOKEN?!")
+		assert.Nilf(t, r.Response.UserList, message, tokenType, route, "GOT USERLIST?!")
+	}
+}
+
+func checkUSERCredentials(t *testing.T, r TestPayload, tokenType string, route string) { // same as ADMINUSER
+	message := "USER credential test failed with token type '%s' @ route '%s'. %s"
+	if assert.NoErrorf(t, r.Error, message, tokenType, route, "Error with processing API request") {
+		// test working expected results
+		assert.Equal(t, http.StatusOK, r.Code, message, tokenType, route, "Expected http.StatusOK")
+		assert.True(t, r.Response.Success, message, tokenType, route, "Expected a successful API request")
+		if assert.Nilf(t, r.Response.Error, message, tokenType, route, "Expected no error") {
+			assert.NotNilf(t, r.Response.User.ID, message, tokenType, route, "Expected ID")                   // Always NotNil
+			assert.NotNilf(t, r.Response.User.Name, message, tokenType, route, "Expected Name")               // Always NotNil
+			assert.Nilf(t, r.Response.User.Password, message, tokenType, route, "GOT PASSWORD?!")             // Always Nil
+			assert.NotNilf(t, r.Response.User.Email, message, tokenType, route, "Expected Email")             // Depends on Token (USER+ can read this)
+			assert.NotNilf(t, r.Response.User.Country, message, tokenType, route, "Expected Country")         // Always NotNil (unless not set, it is always set in tests)
+			assert.NotNilf(t, r.Response.User.Locale, message, tokenType, route, "Expected Locale")           // Always NotNil (unless not set, it is always set in tests)
+			assert.NotNilf(t, r.Response.User.DateCreated, message, tokenType, route, "Expected DateCreated") // Always NotNil
+			assert.NotNilf(t, r.Response.User.Verified, message, tokenType, route, "Expected Verified")       // Always NotNil
+			assert.NotNilf(t, r.Response.User.Banned, message, tokenType, route, "Expected Banned")           // Always NotNil
+			assert.NotNilf(t, r.Response.User.Admin, message, tokenType, route, "Expected Admin")             // Always NotNil
+			assert.Nilf(t, r.Response.User.LastToken, message, tokenType, route, "GOT LASTTOKEN!?")           // Always Nil
+			assert.NotNilf(t, r.Response.User.LastLogin, message, tokenType, route, "Expected LastLogin")     // Always NotNil
+			assert.Nilf(t, r.Response.User.LastIP, message, tokenType, route, "GOT LASTIP?!")                 // Depends on Token (ADMINUSER+ can read this)
+			assert.Nilf(t, r.Response.User.Deleted, message, tokenType, route, "GOT DELETED?!")               // Depends on Token (ADMINUSER+ can read this)
+			assert.Nilf(t, r.Response.User.DateDeleted, message, tokenType, route, "GOT DATEDELETED?!")       // Child of Deleted
+		}
+		assert.Nilf(t, r.Response.Token, message, tokenType, route, "GOT TOKEN?!")
+		assert.Nilf(t, r.Response.UserList, message, tokenType, route, "GOT USERLIST?!")
+	}
+}
+
+func checkADMINCredentials(t *testing.T, r TestPayload, tokenType string, route string) { // same as ADMINUSER
+	message := "ADMIN credential test failed with token type '%s' @ route '%s'. %s"
+	if assert.NoErrorf(t, r.Error, message, tokenType, route, "Error with processing API request") {
+		// test working expected results
+		assert.Equal(t, http.StatusOK, r.Code, message, tokenType, route, "Expected http.StatusOK")
+		assert.True(t, r.Response.Success, message, tokenType, route, "Expected a successful API request")
+		if assert.Nilf(t, r.Response.Error, message, tokenType, route, "Expected no error") {
+			assert.NotNilf(t, r.Response.User.ID, message, tokenType, route, "Expected ID")                                                    // Always NotNil
+			assert.NotNilf(t, r.Response.User.Name, message, tokenType, route, "Expected Name")                                                // Always NotNil
+			assert.Nilf(t, r.Response.User.Password, message, tokenType, route, "GOT PASSWORD?!")                                              // Always Nil
+			assert.NotNilf(t, r.Response.User.Email, message, tokenType, route, "Expected Email")                                              // Depends on Token (USER+ can read this)
+			assert.NotNilf(t, r.Response.User.Country, message, tokenType, route, "Expected Country")                                          // Always NotNil (unless not set, it is always set in tests)
+			assert.NotNilf(t, r.Response.User.Locale, message, tokenType, route, "Expected Locale")                                            // Always NotNil (unless not set, it is always set in tests)
+			assert.NotNilf(t, r.Response.User.DateCreated, message, tokenType, route, "Expected DateCreated")                                  // Always NotNil
+			assert.NotNilf(t, r.Response.User.Verified, message, tokenType, route, "Expected Verified")                                        // Always NotNil
+			assert.NotNilf(t, r.Response.User.Banned, message, tokenType, route, "Expected Banned")                                            // Always NotNil
+			assert.NotNilf(t, r.Response.User.Admin, message, tokenType, route, "Expected Admin")                                              // Always NotNil
+			assert.Nilf(t, r.Response.User.LastToken, message, tokenType, route, "GOT LASTTOKEN!?")                                            // Always Nil
+			assert.NotNilf(t, r.Response.User.LastLogin, message, tokenType, route, "Expected LastLogin")                                      // Always NotNil
+			assert.NotNilf(t, r.Response.User.LastIP, message, tokenType, route, "Expected LastIP")                                            // Depends on Token (ADMINUSER+ can read this)
+			if d := assert.NotNilf(t, r.Response.User.Deleted, message, tokenType, route, "Expected Deleted"); d && *r.Response.User.Deleted { // Depends on Token (ADMINUSER+ can read this)
+				assert.NotNilf(t, r.Response.User.DateDeleted, message, tokenType, route, "Expected Date Deleted") // Child of Deleted
+			} else if d {
+				assert.Nilf(t, r.Response.User.DateDeleted, message, tokenType, route, "GOT DATEDELETED?! (when user is not deleted)") // Child of Deleted
+			}
+		}
+		assert.Nilf(t, r.Response.Token, message, tokenType, route, "GOT TOKEN?!")
+		assert.Nilf(t, r.Response.UserList, message, tokenType, route, "GOT USERLIST?!")
+	}
+}
+
+func checkDELETEDUser(t *testing.T, r TestPayload, tokenType string, route string) {
+
+}
+
+func checkBANNEDUser(t *testing.T, r TestPayload, tokenType string, route string) {
+
 }
