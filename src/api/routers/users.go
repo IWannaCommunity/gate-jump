@@ -45,15 +45,15 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if serr := u.GetUser(auth); serr.Err != nil {
-		switch serr.Err {
-		case sql.ErrNoRows:
-			res.New(http.StatusNotFound).SetErrorMessage("User Not Found").Error(w)
-		default:
-			res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
-		}
+	if serr := u.GetUser(auth); serr.Err != sql.ErrNoRows {
+		res.New(http.StatusNotFound).SetErrorMessage("User Not Found").Error(w)
 		return
+	} else if serr.Err != nil {
+		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
+		return
+
 	}
+
 	res.New(http.StatusOK).SetUser(u).JSON(w)
 }
 
