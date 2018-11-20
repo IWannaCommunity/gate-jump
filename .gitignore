@@ -21,3 +21,5 @@ debug
 
 src/api/config/
 node_modules
+
+src/api/api
