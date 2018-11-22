@@ -137,6 +137,8 @@ func create(count int) {
 	for i := 1; i < count+1; i++ {
 		newUser := fmt.Sprintf(`{"name":"user%d","password":"password%d","email":"email%d@website.com"}`, i, i, i)
 		_ = request("POST", "/register", newUser, nil, nil)
+		login("user"+strconv.Itoa(i), "password"+strconv.Itoa(i)) // set last login date
+		update(1, "us", "en", false, false, false)                // set country and locale
 	}
 }
 
