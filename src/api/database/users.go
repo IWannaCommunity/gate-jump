@@ -367,7 +367,7 @@ func (u *User) ToString() string {
 		str += "\tLastIP:" + tabAmount + *u.LastIP + "\n"
 	}
 	if u.Deleted != nil {
-		str += "\tDeleted:" + tabAmount + strconv.FormatBool(*u.Admin) + "\n"
+		str += "\tDeleted:" + tabAmount + strconv.FormatBool(*u.Deleted) + "\n"
 	}
 	if u.DateDeleted != nil {
 		str += "\tDateDeleted:" + tabAmount + (*u.DateDeleted).String() + "\n"
