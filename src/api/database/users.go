@@ -323,3 +323,55 @@ func (u *User) UnflagDeletion() res.ServerError {
 	_, serr.Err = db.Exec(serr.Query, serr.Args...)
 	return serr
 }
+
+// literally for just debugging
+func (u *User) ToString() string {
+	var str string
+	tabAmount := " ------ "
+	str += "\n{"
+	str += "\tID:" + tabAmount + strconv.FormatInt(u.ID, 10) + "\n"
+	if u.Name != nil {
+		str += "\tName:" + tabAmount + *u.Name + "\n"
+	}
+	if u.Password != nil {
+		str += "\tPassword:" + tabAmount + "notnil" + "\n"
+	}
+	if u.Email != nil {
+		str += "\tEmail:" + tabAmount + *u.Email + "\n"
+	}
+	if u.Country != nil {
+		str += "\tCountry:" + tabAmount + *u.Country + "\n"
+	}
+	if u.Locale != nil {
+		str += "\tLocale:" + tabAmount + *u.Locale + "\n"
+	}
+	if u.DateCreated != nil {
+		str += "\tDateCreated:" + tabAmount + (*u.DateCreated).String() + "\n"
+	}
+	if u.Admin != nil {
+		str += "\tAdmin:" + tabAmount + strconv.FormatBool(*u.Admin) + "\n"
+	}
+	if u.Verified != nil {
+		str += "\tVerified:" + tabAmount + strconv.FormatBool(*u.Verified) + "\n"
+	}
+	if u.Banned != nil {
+		str += "\tBanned:" + tabAmount + strconv.FormatBool(*u.Banned) + "\n"
+	}
+	if u.LastToken != nil {
+		str += "\tLastToken:" + tabAmount + "notnil" + "\n"
+	}
+	if u.LastLogin != nil {
+		str += "\tLastLogin:" + tabAmount + (*u.LastLogin).String() + "\n"
+	}
+	if u.LastIP != nil {
+		str += "\tLastIP:" + tabAmount + *u.LastIP + "\n"
+	}
+	if u.Deleted != nil {
+		str += "\tDeleted:" + tabAmount + strconv.FormatBool(*u.Admin) + "\n"
+	}
+	if u.DateDeleted != nil {
+		str += "\tDateDeleted:" + tabAmount + (*u.DateDeleted).String() + "\n"
+	}
+	str += "}"
+	return str
+}
