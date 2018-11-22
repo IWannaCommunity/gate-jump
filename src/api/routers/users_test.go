@@ -917,7 +917,87 @@ func TestBanUser(t *testing.T) {
 }
 
 func TestDeleteUser(t *testing.T) {
-	t.Error("Not Implemented")
+	clearTable()
+	create(2)
+	var r TestPayload
+	route := "/user/" // add id to the end of this
+
+	update(1, "us", "en", false, false, false) // the user to test
+	update(2, "us", "en", true, false, false)  // the admin user that can verify user is deleted
+
+	userToken := login("user1", "password1")  // user token
+	adminToken := login("user2", "password2") // deleted token
+
+	// check user exists in database before attempting to delete
+	checkUser(t, request("GET", route+"1", nil, nil, nil), "public", route+"1")
+
+	// delete user
+	r = request("DELETE", route+"1", nil, adminToken, nil)
+	if assert.NoError(t, r.Error, "Failed making delete user api request.") {
+		assert.Equal(t, http.StatusAccepted, r.Code, "Expected http.StatusAccepted")
+		assert.True(t, r.Response.Success, "Expected successful API request")
+		assert.Nil(t, r.Response.Token, "GOT TOKEN?!")
+		assert.Nil(t, r.Response.User, "GOT USER?!")
+		assert.Nil(t, r.Response.UserList, "GOT USERLIST?!")
+		assert.Nil(t, r.Response.Error, "GOT ERROR?!")
+	}
+
+	// check deleted user as public user
+	checkDELETEDUser(t, request("GET", route+"1", nil, nil, nil), "public", route+"1")
+
+	// check deleted user as admin user
+	checkDELETEDUser(t, request("GET", route+"1", nil, adminToken, nil), "admin", route+"1")
+
+	// check deleted user as the deleted user's token (should reject)
+	checkNONEXISTINGUser(t, request("GET", route+"1", nil, userToken, nil), "user", route+"1")
+
+	// login to deleted user to undelete it
+	userToken = login("user1", "password1")
+
+	/// check originally deleted user as public user
+	checkUser(t, request("GET", route+"1", nil, nil, nil), "public", route+"1")
+
+	// check originally deleted user as self
+	checkUser(t, request("GET", route+"1", nil, userToken, nil), "user", route+"1")
+
+}
+
+func TestCheckUser(t *testing.T) {
+	clearTable()
+	create(4)
+
+	update(1, "us", "en", false, false, false)
+	update(2, "us", "en", true, false, false) // admin
+	update(3, "us", "en", false, true, false) // banned
+	update(4, "us", "en", false, false, true) // deleted
+
+	adminToken := login("user2", "password2")
+
+	// public
+	checkUser(t, request("GET", "/user/1", nil, nil, nil), "public", "/user/1")                       // test public credentials
+	checkUser(t, request("GET", "/user/1", nil, login("user1", "password1"), nil), "user", "/user/1") // test user credentials
+	checkUser(t, request("GET", "/user/1", nil, adminToken, nil), "admin", "/user/1")                 // test admin credentials
+
+	// banned
+	//checkUser(t, request("GET", "/user/3", nil, nil, nil), "public", "/user/3")       // test public credentials
+	//checkUser(t, request("GET", "/user/3", nil, adminToken, nil), "admin", "/user/3") // test admin credentials
+
+	// deleted
+	//checkUser(t, request("GET", "/user/4", nil, nil, nil), "public", "/user/4")       // test public credentials
+	//checkUser(t, request("GET", "/user/4", nil, adminToken, nil), "admin", "/user/4") // test admin credentials
+
+}
+
+// checkUser checks the user credentials against public or admin based credentials. use specific functions for comparing against self
+func checkUser(t *testing.T, r TestPayload, tokenType string, route string) { // same as ADMINUSER
+	switch tokenType {
+	case "public":
+		checkPUBLICCredentials(t, r, tokenType, route)
+	case "user":
+		checkUSERCredentials(t, r, tokenType, route)
+	case "admin":
+		checkADMINCredentials(t, r, tokenType, route)
+	}
 }
 
 func checkPUBLICCredentials(t *testing.T, r TestPayload, tokenType string, route string) {
