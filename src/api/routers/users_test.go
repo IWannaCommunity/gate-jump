@@ -180,16 +180,12 @@ func TestMain(m *testing.M) {
 
 func TestAlive(t *testing.T) {
 	clearTable()
-	var code int
 	var r TestPayload
-	var err error
-	method := "GET"
-	route := "/"
 
-	r = request(method, route, nil, nil, nil)
-	if assert.NoError(t, err) {
+	r = request("GET", "/", nil, nil, nil)
+	if assert.NoError(t, r.Error) {
 
-		assert.Equal(t, http.StatusOK, code, "expected statusok")
+		assert.Equal(t, http.StatusOK, r.Code, "expected statusok")
 		assert.True(t, r.Response.Success)
 
 		assert.Nil(t, r.Response.Error)
