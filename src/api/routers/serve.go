@@ -25,6 +25,7 @@ func Serve(port, sslport string) {
 	router.HandleFunc("/user/{id:[0-9]+}", getUser).Methods("GET")
 	router.HandleFunc("/user/{id:[0-9]+}", updateUser).Methods("PUT")
 	router.HandleFunc("/user/{id:[0-9]+}", deleteUser).Methods("DELETE")
+	//router.HandleFunc("/user/{id:[0-9]+}", banUser).Methods("POST")
 	router.HandleFunc("/user/{name}", getUserByName).Methods("GET")
 	router.Use(HTTPRecovery)
 	router.Use(authentication.JWTContext)
