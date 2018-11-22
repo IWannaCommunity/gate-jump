@@ -76,6 +76,20 @@ func (u *User) GetUser(auth authentication.Level) res.ServerError {
 		serr.Query = "SELECT * FROM users WHERE id=? AND deleted=FALSE"
 	}
 	serr.Args = append(serr.Args, u.ID)
+	/*
+		rows, err := db.Query(serr.Query, serr.Args...)
+		if err != nil {
+			serr.Err = err
+			return serr
+		}
+		if rows.Next() {
+			err = u.ScanAlls(rows)
+		}
+		if err != nil {
+			serr.Err = err
+			return serr
+		}
+	*/
 	serr.Err = u.ScanAll(db.QueryRow(serr.Query, serr.Args...))
 	if serr.Err != nil {
 		return serr
