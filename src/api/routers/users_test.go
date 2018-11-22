@@ -912,6 +912,10 @@ func TestUpdateUser(t *testing.T) {
 	t.Error("Not Implemented")
 }
 
+func TestBanUser(t *testing.T) {
+	t.Error("Not implemented")
+}
+
 func TestDeleteUser(t *testing.T) {
 	t.Error("Not Implemented")
 }
