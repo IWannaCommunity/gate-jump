@@ -146,7 +146,7 @@ func update(id int, country string, locale string, admin bool, banned bool, dele
 	if deleted {
 		db.Exec("UPDATE users SET country=?, locale=?, admin=?, banned=?, deleted=true, date_deleted=? WHERE id=?", country, locale, admin, banned, time.Now(), id)
 	} else {
-		db.Exec("UPDATE users SET country=?, locale=?, admin=?, banned=?, deleted=false WHERE id=?", country, locale, admin, banned, id)
+		db.Exec("UPDATE users SET country=?, locale=?, admin=?, banned=?, deleted=false, date_deleted=NULL WHERE id=?", country, locale, admin, banned, id)
 	}
 }
 
