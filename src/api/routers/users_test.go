@@ -916,7 +916,7 @@ func TestDeleteUser(t *testing.T) {
 	t.Error("Not Implemented")
 }
 
-func checkPUBLICCredentials(t *testing.T, r TestPayload, tokenType string, route string) { // same as ADMINUSER
+func checkPUBLICCredentials(t *testing.T, r TestPayload, tokenType string, route string) {
 	message := "PUBLIC credential test failed with token type '%s' @ route '%s'. %s"
 	if assert.NoErrorf(t, r.Error, message, tokenType, route, "Error with processing API request") {
 		// test working expected results
@@ -1004,9 +1004,27 @@ func checkADMINCredentials(t *testing.T, r TestPayload, tokenType string, route 
 }
 
 func checkDELETEDUser(t *testing.T, r TestPayload, tokenType string, route string) {
-
+	if tokenType == "admin" { // skip this as we can see deleted users as admin
+		checkADMINCredentials(t, r, tokenType, route)
+		return
+	}
+	checkNONEXISTINGUser(t, r, tokenType, route) // the user doesn't exist to the public eye so it should be equivilent to not existing user
 }
 
 func checkBANNEDUser(t *testing.T, r TestPayload, tokenType string, route string) {
+	checkUser(t, r, tokenType, route) // this is currently the same as any other getuser request
+}
 
+func checkNONEXISTINGUser(t *testing.T, r TestPayload, tokenType string, route string) {
+	message := "NONEXISTING test failed with token type '%s' @ route '%s'. %s"
+	if assert.NoErrorf(t, r.Error, message, tokenType, route, "Error with processing API request") {
+		assert.Equal(t, http.StatusNotFound, r.Code, message, tokenType, route, "Expected http.StatusNotFound")
+		assert.False(t, r.Response.Success, message, tokenType, route, "Expected a failed API request")
+		if assert.NotNilf(t, r.Response.Error, message, tokenType, route, "Expected an error") {
+			assert.Equal(t, "User Not Found", r.Response.Error.Message, message, tokenType, route, "Expected 'User Not Found' error message")
+		}
+		assert.Nilf(t, r.Response.User, message, tokenType, route, "GOT USER?!")
+		assert.Nilf(t, r.Response.Token, message, tokenType, route, "GOT TOKEN?!")
+		assert.Nilf(t, r.Response.UserList, message, tokenType, route, "GOT USERLIST?!")
+	}
 }
