@@ -101,6 +101,9 @@ func request(method string, apiUrl string, jsonPayload interface{}, token interf
 	if token != nil {
 		req.Header.Set("Authorization", token.(string))
 	}
+
+	req.RemoteAddr = "127.0.0.1" // because im shoving the request into the route instead of sending it this doesnt exist otherwise
+
 	response := executeRequest(req)
 	p, err := unmarshal(response.Body)
 	if err != nil {
