@@ -50,7 +50,7 @@ type TestPayload struct {
 
 type Payload struct {
 	Success  bool               `json:"success"`
-	Error    *res.ResponseError `json:"error,omitempty"`
+	Error    *string            `json:"error,omitempty"`
 	Token    *string            `json:"token,omitempty"`
 	User     *database.User     `json:"user,omitempty"`
 	UserList *database.UserList `json:"userList,omitempty"`

@@ -14,18 +14,13 @@ type Response struct {
 	Function string
 	Code     int
 	Payload  struct {
-		Success  bool           `json:"success"`
-		Error    *ResponseError `json:"error,omitempty"`
-		Token    *string        `json:"token,omitempty"`
-		User     interface{}    `json:"user,omitempty"`
-		UserList interface{}    `json:"userList,omitempty"`
+		Success  bool        `json:"success"`
+		Error    *string     `json:"error,omitempty"`
+		Token    *string     `json:"token,omitempty"`
+		User     interface{} `json:"user,omitempty"`
+		UserList interface{} `json:"userList,omitempty"`
 	}
 	InternalError *ServerError
-}
-
-type ResponseError struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
 }
 
 type ServerError struct {
@@ -62,10 +57,7 @@ func (r *Response) SetToken(token string) *Response {
 }
 
 func (r *Response) SetErrorMessage(message string) *Response {
-	e := ResponseError{}
-	e.Code = r.Code
-	e.Message = message
-	r.Payload.Error = &e
+	r.Payload.Error = &message
 	r.InternalError = &ServerError{Query: "", Args: nil, Err: errors.New(message)} // oddball case where code fails that isn't from sql query
 	return r
 }
@@ -89,10 +81,8 @@ func (r *Response) Error(w http.ResponseWriter) {
 	}
 	r.Payload.Success = false
 	if r.Payload.Error == nil {
-		e := ResponseError{}
-		e.Code = r.Code
-		e.Message = r.InternalError.Err.Error()
-		r.Payload.Error = &e
+		message := r.InternalError.Err.Error()
+		r.Payload.Error = &message
 	}
 	r.JSON(w)
 }
