@@ -8,7 +8,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-const version uint8 = 2
+const version uint8 = 3
 
 var db *sql.DB
 
@@ -54,10 +54,25 @@ func Init() error {
 	current := *new(uint8)
 	rows.Scan(&current) // TODO: error check this
 
-	log.Debug("Reported db version", current)
+	log.Debug("Reported Database Schema Version ", current)
 
 	if current != version {
-		//TODO: do something in the future when we have more than two migration schemas
+		switch current {
+
+		case 2:
+			err := setupSchema("00003_magiclinks.sql")
+			if err != nil {
+				return err
+			}
+			log.Info("Upgraded to Database Schema version " + string(version))
+			fallthrough
+
+		default:
+			db.Exec(`UPDATE meta SET db_version=? WHERE db_version=?`, version, current)
+
+			log.Info("No more Database Schema upgrades found, continuing startup...")
+
+		}
 	}
 
 	return nil

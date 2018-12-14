@@ -24,7 +24,7 @@ lcf = true
 debug = false
 
 [[custom]]
-    files = ["src/migrations/00001_inital.sql", "src/migrations/00002_meta.sql"]
+    files = ["src/migrations/00001_inital.sql", "src/migrations/00002_meta.sql", "src/migrations/00003_magiclinks.sql"]
     base = ""
     prefix = ""
     tags = ""
