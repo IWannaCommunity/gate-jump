@@ -22,6 +22,7 @@ type httpsConfig struct {
 
 type mailerConfig struct {
 	Host string `json:"host"`
+	Port string `json:"port"`
 	User string `json:"user"`
 	Pass string `json:"pass"`
 }
@@ -77,6 +78,7 @@ func setActiveConfig(configmap map[string]interface{}) {
 
 	Mailer = mailerConfig{
 		Host: configmap["mailer"].(map[string]interface{})["host"].(string),
+		Port: configmap["mailer"].(map[string]interface{})["port"].(string),
 		User: configmap["mailer"].(map[string]interface{})["user"].(string),
 		Pass: configmap["mailer"].(map[string]interface{})["pass"].(string),
 	}
