@@ -20,10 +20,17 @@ type httpsConfig struct {
 	KeyFile  string `json:"keyFile"`
 }
 
+type mailerConfig struct {
+	Host string `json:"host"`
+	User string `json:"user"`
+	Pass string `json:"pass"`
+}
+
 // Configuration and Settings
 var (
 	Database          databaseConfig
 	Https             httpsConfig
+	Mailer            mailerConfig
 	RouteBase         string
 	Port              string
 	SslPort           string
@@ -60,12 +67,18 @@ func setActiveConfig(configmap map[string]interface{}) {
 	Database = databaseConfig{
 		Username: configmap["database"].(map[string]interface{})["username"].(string),
 		Password: configmap["database"].(map[string]interface{})["password"].(string),
-		Dsn: configmap["database"].(map[string]interface{})["dsn"].(string),
+		Dsn:      configmap["database"].(map[string]interface{})["dsn"].(string),
 	}
 
 	Https = httpsConfig{
 		CertFile: configmap["https"].(map[string]interface{})["certFile"].(string),
-		KeyFile: configmap["https"].(map[string]interface{})["keyFile"].(string),
+		KeyFile:  configmap["https"].(map[string]interface{})["keyFile"].(string),
+	}
+
+	Mailer = mailerConfig{
+		Host: configmap["mailer"].(map[string]interface{})["host"].(string),
+		User: configmap["mailer"].(map[string]interface{})["user"].(string),
+		Pass: configmap["mailer"].(map[string]interface{})["pass"].(string),
 	}
 
 	Host = configmap["host"].(string)
