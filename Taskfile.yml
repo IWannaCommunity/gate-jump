@@ -1,8 +1,25 @@
 version: '2'
 
+vars:
+    _G_MINOR: "0"
+    _G_PATCH: "2"
+    _G_MAJOR: "0"
+    _G_EXTRA: "-indev"
+    _G_COMMIT:
+        sh: echo "$(git rev-parse --short HEAD)"
+    _G_DATE:
+        sh: echo "$(date +%FT%T%z)"
+
 tasks:
     build:
         cmds:
             - go version
             - fileb0x src/migrations/fileb0x.toml
-            - go build -v -i ./src/api/
+            - 'go build
+                -ldflags "
+                    -X main.Minor={{._G_MINOR }}
+                    -X main.Patch={{._G_PATCH}}
+                    -X main.Extra={{._G_EXTRA}}
+                    -X main.Commit={{._G_COMMIT}}
+                    -X main.Date={{._G_DATE}}"
+                -v -i ./src/api/'
