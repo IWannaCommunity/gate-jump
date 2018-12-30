@@ -2,8 +2,6 @@ package main
 
 import (
 	"strings"
-
-	"github.com/IWannaCommunity/gate-jump/src/api/log"
 )
 
 func BuildInfo() (string, error) {
