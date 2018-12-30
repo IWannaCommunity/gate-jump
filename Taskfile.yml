@@ -19,6 +19,7 @@ tasks:
                 -ldflags "
                     -X main.Minor={{._G_MINOR }}
                     -X main.Patch={{._G_PATCH}}
+                    -X main.Major={{._G_MAJOR}}
                     -X main.Extra={{._G_EXTRA}}
                     -X main.Commit={{._G_COMMIT}}
                     -X main.Date={{._G_DATE}}"
