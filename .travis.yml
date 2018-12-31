@@ -70,12 +70,12 @@ matrix:
 script:
 - task build
 
-after_script:
+after_success:
     - wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/ee0c1b3ff5b353178248f944f4aaeeff26fb9eb4/send.sh
     - chmod +x send.sh
-
-after_success:
     - ./send.sh success $WEBHOOK_URL
 
 after_failure:
+    - wget https://raw.githubusercontent.com/DiscordHooks/travis-ci-discord-webhook/ee0c1b3ff5b353178248f944f4aaeeff26fb9eb4/send.sh
+    - chmod +x send.sh
     - ./send.sh failure $WEBHOOK_URL
