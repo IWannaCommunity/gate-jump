@@ -170,6 +170,12 @@ func (u *User) UpdateUser(auth authentication.Level) res.ServerError {
 	} else {
 		u.LastIP = nil
 	}
+	if u.Verified != nil && (auth == authentication.SERVER) {
+		serr.Query += " verified=?,"
+		serr.Args = append(serr.Args, u.Verified)
+	} else {
+		u.Verified = nil
+	}
 
 	if len(serr.Args) == 0 {
 		return serr // there were no sections to update so return empty user
