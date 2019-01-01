@@ -11,8 +11,11 @@ import (
 	"github.com/IWannaCommunity/gate-jump/src/api/authentication"
 	"github.com/IWannaCommunity/gate-jump/src/api/database"
 	"github.com/IWannaCommunity/gate-jump/src/api/log"
+	"github.com/IWannaCommunity/gate-jump/src/api/mailer"
 	"github.com/IWannaCommunity/gate-jump/src/api/res"
+	"github.com/IWannaCommunity/gate-jump/src/api/settings"
 	"github.com/IWannaCommunity/gate-jump/src/api/util"
+	smtp "github.com/go-mail/mail"
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -123,7 +126,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	ml := *new(database.MagicLink)
 	cherr := make(chan error)
 	chstr := make(chan []byte)
-	go util.CreateRandomString(32, 1, chstr, cherr)
+	go util.CreateRandomString(32, 2, chstr, cherr)
 
 	// Validate user input
 	if !util.IsValidUsername(*checkuser.Name) || util.IsValidEmail(*checkuser.Name) {
@@ -191,6 +194,16 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	log.Info("New Magiclink ID: ", ml.ID)
 
 	res.New(http.StatusCreated).JSON(w)
+
+	msg := smtp.NewMessage()
+	msg.SetHeader("From", settings.Mailer.User)
+	msg.SetHeader("To", *checkuser.Email)
+	msg.SetHeader("Subject", "Account Verification for I Wanna Community")
+	msg.SetBody("text/plain", `In order to complete account registration,
+		please verify your email by clicking the link below.
+
+		https://localhost:80/verify/`+ml.Magic)
+	mailer.Outbox <- msg
 }
 
 // update
