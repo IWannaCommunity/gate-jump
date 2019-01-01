@@ -7,7 +7,8 @@ import (
 
 var letterBytes = []string{
 					"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/-*[]{}()<>|?!.=_&^%$#@",
-					"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"}
+					"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+					"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"}
 var letterIdxBits = []uint{7, 6} // 7 bits to represent a letter index
 
 func CreateRandomString(n int, letterSet uint8, token chan []byte, err chan error) {
