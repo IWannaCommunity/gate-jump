@@ -38,3 +38,25 @@ func (ml *MagicLink) CreateMagicLink() res.ServerError {
 
 	return serr
 }
+
+func (ml *MagicLink) GetMagicLinkFromMagicString() res.ServerError {
+	serr := *new(res.ServerError)
+
+	serr.Query = "SELECT * FROM magic WHERE magic = ?"
+	serr.Args = append(serr.Args, ml.Magic)
+	serr.Err = ml.ScanAll(db.QueryRow(serr.Query, serr.Args...))
+	if serr.Err != nil {
+		return serr
+	}
+
+	return serr
+}
+
+// scans all user data into the user struct
+func (ml *MagicLink) ScanAll(row *sql.Row) error {
+
+	return row.Scan(
+		&ml.ID,
+		&ml.UserID,
+		&ml.Magic)
+}
