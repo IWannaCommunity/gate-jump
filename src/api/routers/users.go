@@ -126,7 +126,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	ml := *new(database.MagicLink)
 	cherr := make(chan error)
 	chstr := make(chan []byte)
-	go util.CreateRandomString(32, 2, chstr, cherr)
+	go util.CreateRandomString(32, 1, chstr, cherr)
 
 	// Validate user input
 	if !util.IsValidUsername(*checkuser.Name) || util.IsValidEmail(*checkuser.Name) {
@@ -199,11 +199,46 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	msg.SetHeader("From", settings.Mailer.User)
 	msg.SetHeader("To", *checkuser.Email)
 	msg.SetHeader("Subject", "Account Verification for I Wanna Community")
+	// TODO: Change the URL here, hardcoded for now...
 	msg.SetBody("text/plain", `In order to complete account registration,
 		please verify your email by clicking the link below.
 
 		https://localhost:80/verify/`+ml.Magic)
 	mailer.Outbox <- msg
+}
+
+// verifyUser verifies the user's account
+func verifyUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	str := vars["magic"]
+
+	ml := database.MagicLink{Magic: str}
+	serr := ml.GetMagicLinkFromMagicString()
+
+	if serr.Err != nil {
+		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
+		return
+	}
+
+	usr := database.User{ID: ml.UserID}
+	serr = usr.GetUser(authentication.SERVER)
+
+	if serr.Err != nil {
+		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
+		return
+	}
+
+	// TODO: we need to get rid of pointer values in structs unless
+	// absolutely necessary, that way we don't get monsters like this
+	usr.Verified = &[]bool{true}[0]
+	serr = usr.UpdateUser(authentication.SERVER)
+
+	if serr.Err != nil {
+		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
+		return
+	}
+
+	res.New(http.StatusAccepted).JSON(w)
 }
 
 // update
