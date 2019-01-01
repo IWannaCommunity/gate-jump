@@ -50,6 +50,9 @@ func main() {
 
 	log.Info("Successfully connected to local SMTP host!")
 
+	go mailer.Daemon()
+	log.Info("Mailer Daemon Started!")
+
 	// Database Initialization
 	log.Info("Attaching to Database...")
 
