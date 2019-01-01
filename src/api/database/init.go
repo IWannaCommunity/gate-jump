@@ -38,15 +38,13 @@ func Init() error {
 			return err
 		}
 
-		result, err := db.Exec(`INSERT INTO meta ( db_version ) VALUES ( ? );`, version)
+		result, err := db.Exec(`INSERT INTO meta ( db_version ) VALUES ( 2 );`)
 		if err != nil {
 			return err
 		}
 
 		log.Info(result.LastInsertId())
 		log.Info(result.RowsAffected())
-
-		return nil
 	}
 
 	// Run other migrations if required
