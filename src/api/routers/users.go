@@ -238,6 +238,21 @@ func verifyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// delete the link from the database, we can fail here without panicing
+	serr = ml.DeleteMagicLinkFromMagicString()
+
+	if serr.Err != nil {
+		log.Warning("Unable to delete a magic link from the database, %v", serr.Err)
+	}
+
+	// send a successful registration email
+	msg := smtp.NewMessage()
+	msg.SetHeader("From", settings.Mailer.User)
+	msg.SetHeader("To", *usr.Email)
+	msg.SetHeader("Subject", "Welcome to I Wanna Community!")
+	msg.SetBody("text/plain", "Thank you for verifying and registering with I Wanna Community, we hope your stay with us is pleasant!")
+	mailer.Outbox <- msg
+
 	res.New(http.StatusAccepted).JSON(w)
 }
 
