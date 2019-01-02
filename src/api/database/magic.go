@@ -52,6 +52,19 @@ func (ml *MagicLink) GetMagicLinkFromMagicString() res.ServerError {
 	return serr
 }
 
+func (ml *MagicLink) DeleteMagicLinkFromMagicString() res.ServerError {
+	serr := *new(res.ServerError)
+
+	serr.Query = "DELETE FROM magic WHERE magic = ? LIMIT 1"
+	serr.Args = append(serr.Args, ml.Magic)
+	_, serr.Err = db.Exec(serr.Query, serr.Args...)
+	if serr.Err != nil {
+		return serr
+	}
+
+	return serr
+}
+
 // scans all user data into the user struct
 func (ml *MagicLink) ScanAll(row *sql.Row) error {
 
