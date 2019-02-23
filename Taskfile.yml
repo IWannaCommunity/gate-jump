@@ -14,7 +14,7 @@ tasks:
     build:
         cmds:
             - go version
-            - fileb0x src/migrations/fileb0x.toml
+            - fileb0x src/schemas/fileb0x.toml
             - 'go build
                 -ldflags "
                     -X main.Minor={{._G_MINOR }}
