@@ -58,6 +58,9 @@ type User struct {
 	DateDeleted *time.Time `json:"date_deleted,omitempty"`
 	// READ: ADMIN
 	// WRITE: SERVER
+	UUID *string `json:"uuid"`
+	// READ: PUBLIC
+	// WRITE: Nobody
 }
 
 type UserList struct {
