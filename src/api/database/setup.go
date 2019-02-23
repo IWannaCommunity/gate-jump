@@ -33,7 +33,12 @@ func doesTableExist(name string) (error, bool) {
 }
 
 func setupSchema(filename string) error {
-	f, err := migrations.ReadFile("src/migrations/" + filename)
+	f, err := migrations.ReadFile(filename)
+
+	if err != nil {
+		return err
+	}
+
 	buf := new(strings.Builder)
 	buf.Write(f)
 
