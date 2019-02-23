@@ -1,5 +1,5 @@
 pkg = "migrations"
-dest = "src/api/schemas"
+dest = "src/api/migrations"
 fmt = false
 tags = "" # build tags
 
@@ -24,7 +24,7 @@ lcf = true
 debug = false
 
 [[custom]]
-    files = ["src/schemas/00001_inital.sql", "src/schemas/00002_meta.sql", "src/schemas/00003_magiclinks.sql"]
-    base = ""
+    files = ["src/schemas/00001_inital.sql", "src/schemas/00002_meta.sql", "src/schemas/00003_magiclinks.sql", "src/schemas/00004_uuid.sql"]
+    base = "src/schemas/"
     prefix = ""
     tags = ""
