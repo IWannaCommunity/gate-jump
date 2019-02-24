@@ -28,6 +28,7 @@ func Serve(port, sslport string) {
 	//router.HandleFunc("/user/{id:[0-9]+}", banUser).Methods("POST")
 	router.HandleFunc("/user/{name}", getUserByName).Methods("GET")
 	router.HandleFunc("/verify/{magic}", verifyUser).Methods("GET")
+	router.HandleFunc("/scope", createScope).Methods("POST")
 	router.Use(HTTPRecovery)
 	router.Use(authentication.JWTContext)
 
