@@ -24,7 +24,7 @@ lcf = true
 debug = false
 
 [[custom]]
-    files = ["src/schemas/00001_inital.sql", "src/schemas/00002_meta.sql", "src/schemas/00003_magiclinks.sql", "src/schemas/00004_uuid.sql", "src/schemas/00005_scopes.sql", "src/schemas/00006_groups.sql"]
+    files = ["src/schemas/00001_inital.sql", "src/schemas/00002_meta.sql", "src/schemas/00003_magiclinks.sql", "src/schemas/00004_uuid.sql", "src/schemas/00005_scopes.sql", "src/schemas/00006_groups.sql", "src/schemas/00007_permissions.sql"]
     base = "src/schemas/"
     prefix = ""
     tags = ""
