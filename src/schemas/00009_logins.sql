@@ -6,6 +6,5 @@ CREATE TABLE logins (
     token TEXT NOT NULL,
     expires SMALLINT UNSIGNED NOT NULL,
     PRIMARY KEY (id),
-    FOREIGN KEY (userid) REFERENCES users(id),
-    FOREIGN KEY (useruuid) REFERENCES users(uuid)
+    FOREIGN KEY (userid) REFERENCES users(id)
 )
