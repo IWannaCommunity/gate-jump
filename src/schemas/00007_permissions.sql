@@ -1,6 +1,6 @@
 CREATE TABLE permissions (
-    groupid INT NOT NULL AUTO_INCREMENT,
-    scopeid INT NOT NULL AUTO_INCREMENT,
+    groupid INT NOT NULL,
+    scopeid INT NOT NULL,
     FOREIGN KEY (groupid) REFERENCES groups(id),
-    FOREIGN KEY (scopeid) REFERENCES scopes(id),
+    FOREIGN KEY (scopeid) REFERENCES scopes(id)
 )
