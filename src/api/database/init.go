@@ -8,7 +8,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-const version uint8 = 6
+const version uint8 = 7
 
 var db *sql.DB
 
@@ -87,6 +87,15 @@ func Init() error {
 		case 5:
 			log.Info("Migrating current Database Schema to 6")
 			err := setupSchema("00006_groups.sql")
+			if err != nil {
+				log.Error("Schema failed to execute successfully")
+				return err
+			}
+			fallthrough
+
+		case 6:
+			log.Info("Migrating current Database Schema to 7")
+			err := setupSchema("00007_permissions.sql")
 			if err != nil {
 				log.Error("Schema failed to execute successfully")
 				return err
