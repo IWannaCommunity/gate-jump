@@ -49,8 +49,7 @@ func TestMain(m *testing.M) {
 
 	go Serve("10421", "444") // run router on port
 
-	log.Info("in TestMain", database)
-	log.Info("in TestMain", router)
+	log.Info("Is Router Initalized?: ", router == nil, " ", router)
 
 	te = &tst.TestingEnv{}
 	te.Init(database, router, tableCreationQuery)
@@ -65,15 +64,15 @@ func TestAlive(t *testing.T) {
 	te.Prepare("GET", "/")
 	r := te.Request(nil)
 
-	if assert.NoError(t, r.Err, te.Expect(nil)) {
+	if assert.NoError(t, r.Err, te.Expect()) {
 
-		assert.Equal(t, http.StatusOK, r.Code, te.Expect(http.StatusOK))
-		assert.True(t, r.Response.Success, te.Expect(true))
+		assert.Equal(t, http.StatusOK, r.Code, te.Expect())
+		assert.True(t, r.Response.Success, te.Expect())
 
-		assert.Nil(t, r.Response.Error, te.Expect(nil))
-		assert.Nil(t, r.Response.Token, te.Expect(nil))
-		assert.Nil(t, r.Response.User, te.Expect(nil))
-		assert.Nil(t, r.Response.UserList, te.Expect(nil))
+		assert.Nil(t, r.Response.Error, te.Expect())
+		assert.Nil(t, r.Response.Token, te.Expect())
+		assert.Nil(t, r.Response.User, te.Expect())
+		assert.Nil(t, r.Response.UserList, te.Expect())
 
 	}
 
