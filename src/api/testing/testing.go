@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// payload response returned from api. this should be passed in as an argument eventually
 type Payload struct {
 	Success  bool        `json:"success"`
 	Error    *string     `json:"error,omitempty"`
@@ -17,11 +18,13 @@ type Payload struct {
 	UserList interface{} `json:"userList,omitempty"`
 }
 
+// test payload containing information about the request. should include response time
 type TestPayload struct {
 	code    int
 	payload *Payload
 }
 
+// includes everything relevant to making requests to the api directly through the router
 type TestingEnv struct {
 	s             *sql.DB
 	r             *mux.Router
@@ -31,6 +34,7 @@ type TestingEnv struct {
 	creationQuery string
 }
 
+// should initalize the database on its own eventually by being passed in a string
 func (te *TestingEnv) Init(s *sql.DB, r *mux.Router, creationQuery string) *TestingEnv {
 	te.s = s
 	te.r = r
@@ -38,8 +42,15 @@ func (te *TestingEnv) Init(s *sql.DB, r *mux.Router, creationQuery string) *Test
 	return te
 }
 
-func (te *TestingEnv) Prepare(method string, url string) {
+func (te *TestingEnv) Prepare(method string, url string) *TestingEnv {
+	// clean database for new setup
+	_ = ensureTableExists(te.s, te.creationQuery)
+	clearTable(te.s)
 
+	// set method and url for api requests
+	te.method = method
+	te.url = url
+	return te
 }
 
 func clearTable(db *sql.DB) {
@@ -49,17 +60,14 @@ func clearTable(db *sql.DB) {
 
 func ensureTableExists(db *sql.DB, creationQuery string) error {
 	if _, err := db.Exec(creationQuery); err != nil {
-		return err
+		return err // do we care?
 	}
 	return nil
 }
 
-func (te *TestingEnv) executeRequest(req []byte, method string, url string) (*TestingEnv, error) {
-
-	// Ensure a clean database
-
+func (te *TestingEnv) executeRequest(req []byte) (*TestingEnv, error) {
 	// Make API Request
-	httpRequest, _ := http.NewRequest(method, url, nil)
+	httpRequest, _ := http.NewRequest(te.method, te.url, nil)
 	httpTestRecorder := httptest.NewRecorder()
 	te.r.ServeHTTP(httpTestRecorder, httpRequest)
 	tp := TestPayload{}
