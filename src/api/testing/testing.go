@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 
@@ -78,7 +80,8 @@ func (te *TestingEnv) Request(jsonRequest []byte) TestPayload {
 	tp := TestPayload{}
 	tp.Err = nil
 	tp.Code = httpTestRecorder.Code
-	err := json.NewDecoder(httpTestRecorder.Body).Decode(tp.Response)
+	temp, _ := ioutil.ReadAll(httpTestRecorder.Body)
+	err := json.Unmarshal(temp, &tp.Response)
 	if err != nil { // unmarshal failed somehow
 		tp.Err = err
 	}
