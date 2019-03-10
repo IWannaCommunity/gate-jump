@@ -1,6 +1,7 @@
 package testing
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -10,7 +11,7 @@ import (
 )
 
 // payload response returned from api. this should be passed in as an argument eventually
-type Payload struct {
+type Response struct {
 	Success  bool        `json:"success"`
 	Error    *string     `json:"error,omitempty"`
 	Token    *string     `json:"token,omitempty"`
@@ -20,29 +21,33 @@ type Payload struct {
 
 // test payload containing information about the request. should include response time
 type TestPayload struct {
-	code    int
-	payload *Payload
+	Code     int
+	Err      error
+	Response *Response
 }
 
 // includes everything relevant to making requests to the api directly through the router
 type TestingEnv struct {
 	s             *sql.DB
 	r             *mux.Router
-	tp            *TestPayload
+	lastRequest   interface{}
 	method        string
 	url           string
 	creationQuery string
 }
 
+func (te *TestingEnv) ExpectedPayload(code int, err error, token string, user interface{}, userList interface{}) {
+
+}
+
 // should initalize the database on its own eventually by being passed in a string
-func (te *TestingEnv) Init(s *sql.DB, r *mux.Router, creationQuery string) *TestingEnv {
+func (te *TestingEnv) Init(s *sql.DB, r *mux.Router, creationQuery string) {
 	te.s = s
 	te.r = r
 	te.creationQuery = creationQuery
-	return te
 }
 
-func (te *TestingEnv) Prepare(method string, url string) *TestingEnv {
+func (te *TestingEnv) Prepare(method string, url string) {
 	// clean database for new setup
 	_ = ensureTableExists(te.s, te.creationQuery)
 	clearTable(te.s)
@@ -50,7 +55,6 @@ func (te *TestingEnv) Prepare(method string, url string) *TestingEnv {
 	// set method and url for api requests
 	te.method = method
 	te.url = url
-	return te
 }
 
 func clearTable(db *sql.DB) {
@@ -65,16 +69,22 @@ func ensureTableExists(db *sql.DB, creationQuery string) error {
 	return nil
 }
 
-func (te *TestingEnv) executeRequest(req []byte) (*TestingEnv, error) {
+func (te *TestingEnv) Request(jsonRequest []byte) TestPayload {
 	// Make API Request
-	httpRequest, _ := http.NewRequest(te.method, te.url, nil)
+	te.lastRequest = jsonRequest
+	httpRequest, _ := http.NewRequest(te.method, te.url, bytes.NewBuffer(jsonRequest))
 	httpTestRecorder := httptest.NewRecorder()
 	te.r.ServeHTTP(httpTestRecorder, httpRequest)
 	tp := TestPayload{}
-	tp.code = httpTestRecorder.Code
-	err := json.NewDecoder(httpTestRecorder.Body).Decode(tp.payload)
+	tp.Err = nil
+	tp.Code = httpTestRecorder.Code
+	err := json.NewDecoder(httpTestRecorder.Body).Decode(tp.Response)
 	if err != nil { // unmarshal failed somehow
-		return te, err
+		tp.Err = err
 	}
-	return te, nil
+	return tp
+}
+
+func (te *TestingEnv) Expect(val interface{}) string {
+	return "error occurred" //fmt.Sprintf("%s %s\tExpected %s=%v"
 }
