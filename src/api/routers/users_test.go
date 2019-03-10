@@ -49,10 +49,10 @@ func TestMain(m *testing.M) {
 
 	go Serve("10421", "444") // run router on port
 
-	for router != nil {
-		log.Info("It's nil...")
-	}
+	log.Info("in TestMain", database)
+	log.Info("in TestMain", router)
 
+	te = &tst.TestingEnv{}
 	te.Init(database, router, tableCreationQuery)
 
 	code := m.Run() // run tests
