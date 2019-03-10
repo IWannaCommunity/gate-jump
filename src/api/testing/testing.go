@@ -88,6 +88,6 @@ func (te *TestingEnv) Request(jsonRequest []byte) TestPayload {
 	return tp
 }
 
-func (te *TestingEnv) Expect(val interface{}) string {
-	return "error occurred" //fmt.Sprintf("%s %s\tExpected %s=%v"
+func (te *TestingEnv) Expect() string {
+	return fmt.Sprintf("%s @ %s\twith \"%v\"", te.method, te.url, te.lastRequest)
 }
