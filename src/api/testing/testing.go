@@ -71,7 +71,10 @@ func ensureTableExists(db *sql.DB, creationQuery string) error {
 	return nil
 }
 
-func (te *TestingEnv) Request(jsonRequest []byte) TestPayload {
+func (te *TestingEnv) Request(clear bool, jsonRequest []byte) TestPayload {
+	if clear {
+		clearTable(te.s)
+	}
 	// Make API Request
 	te.lastRequest = jsonRequest
 	httpRequest, _ := http.NewRequest(te.method, te.url, bytes.NewBuffer(jsonRequest))
