@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	"github.com/IWannaCommunity/gate-jump/src/api/database"
 	"github.com/gorilla/mux"
 )
 
@@ -64,8 +65,9 @@ func (te *TestingEnv) Prepare(method string, url string) {
 }
 
 func clearTable(db *sql.DB) {
-	db.Exec("DELETE FROM users")
-	db.Exec("ALTER TABLE users AUTO_INCREMENT = 1")
+	db.Exec("DROP DATABASE gatejump")
+	db.Exec("CREATE DATABASE gatejump")
+	database.Init()
 }
 
 func ensureTableExists(db *sql.DB, creationQuery string) error {

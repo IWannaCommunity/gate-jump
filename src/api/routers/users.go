@@ -162,7 +162,6 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Info("We Got Here", 5)
 	//hash the password
 	hashpwd, err := bcrypt.GenerateFromPassword([]byte(*u.Password), 12)
 	if err != nil {
@@ -176,7 +175,6 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Info("We Got Here", 6)
 	// create a new magic link
 	err = <-cherr
 	if err != nil {
@@ -195,10 +193,8 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Info("New Magiclink ID: ", ml.ID)
 
-	log.Info("We Got Here", 7)
 	res.New(http.StatusCreated).JSON(w)
 
-	log.Info("We Got Here", 8)
 	msg := smtp.NewMessage()
 	msg.SetHeader("From", settings.Mailer.User)
 	msg.SetHeader("To", *checkuser.Email)
@@ -209,6 +205,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 
 		https://localhost:80/verify/`+ml.Magic)
 	mailer.Outbox <- msg
+	log.Info("We Got Here", 8)
 }
 
 // verifyUser verifies the user's account
