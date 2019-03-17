@@ -259,7 +259,8 @@ func (u *User) ScanAll(row *sql.Row) error {
 		&u.LastLogin,
 		&u.LastIP,
 		&u.Deleted,
-		&u.DateDeleted)
+		&u.DateDeleted,
+		&u.UUID)
 }
 
 // scans all user data into the user struct (for rows)
@@ -279,7 +280,8 @@ func (u *User) ScanAlls(rows *sql.Rows) error {
 		&u.LastLogin,
 		&u.LastIP,
 		&u.Deleted,
-		&u.DateDeleted)
+		&u.DateDeleted,
+		&u.UUID)
 }
 
 // applies read user data permissions of a fully retrieved user
