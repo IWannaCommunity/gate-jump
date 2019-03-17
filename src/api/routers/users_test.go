@@ -41,21 +41,26 @@ func TestMain(m *testing.M) {
 		err = settings.FromFile("config/config.json")
 		if err != nil {
 			log.Fatal(err) // clearly couldn't get database variables
-		}*/
+		}
+	*/
 
-	database, err := sql.Open("mysql", fmt.Sprintf("%s:%s@/%s?charset=utf8mb4&parseTime=True&interpolateParams=true", "root", "", "gatejump"))
+	go database.Connect("root", "", "gatejump") // connect the database for the database package
+	go Serve("10421", "444")                    // run router on port
+
+	testdb, err := sql.Open("mysql", fmt.Sprintf("%s:%s@/%s?charset=utf8mb4&parseTime=True&interpolateParams=true", "root", "", "gatejump"))
 	if err != nil {
 		log.Fatal(err) // can't run tests if we can't initialize the database
 	}
 
-	go Serve("10421", "444") // run router on port
-
-	for router == nil { // worries about asyncronous actions so spinlock
+	for database.Initialized() { // checking that database package database object is initalized
 	}
+	for router == nil { // checking that router package router object is initalized
+	}
+
 	log.Info("Router has been initalized.", router)
 
 	te = &tst.TestingEnv{}
-	te.Init(database, router, tableCreationQuery)
+	te.Init(testdb, router, tableCreationQuery)
 
 	code := m.Run() // run tests
 
