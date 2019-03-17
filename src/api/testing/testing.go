@@ -93,5 +93,5 @@ func (te *TestingEnv) Request(jsonRequest []byte) TestPayload {
 }
 
 func (te *TestingEnv) Expect() string {
-	return fmt.Sprintf("%s @ %s\twith \"%v\"", te.method, te.url, te.lastRequest)
+	return fmt.Sprintf("%s @ %s | \"%s\"", te.method, te.url, te.lastRequest)
 }
