@@ -12,6 +12,10 @@ const version uint8 = 5
 
 var db *sql.DB
 
+func Initialized() bool {
+	return db != nil
+}
+
 func Connect(user, password, dbname string) {
 	var err error
 	db, err = sql.Open("mysql", fmt.Sprintf("%s:%s@/%s?charset=utf8mb4&parseTime=True&interpolateParams=true", user, password, dbname))
