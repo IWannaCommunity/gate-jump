@@ -55,8 +55,12 @@ func (te *TestingEnv) Prepare(method string, url string) {
 	clearTable(te.s)
 
 	// set method and url for api requests
-	te.method = method
-	te.url = url
+	if method != "" {
+		te.method = method
+	}
+	if url != "" {
+		te.url = url
+	}
 }
 
 func clearTable(db *sql.DB) {
