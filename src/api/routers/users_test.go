@@ -49,7 +49,9 @@ func TestMain(m *testing.M) {
 
 	go Serve("10421", "444") // run router on port
 
-	log.Info("Is Router Initalized?: ", router == nil, " ", router)
+	for router == nil { // worries about asyncronous actions so spinlock
+	}
+	log.Info("Router has been initalized.", router)
 
 	te = &tst.TestingEnv{}
 	te.Init(database, router, tableCreationQuery)
