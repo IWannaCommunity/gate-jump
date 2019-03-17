@@ -57,8 +57,6 @@ func TestMain(m *testing.M) {
 	for router == nil { // checking that router package router object is initalized
 	}
 
-	log.Info("Router has been initalized.", router)
-
 	te = &tst.TestingEnv{}
 	te.Init(testdb, router, tableCreationQuery)
 
