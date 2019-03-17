@@ -24,7 +24,7 @@ lcf = true
 debug = false
 
 [[custom]]
-    files = ["src/schemas/00001_inital.sql", "src/schemas/00002_meta.sql", "src/schemas/00003_magiclinks.sql", "src/schemas/00004_uuid.sql", "src/schemas/00005_scopes.sql", "src/schemas/00006_groups.sql", "src/schemas/00007_permissions.sql", "src/schemas/00008_memberships.sql", "src/schemas/00009_logins.sql", "src/schemas/00010_ipforlogins.sql", "src/schemas/00011_epochforlogins.sql", "src/schemas/00012_trimlogins.sql"]
+    files = ["src/schemas/00001_inital.sql", "src/schemas/00002_meta.sql", "src/schemas/00003_magiclinks.sql", "src/schemas/00004_uuid.sql", "src/schemas/00005_scopes.sql", "src/schemas/00006_groups.sql", "src/schemas/00007_permissions.sql", "src/schemas/00008_memberships.sql", "src/schemas/00009_logins.sql", "src/schemas/00010_ipforlogins.sql", "src/schemas/00011_epochforlogins.sql", "src/schemas/00012_trimlogins.sql", "src/schemas/00013_defaultscope.sql"]
     base = "src/schemas/"
     prefix = ""
     tags = ""
