@@ -1,0 +1,2 @@
+ALTER TABLE logins
+    MODIFY expires INT UNSIGNED NOT NULL
