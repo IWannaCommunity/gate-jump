@@ -27,11 +27,16 @@ type mailerConfig struct {
 	Pass string `json:"pass"`
 }
 
+type superuserConfig struct {
+	Password string `json:"password"`
+}
+
 // Configuration and Settings
 var (
 	Database          databaseConfig
 	Https             httpsConfig
 	Mailer            mailerConfig
+	SuperUser         superuserConfig
 	RouteBase         string
 	Port              string
 	SslPort           string
@@ -81,6 +86,10 @@ func setActiveConfig(configmap map[string]interface{}) {
 		Port: configmap["mailer"].(map[string]interface{})["port"].(string),
 		User: configmap["mailer"].(map[string]interface{})["user"].(string),
 		Pass: configmap["mailer"].(map[string]interface{})["pass"].(string),
+	}
+
+	SuperUser = superuserConfig{
+		Password: configmap["superuser"].(map[string]interface{})["password"].(string),
 	}
 
 	Host = configmap["host"].(string)
