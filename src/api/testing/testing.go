@@ -32,12 +32,11 @@ type TestPayload struct {
 
 // includes everything relevant to making requests to the api directly through the router
 type TestingEnv struct {
-	s             *sql.DB
-	r             *mux.Router
-	lastRequest   interface{}
-	method        string
-	url           string
-	creationQuery string
+	s           *sql.DB
+	r           *mux.Router
+	lastRequest interface{}
+	method      string
+	url         string
 }
 
 func (te *TestingEnv) ExpectedPayload(code int, err error, token string, user interface{}, userList interface{}) {
@@ -45,15 +44,13 @@ func (te *TestingEnv) ExpectedPayload(code int, err error, token string, user in
 }
 
 // should initalize the database on its own eventually by being passed in a string
-func (te *TestingEnv) Init(s *sql.DB, r *mux.Router, creationQuery string) {
+func (te *TestingEnv) Init(s *sql.DB, r *mux.Router) {
 	te.s = s
 	te.r = r
-	te.creationQuery = creationQuery
 }
 
 func (te *TestingEnv) Prepare(method string, url string) {
 	// clean database for new setup
-	_ = ensureTableExists(te.s, te.creationQuery)
 	clearTable(te.s)
 
 	// set method and url for api requests

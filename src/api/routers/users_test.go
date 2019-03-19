@@ -16,25 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const tableCreationQuery = `CREATE TABLE users (
-    id INT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-    password CHAR(60) BINARY NOT NULL,
-    email VARCHAR(100),
-    country CHAR(2),
-    locale VARCHAR(20),
-    date_created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    admin BOOL NOT NULL DEFAULT FALSE,
-    verified BOOL NOT NULL DEFAULT FALSE,
-    banned BOOL NOT NULL DEFAULT FALSE,
-    last_token BLOB,
-    last_login DATETIME,
-    last_ip VARCHAR(50),
-    deleted BOOL NOT NULL DEFAULT FALSE,
-    date_deleted DATETIME,
-    PRIMARY KEY (id)
-)`
-
 var te *tst.TestingEnv
 
 func TestMain(m *testing.M) {
@@ -66,7 +47,7 @@ func TestMain(m *testing.M) {
 	}
 
 	te = &tst.TestingEnv{}
-	te.Init(testdb, router, tableCreationQuery)
+	te.Init(testdb, router)
 
 	code := m.Run() // run tests
 
