@@ -107,9 +107,9 @@ func TestCreateUser(t *testing.T) {
 		`{"name":"test_user@website.com","password":"12345678","email":"email@website.com"}`, // invalid username (its an email)
 		`{"name":"test_user","password":"12345","email":"email@website.com"}`,                // invalid password (less than 8 characters)
 		`{"name":"test_user","password":"12345678","email":"email"}`)                         // invalid email (non-email format)
-	mainUser := `{"name":"test_user","password":"12345678","email":"email@website.com"}` // valid request
-	//duplicateName := `{"name":"test_user","password":"12345678","email":"email@someotherwebsite.com"}` // name == mainUser.Name
-	//duplicateEmail := `{"name":"some_other_user","password":"12345678","email":"email@website.com"}`   // email == mainUser.Email
+	mainUser := `{"name":"test_user","password":"12345678","email":"email@website.com"}`               // valid request
+	duplicateName := `{"name":"test_user","password":"12345678","email":"email@someotherwebsite.com"}` // name == mainUser.Name
+	duplicateEmail := `{"name":"some_other_user","password":"12345678","email":"email@website.com"}`   // email == mainUser.Email
 
 	// test bad request
 	for i, badRequest := range badRequests {
@@ -152,35 +152,33 @@ func TestCreateUser(t *testing.T) {
 		assert.Nil(t, r.Response.UserList, te.Expect())
 	}
 
-	/*
-		// test duplicate username
-		r = te.Request([]byte(duplicateName))
-		if assert.NoError(t, r.Err) {
+	// test duplicate username
+	r = te.Request([]byte(duplicateName))
+	if assert.NoError(t, r.Err) {
 
-			assert.Equal(t, http.StatusConflict, r.Code, te.Expect())
-			assert.False(t, r.Response.Success, te.Expect())
-			if assert.NotNil(t, r.Response.Error) {
-				assert.Equal(t, "Username Already Exists", *r.Response.Error, te.Expect())
-			}
-
-			assert.Nil(t, r.Response.Token)
-			assert.Nil(t, r.Response.User)
-			assert.Nil(t, r.Response.UserList)
+		assert.Equal(t, http.StatusConflict, r.Code, te.Expect())
+		assert.False(t, r.Response.Success, te.Expect())
+		if assert.NotNil(t, r.Response.Error) {
+			assert.Equal(t, "Username Already Exists", *r.Response.Error, te.Expect())
 		}
 
-		// test duplicate email
-		r = te.Request([]byte(duplicateEmail))
-		if assert.NoError(t, r.Err) {
+		assert.Nil(t, r.Response.Token)
+		assert.Nil(t, r.Response.User)
+		assert.Nil(t, r.Response.UserList)
+	}
 
-			assert.Equal(t, http.StatusConflict, r.Code, "expected statusconflict")
-			assert.False(t, r.Response.Success)
-			if assert.NotNil(t, r.Response.Error) {
-				assert.Equal(t, "Email Already In Use", *r.Response.Error)
-			}
+	// test duplicate email
+	r = te.Request([]byte(duplicateEmail))
+	if assert.NoError(t, r.Err) {
 
-			assert.Nil(t, r.Response.Token)
-			assert.Nil(t, r.Response.User)
-			assert.Nil(t, r.Response.UserList)
+		assert.Equal(t, http.StatusConflict, r.Code, "expected statusconflict")
+		assert.False(t, r.Response.Success)
+		if assert.NotNil(t, r.Response.Error) {
+			assert.Equal(t, "Email Already In Use", *r.Response.Error)
 		}
-	*/
+
+		assert.Nil(t, r.Response.Token)
+		assert.Nil(t, r.Response.User)
+		assert.Nil(t, r.Response.UserList)
+	}
 }
