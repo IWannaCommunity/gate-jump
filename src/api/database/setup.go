@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"strings"
 
+	"github.com/IWannaCommunity/gate-jump/src/api/log"
 	"github.com/IWannaCommunity/gate-jump/src/api/migrations"
 	"github.com/IWannaCommunity/gate-jump/src/api/settings"
 )
@@ -36,6 +37,7 @@ func setupSchema(filename string) error {
 	f, err := migrations.ReadFile(filename)
 
 	if err != nil {
+		log.Error("Failed reading from file")
 		return err
 	}
 
@@ -45,12 +47,14 @@ func setupSchema(filename string) error {
 	stmt, err := db.Prepare(buf.String())
 
 	if err != nil {
+		log.Error("Failed preparing statement ", buf.String())
 		return err
 	}
 
 	_, err = stmt.Exec()
 
 	if err != nil {
+		log.Error("Failed executing statement")
 		return err
 	}
 
