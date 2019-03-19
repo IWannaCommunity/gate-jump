@@ -58,7 +58,7 @@ func TestMain(m *testing.M) {
 		log.Fatal(err) // can't run tests if we can't initialize the database
 	}
 
-	for database.Initialized() { // checking that database package database object is initalized
+	for !database.Initialized() { // checking that database package database object is initalized
 	}
 	for router == nil { // checking that router package router object is initalized
 	}
