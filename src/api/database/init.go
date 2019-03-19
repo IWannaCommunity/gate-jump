@@ -11,7 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const version uint8 = 16
+const version uint8 = 17
 
 var db *sql.DB
 
@@ -194,6 +194,15 @@ func Init() error {
 		case 15:
 			log.Info("Migrate current Database Schema to 16")
 			err := setupSchema("00016_scopeasperm.sql")
+			if err != nil {
+				log.Error("Schema failed to execute successfully")
+				return err
+			}
+			fallthrough
+
+		case 16:
+			log.Info("Migrate current Database Schema to 17")
+			err := setupSchema("00017_defaultmembership.sql")
 			if err != nil {
 				log.Error("Schema failed to execute successfully")
 				return err
