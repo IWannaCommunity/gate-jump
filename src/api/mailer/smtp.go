@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/IWannaCommunity/gate-jump/src/api/log"
 	"github.com/IWannaCommunity/gate-jump/src/api/settings"
 	smtp "github.com/go-mail/mail"
 )
@@ -24,10 +25,10 @@ func SMTPInit() error {
 	mailman.StartTLSPolicy = smtp.MandatoryStartTLS
 
 	outbox, err := mailman.Dial()
-	defer outbox.Close()
 	if err != nil {
+		log.Error("Failed dialing the outbox")
 		return err
 	}
-
+	defer outbox.Close()
 	return nil
 }
