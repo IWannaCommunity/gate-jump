@@ -6,5 +6,5 @@
 package migrations
 
 func ReadFile(path string) ([]byte, error) {
-    return []byte{}, nil
+	return []byte{}, nil
 }

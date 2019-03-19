@@ -76,7 +76,7 @@ func (r *Response) Error(w http.ResponseWriter) {
 				Message: Invalid sql syntax check something something
 		*/
 		log.Error(
-			fmt.Sprintf("\n\tInternal Server Error (%d) in Function: %s()\n\t\"%s\" << %v\n\tMessage: %s",
+			fmt.Sprintf("\n\tInternal Server Error (%d) in Function: %s()\n\t\"%s\" << %v\n\tMessage: %s\n\t",
 				r.Code, r.Function, r.InternalError.Query, r.InternalError.Args, r.InternalError.Err.Error()))
 	}
 	r.Payload.Success = false

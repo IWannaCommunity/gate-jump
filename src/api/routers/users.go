@@ -112,6 +112,7 @@ func getUsers(w http.ResponseWriter, r *http.Request) {
 
 // register
 func createUser(w http.ResponseWriter, r *http.Request) {
+
 	var u database.User
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&u); err != nil || u.Name == nil || u.Password == nil || u.Email == nil {
@@ -152,7 +153,6 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
 	}
-
 	// check if user with email already exists; if not, we will get an ErrNoRows which is what we want
 	if serr := checkuser.GetUserByEmail(authentication.SERVER); serr.Err == nil {
 		res.New(http.StatusConflict).SetErrorMessage("Email Already In Use").Error(w)
@@ -205,6 +205,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 
 		https://localhost:80/verify/`+ml.Magic)
 	mailer.Outbox <- msg
+	log.Info("We Got Here", 8)
 }
 
 // verifyUser verifies the user's account

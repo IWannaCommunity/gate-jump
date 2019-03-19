@@ -1,12 +1,12 @@
 package authentication
 
 import (
-    "net/http"
-    "context"
+	"context"
+	"net/http"
 
-    jwt "github.com/dgrijalva/jwt-go"
-    "github.com/IWannaCommunity/gate-jump/src/api/res"
-    "github.com/IWannaCommunity/gate-jump/src/api/settings"
+	"github.com/IWannaCommunity/gate-jump/src/api/res"
+	"github.com/IWannaCommunity/gate-jump/src/api/settings"
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 type Level int
