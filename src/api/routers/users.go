@@ -205,7 +205,6 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 
 		https://localhost:80/verify/`+ml.Magic)
 	mailer.Outbox <- msg
-	log.Info("We Got Here", 8)
 }
 
 // verifyUser verifies the user's account
