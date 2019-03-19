@@ -5,10 +5,13 @@ import (
 	"fmt"
 
 	"github.com/IWannaCommunity/gate-jump/src/api/log"
+	"github.com/IWannaCommunity/gate-jump/src/api/res"
+	"github.com/IWannaCommunity/gate-jump/src/api/settings"
 	_ "github.com/go-sql-driver/mysql"
+	"golang.org/x/crypto/bcrypt"
 )
 
-const version uint8 = 14
+const version uint8 = 15
 
 var db *sql.DB
 
@@ -160,6 +163,29 @@ func Init() error {
 			log.Info("Migrate current Database Schema to 14")
 			err := setupSchema("00014_defaultgroup.sql")
 			if err != nil {
+				log.Error("Schema failed to execute successfully")
+				return err
+			}
+			fallthrough
+
+		case 14:
+			log.Info("Migrate current Database Schema to 15")
+
+			if settings.SuperUser.Password == "" {
+				log.Warning("SuperUser password was either not specified or was empty. Please assign a stronger password ASAP.")
+			}
+
+			serr := *new(res.ServerError)
+			serr.Query = "INSERT INTO users (name, password) VALUES (?, ?)"
+			ciphertext, err := bcrypt.GenerateFromPassword([]byte(settings.SuperUser.Password), 12)
+			if err != nil {
+				log.Error("Schema failed to execute successfully")
+				return err
+			}
+			serr.Args = append(serr.Args, "admin", ciphertext)
+
+			_, serr.Err = db.Exec(serr.Query, serr.Args...)
+			if serr.Err != nil {
 				log.Error("Schema failed to execute successfully")
 				return err
 			}
