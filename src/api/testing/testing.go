@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 
 	"github.com/IWannaCommunity/gate-jump/src/api/database"
+	"github.com/IWannaCommunity/gate-jump/src/api/log"
 	"github.com/gorilla/mux"
 )
 
@@ -65,9 +66,19 @@ func (te *TestingEnv) Prepare(method string, url string) {
 }
 
 func clearTable(db *sql.DB) {
-	db.Exec("DROP DATABASE gatejump")
-	db.Exec("CREATE DATABASE gatejump")
-	database.Init()
+	var err error
+	_, err = db.Exec("DROP DATABASE gatejump")
+	if err != nil {
+		log.Fatal("1", err)
+	}
+	_, err = db.Exec("CREATE DATABASE gatejump")
+	if err != nil {
+		log.Fatal("2", err)
+	}
+	err = database.Init()
+	if err != nil {
+		log.Fatal("3", err)
+	}
 }
 
 func ensureTableExists(db *sql.DB, creationQuery string) error {
