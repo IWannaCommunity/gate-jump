@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/IWannaCommunity/gate-jump/src/api/mailer"
+	"github.com/IWannaCommunity/gate-jump/src/api/settings"
 
 	"github.com/IWannaCommunity/gate-jump/src/api/database"
 	"github.com/IWannaCommunity/gate-jump/src/api/log"
@@ -39,12 +40,10 @@ var te *tst.TestingEnv
 func TestMain(m *testing.M) {
 	var err error
 
-	/*
-		err = settings.FromFile("config/config.json")
-		if err != nil {
-			log.Fatal(err) // clearly couldn't get database variables
-		}
-	*/
+	err = settings.FromFile("../config/config.json")
+	if err != nil {
+		log.Fatal(err) // clearly couldn't get database variables
+	}
 
 	go database.Connect("root", "", "gatejump") // connect the database for the database package
 	go Serve("10421", "444")                    // run router on port
