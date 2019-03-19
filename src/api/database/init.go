@@ -27,6 +27,7 @@ func Connect(user, password, dbname string) {
 func Init() error {
 	err, exists := doesTableExist("meta")
 	if err != nil {
+		log.Error("Failed checking for exiting meta table")
 		return err
 	}
 
@@ -34,16 +35,19 @@ func Init() error {
 	if exists == false {
 		err := setupSchema("00001_inital.sql")
 		if err != nil {
+			log.Error("Failed setting up inital")
 			return err
 		}
 
 		err = setupSchema("00002_meta.sql")
 		if err != nil {
+			log.Error("Failed setting up meta")
 			return err
 		}
 
 		result, err := db.Exec(`INSERT INTO meta ( db_version ) VALUES ( 2 );`)
 		if err != nil {
+			log.Error("Failed inserting db version into meta")
 			return err
 		}
 
