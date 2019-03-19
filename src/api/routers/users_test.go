@@ -7,6 +7,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/IWannaCommunity/gate-jump/src/api/mailer"
+
 	"github.com/IWannaCommunity/gate-jump/src/api/database"
 	"github.com/IWannaCommunity/gate-jump/src/api/log"
 	tst "github.com/IWannaCommunity/gate-jump/src/api/testing"
@@ -46,6 +48,11 @@ func TestMain(m *testing.M) {
 
 	go database.Connect("root", "", "gatejump") // connect the database for the database package
 	go Serve("10421", "444")                    // run router on port
+	err = mailer.SMTPInit()
+	if err != nil {
+		log.Fatal(err)
+	}
+	go mailer.Daemon()
 
 	testdb, err := sql.Open("mysql", fmt.Sprintf("%s:%s@/%s?charset=utf8mb4&parseTime=True&interpolateParams=true", "root", "", "gatejump"))
 	if err != nil {
@@ -55,6 +62,8 @@ func TestMain(m *testing.M) {
 	for database.Initialized() { // checking that database package database object is initalized
 	}
 	for router == nil { // checking that router package router object is initalized
+	}
+	for mailer.Outbox == nil { // checking that mailer object is initalized
 	}
 
 	te = &tst.TestingEnv{}
