@@ -17,6 +17,11 @@ tags:
   externalDocs:
     description: ""
     url: ""
+- name: "scopes"
+  description: "scopes stuff"
+  externalDocs:
+    description: ""
+    url: ""
 - name: "misc"
   description: "Misc API requests"
   externalDocs:
@@ -25,13 +30,186 @@ tags:
 schemes:
 - "https"
 - "http"
+
+consumes:
+  - "applicataion/json"
+produces:
+  - "applicataion/json"
+  
 paths:
   /:
     get:
       tags:
       - "misc"
       summary: "Check if the server is up and running"
-      
+      description: ""
+      operationId: "getAlive"
+      parameters:
+      - in: "body"
+        name: "name"
+        description: "something"
+        required: true
+  /scope:
+    post:
+      tags:
+      - "scopes"
+      summary: "Creates a new scope"
+      description: "Scopes are data, more precisely defining how a user can interact with services."
+      operationId: "createScope"
+      parameters:
+      - in: "string"
+        name: "name"
+        description: "Name of the scope"
+        required: true
+      - in: ""
+        name: "description"
+  /user:  
+    get:
+      tags:
+      - "user"
+      summary: "Get a list of users from the given id."
+      description: "thinking"
+      operationId: "getUsers"
+      parameters:
+      - in: "Authorization"
+        name: "Authorization Token"
+        description: "Used to confirm the person making the request is an admin of gate-jump."
+        required: true
+  /register:
+    post:
+      tags:
+      - "user"
+      summary: "Register an account to the website."
+      description: "thinking"
+      operationId: "createUser"
+      parameters:
+      - name: "body"
+        in: "body"
+        description: "The account information."
+        schema:
+          $ref: "#/definitions/CreateData"
+        required: true
+  /login:
+    post:
+      tags:
+      - "user"
+      summary: "Login an account to the website."
+      description: "thinking"
+      operationId: "validateUser"
+      parameters:
+      - name: "body"
+        in: "body"
+        description: "The account information."
+        schema:
+          $ref: "#/definitions/CreateData"
+  /refresh:
+    post:
+      tags:
+      - "user"
+      summary: "next to api thingy"
+      description: "body inside click"
+      operationId: "function name"
+      parameters:
+      - name: "body"
+        in: "body"
+        description: "parameter information"
+        schema:
+          $ref: "#/definitions/CreateData"
+  /user/{id:[0-9]+}:
+    get:
+      tags:
+      - "user"
+      summary: "next to api thingy"
+      description: "body inside click"
+      operationId: "function name"
+      parameters:
+      - name: "body"
+        in: "body"
+        description: "parameter information"
+        schema:
+          $ref: "#/definitions/CreateData"
+    put:
+      tags:
+      - "user"
+      summary: "next to api thingy"
+      description: "body inside click"
+      operationId: "function name"
+      parameters:
+      - name: "body"
+        in: "body"
+        description: "parameter information"
+        schema:
+          $ref: "#/definitions/CreateData"
+    delete:
+      tags:
+      - "user"
+      summary: "next to api thingy"
+      description: "body inside click"
+      operationId: "function name"
+      parameters:
+      - name: "body"
+        in: "body"
+        description: "parameter information"
+        schema:
+          $ref: "#/definitions/CreateData"
+    post:
+      tags:
+      - "user"
+      summary: "next to api thingy"
+      description: "body inside click"
+      operationId: "function name"
+      parameters:
+      - name: "body"
+        in: "body"
+        description: "parameter information"
+        schema:
+          $ref: "#/definitions/CreateData"
+  /user/{name}:
+    get:
+      tags:
+      - "user"
+      summary: "next to api thingy"
+      description: "body inside click"
+      operationId: "function name"
+      parameters:
+      - name: "body"
+        in: "body"
+        description: "parameter information"
+        schema:
+          $ref: "#/definitions/CreateData"
+  /verify/{magic}:
+    get:
+      tags:
+      - "user"
+      summary: "next to api thingy"
+      description: "body inside click"
+      operationId: "function name"
+      parameters:
+      - name: "body"
+        in: "body"
+        description: "parameter information"
+        schema:
+          $ref: "#/definitions/CreateData"
+
+definitions:
+  Model:
+    type: "Object"
+    xml:
+      name: "Model"
+  CreateData:
+    type: "Object"
+    properties:
+      name:
+        type: "string"
+        example: "stinkycheeseone890"
+      password:
+        type: "string"
+        example: "CorrectHorseBatteryStaple"
+      email:
+        type: "string"
+        example: "iLOVEcheese@gmail.com"
+    xml:
+      name: "UserCreateData"
 securityDefinitions:
   petstore_auth:
     type: "oauth2"
