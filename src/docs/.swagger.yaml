@@ -193,11 +193,11 @@ paths:
 
 definitions:
   Model:
-    type: "Object"
+    type: "object"
     xml:
       name: "Model"
   CreateData:
-    type: "Object"
+    type: "object"
     properties:
       name:
         type: "string"
