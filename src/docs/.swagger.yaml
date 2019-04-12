@@ -52,6 +52,7 @@ paths:
         200:
           description: No Description
           content: {}
+
   /user:  
     get:
       tags:
@@ -216,7 +217,7 @@ components:
     Model:
       type: "object"
       xml:
-        name: "Model"
+        name: "BlankModel"
     CreateData:
       type: "object"
       properties:
