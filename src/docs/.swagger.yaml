@@ -36,11 +36,6 @@ paths:
       summary: "Check if the server is up and running"
       description: "Should be used as a check to determine if the authentication service is running."
       operationId: "getAlive"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Model'
       responses:
         200:
           description: No Description
@@ -53,13 +48,6 @@ paths:
       summary: "Creates a new scope"
       description: "Scopes are data, more precisely defining how a user can interact with services."
       operationId: "createScope"
-      parameters:
-      - in: "string"
-        name: "name"
-        description: "Name of the scope"
-        required: true
-      - in: ""
-        name: "description"
       responses:
         200:
           description: No Description
@@ -71,11 +59,6 @@ paths:
       summary: "Get a list of users from the given id."
       description: "thinking"
       operationId: "getUsers"
-      parameters:
-      - in: "Authorization"
-        name: "Authorization Token"
-        description: "Used to confirm the person making the request is an admin of gate-jump."
-        required: true
       responses:
         200:
           description: No Description
@@ -87,13 +70,12 @@ paths:
       summary: "Register an account to the website."
       description: "thinking"
       operationId: "createUser"
-      parameters:
-      - name: "body"
-        in: "body"
-        description: "The account information."
-        schema:
-          $ref: "#/components/schemas/CreateData"
-        required: true
+      requestBody:
+        description: "No Description"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateData"
       responses:
         200:
           description: No Description
@@ -105,12 +87,6 @@ paths:
       summary: "Login an account to the website."
       description: "thinking"
       operationId: "validateUser"
-      parameters:
-      - name: "body"
-        in: "body"
-        description: "The account information."
-        schema:
-          $ref: "#/components/schemas/Model"
       responses:
         200:
           description: No Description
@@ -122,17 +98,11 @@ paths:
       summary: "Retrieves a fresh bearer token for a user."
       description: "body inside click"
       operationId: "refreshUser"
-      parameters:
-      - name: "body"
-        in: "body"
-        description: "parameter information"
-        schema:
-          $ref: "#/components/schemas/Model"
       responses:
         200:
           description: No Description
           content: {}
-  /user/{id:[0-9]+}:
+  /user/{id}:
     get:
       tags:
       - "user"
@@ -140,11 +110,13 @@ paths:
       description: "body inside click"
       operationId: "function name"
       parameters:
-      - name: "body"
-        in: "body"
+      - name: "id"
+        in: "path"
         description: "parameter information"
+        required: true
         schema:
-          $ref: "#/components/schemas/Model"
+          type: integer
+          format: uint64
       responses:
         200:
           description: No Description
@@ -154,13 +126,15 @@ paths:
       - "user"
       summary: "next to api thingy"
       description: "body inside click"
-      operationId: "function name"
+      operationId: "function name2"
       parameters:
-      - name: "body"
-        in: "body"
+      - name: "id"
+        in: "path"
         description: "parameter information"
+        required: true
         schema:
-          $ref: "#/components/schemas/Model"
+          type: integer
+          format: int64
       responses:
         200:
           description: No Description
@@ -170,13 +144,15 @@ paths:
       - "user"
       summary: "next to api thingy"
       description: "body inside click"
-      operationId: "function name"
+      operationId: "function name3"
       parameters:
-      - name: "body"
-        in: "body"
+      - name: "id"
+        in: "path"
         description: "parameter information"
+        required: true
         schema:
-          $ref: "#/components/schemas/Model"
+          type: integer
+          format: int64
       responses:
         200:
           description: No Description
@@ -186,13 +162,15 @@ paths:
       - "user"
       summary: "next to api thingy"
       description: "body inside click"
-      operationId: "function name"
+      operationId: "function name4"
       parameters:
-      - name: "body"
-        in: "body"
+      - name: "id"
+        in: "path"
         description: "parameter information"
+        required: true
         schema:
-          $ref: "#/components/schemas/Model"
+          type: integer
+          format: int64
       responses:
         200:
           description: No Description
@@ -203,13 +181,14 @@ paths:
       - "user"
       summary: "next to api thingy"
       description: "body inside click"
-      operationId: "function name"
+      operationId: "function name5"
       parameters:
-      - name: "body"
-        in: "body"
+      - name: "name"
+        in: "path"
         description: "parameter information"
+        required: true
         schema:
-          $ref: "#/components/schemas/Model"
+          type: string
       responses:
         200:
           description: No Description
@@ -220,7 +199,13 @@ paths:
       - "user"
       summary: "next to api thingy"
       description: "body inside click"
-      operationId: "function name"
+      operationId: "function name6"
+      parameters:
+      - name: "magic"
+        in: "path"
+        required: true
+        schema:
+          type: string
       responses:
         200:
           description: No Description
