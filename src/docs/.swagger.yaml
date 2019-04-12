@@ -1,4 +1,4 @@
-swagger: "2.0"
+openapi: 3.0.2
 info:
   description: "This is a reference for gate-jump's API."
   version: "1.0.0"
@@ -9,8 +9,8 @@ info:
   license:
     name: "Apache 2.0"
     url: "http://www.apache.org/licenses/LICENSE-2.0.html"
-host: "gatejump.com"
-basePath: "/"
+servers:
+- url: https://gate-jump.com/api/v0
 tags:
 - name: "user"
   description: "User interaction API requests"
@@ -27,14 +27,6 @@ tags:
   externalDocs:
     description: ""
     url: ""
-schemes:
-- "https"
-- "http"
-
-consumes:
-  - "applicataion/json"
-produces:
-  - "applicataion/json"
   
 paths:
   /:
@@ -42,13 +34,18 @@ paths:
       tags:
       - "misc"
       summary: "Check if the server is up and running"
-      description: ""
+      description: "Should be used as a check to determine if the authentication service is running."
       operationId: "getAlive"
-      parameters:
-      - in: "body"
-        name: "name"
-        description: "something"
-        required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Model'
+      responses:
+        200:
+          description: No Description
+          content: {}
+
   /scope:
     post:
       tags:
@@ -63,6 +60,10 @@ paths:
         required: true
       - in: ""
         name: "description"
+      responses:
+        200:
+          description: No Description
+          content: {}
   /user:  
     get:
       tags:
@@ -75,6 +76,10 @@ paths:
         name: "Authorization Token"
         description: "Used to confirm the person making the request is an admin of gate-jump."
         required: true
+      responses:
+        200:
+          description: No Description
+          content: {}
   /register:
     post:
       tags:
@@ -87,8 +92,12 @@ paths:
         in: "body"
         description: "The account information."
         schema:
-          $ref: "#/definitions/CreateData"
+          $ref: "#/components/schemas/CreateData"
         required: true
+      responses:
+        200:
+          description: No Description
+          content: {}
   /login:
     post:
       tags:
@@ -101,20 +110,28 @@ paths:
         in: "body"
         description: "The account information."
         schema:
-          $ref: "#/definitions/CreateData"
+          $ref: "#/components/schemas/Model"
+      responses:
+        200:
+          description: No Description
+          content: {}
   /refresh:
     post:
       tags:
       - "user"
-      summary: "next to api thingy"
+      summary: "Retrieves a fresh bearer token for a user."
       description: "body inside click"
-      operationId: "function name"
+      operationId: "refreshUser"
       parameters:
       - name: "body"
         in: "body"
         description: "parameter information"
         schema:
-          $ref: "#/definitions/CreateData"
+          $ref: "#/components/schemas/Model"
+      responses:
+        200:
+          description: No Description
+          content: {}
   /user/{id:[0-9]+}:
     get:
       tags:
@@ -127,7 +144,11 @@ paths:
         in: "body"
         description: "parameter information"
         schema:
-          $ref: "#/definitions/CreateData"
+          $ref: "#/components/schemas/Model"
+      responses:
+        200:
+          description: No Description
+          content: {}
     put:
       tags:
       - "user"
@@ -139,7 +160,11 @@ paths:
         in: "body"
         description: "parameter information"
         schema:
-          $ref: "#/definitions/CreateData"
+          $ref: "#/components/schemas/Model"
+      responses:
+        200:
+          description: No Description
+          content: {}
     delete:
       tags:
       - "user"
@@ -151,7 +176,11 @@ paths:
         in: "body"
         description: "parameter information"
         schema:
-          $ref: "#/definitions/CreateData"
+          $ref: "#/components/schemas/Model"
+      responses:
+        200:
+          description: No Description
+          content: {}
     post:
       tags:
       - "user"
@@ -163,7 +192,11 @@ paths:
         in: "body"
         description: "parameter information"
         schema:
-          $ref: "#/definitions/CreateData"
+          $ref: "#/components/schemas/Model"
+      responses:
+        200:
+          description: No Description
+          content: {}
   /user/{name}:
     get:
       tags:
@@ -176,7 +209,11 @@ paths:
         in: "body"
         description: "parameter information"
         schema:
-          $ref: "#/definitions/CreateData"
+          $ref: "#/components/schemas/Model"
+      responses:
+        200:
+          description: No Description
+          content: {}
   /verify/{magic}:
     get:
       tags:
@@ -184,44 +221,31 @@ paths:
       summary: "next to api thingy"
       description: "body inside click"
       operationId: "function name"
-      parameters:
-      - name: "body"
-        in: "body"
-        description: "parameter information"
-        schema:
-          $ref: "#/definitions/CreateData"
+      responses:
+        200:
+          description: No Description
+          content: {}
 
-definitions:
-  Model:
-    type: "object"
-    xml:
-      name: "Model"
-  CreateData:
-    type: "object"
-    properties:
-      name:
-        type: "string"
-        example: "stinkycheeseone890"
-      password:
-        type: "string"
-        example: "CorrectHorseBatteryStaple"
-      email:
-        type: "string"
-        example: "iLOVEcheese@gmail.com"
-    xml:
-      name: "UserCreateData"
-securityDefinitions:
-  petstore_auth:
-    type: "oauth2"
-    authorizationUrl: "http://petstore.swagger.io/oauth/dialog"
-    flow: "implicit"
-    scopes:
-      write:pets: "modify pets in your account"
-      read:pets: "read your pets"
-  api_key:
-    type: "apiKey"
-    name: "api_key"
-    in: "header"
+components:
+  schemas:
+    Model:
+      type: "object"
+      xml:
+        name: "Model"
+    CreateData:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+          example: "stinkycheeseone890"
+        password:
+          type: "string"
+          example: "CorrectHorseBatteryStaple"
+        email:
+          type: "string"
+          example: "iLOVEcheese@gmail.com"
+      xml:
+        name: "UserCreateData"
 externalDocs:
   description: "Find out more about Swagger"
   url: "http://swagger.io"
