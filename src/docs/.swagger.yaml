@@ -38,7 +38,7 @@ paths:
       operationId: "getAlive"
       responses:
         200:
-          description: No Description
+          description: Success
           content: {}
 
   /scope:
@@ -50,7 +50,7 @@ paths:
       operationId: "createScope"
       responses:
         200:
-          description: No Description
+          description: Success
           content: {}
 
   /user:  
@@ -62,7 +62,7 @@ paths:
       operationId: "getUsers"
       responses:
         200:
-          description: No Description
+          description: Success
           content: {}
   /register:
     post:
@@ -79,7 +79,7 @@ paths:
               $ref: "#/components/schemas/CreateData"
       responses:
         200:
-          description: No Description
+          description: Success
           content: {}
   /login:
     post:
@@ -90,7 +90,7 @@ paths:
       operationId: "validateUser"
       responses:
         200:
-          description: No Description
+          description: Success
           content: {}
   /refresh:
     post:
@@ -101,7 +101,7 @@ paths:
       operationId: "refreshUser"
       responses:
         200:
-          description: No Description
+          description: Success
           content: {}
   /user/{id}:
     get:
@@ -120,7 +120,7 @@ paths:
           format: uint64
       responses:
         200:
-          description: No Description
+          description: Success
           content: {}
     put:
       tags:
@@ -138,7 +138,7 @@ paths:
           format: int64
       responses:
         200:
-          description: No Description
+          description: Success
           content: {}
     delete:
       tags:
@@ -156,7 +156,7 @@ paths:
           format: int64
       responses:
         200:
-          description: No Description
+          description: Success
           content: {}
     post:
       tags:
@@ -174,7 +174,7 @@ paths:
           format: int64
       responses:
         200:
-          description: No Description
+          description: Success
           content: {}
   /user/{name}:
     get:
@@ -192,7 +192,7 @@ paths:
           type: string
       responses:
         200:
-          description: No Description
+          description: Success
           content: {}
   /verify/{magic}:
     get:
@@ -209,7 +209,7 @@ paths:
           type: string
       responses:
         200:
-          description: No Description
+          description: Success
           content: {}
 
 components:
