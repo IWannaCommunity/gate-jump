@@ -285,13 +285,13 @@ components:
           example: true
         banned:
           type: "boolean"
-          format: false
+          example: false
         last_login:
           type: "string"
           format: "date-time"
         deleted:
           type: "boolean"
-          format: false
+          example: false
         date_deleted:
           type: "string"
           format: "date-time"
