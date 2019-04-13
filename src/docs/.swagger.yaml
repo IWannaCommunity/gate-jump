@@ -125,13 +125,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
         500:
           description: Invalid Parameters or Database Error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
   /refresh:
     post:
       tags:
@@ -158,13 +158,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
         500:
           description: "Database Issue"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
   /user/{id}:
     get:
       tags:
@@ -192,19 +192,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
         404:
           description: "Nonexistant User"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
         500:
           description: "Database Issue"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
     put:
       tags:
       - "user"
@@ -238,19 +238,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
         401:
           description: "Not Admin or Self"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
         500:
           description: "Database Issue"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
     delete:
       tags:
       - "user"
@@ -277,19 +277,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
         401:
           description: "Not Admin or Self"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
         500:
           description: "Database Issue"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
   /user/{name}:
     get:
       tags:
@@ -316,13 +316,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
         500:
           description: "Database Issue"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
   /verify/{magic}:
     get:
       tags:
@@ -343,13 +343,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
         500:
           description: "Generic Error"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Blank"
+                $ref: "#/components/schemas/Error"
 
   /scope:
     post:
@@ -366,6 +366,12 @@ paths:
 
 components:
   schemas:
+    Error:
+      type: "object"
+      properties:
+        error:
+          type: string
+          example: "https://www.gatejump.com/api#documentationLink"
     Blank:
       type: "object"
       xml:
