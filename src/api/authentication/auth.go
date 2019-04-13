@@ -26,12 +26,13 @@ const (
 	ClaimsKey ContextKey = -1 // claims context tag
 )
 
-type Context struct {
-	Claims Claims
-	Token  string
+type Refresh struct {
+	UUID  *string  `json:"uuid"`
+	Group []string `json:"group"`
+	jwt.StandardClaims
 }
 
-type Claims struct {
+type Bearer struct {
 	UUID    *string  `json:"uuid"`
 	Name    *string  `json:"username"`
 	Country *string  `json:"country"`
@@ -43,7 +44,7 @@ type Claims struct {
 
 func JWTContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		claims := Context{}
+		claims := Refresh{}
 		tokenString := r.Header.Get("Authorization")
 
 		if tokenString == "" { // no token provided, value checked will be nil
@@ -53,7 +54,7 @@ func JWTContext(next http.Handler) http.Handler {
 		}
 
 		// parse token provided
-		token, err := jwt.ParseWithClaims(tokenString, &claims.Claims,
+		token, err := jwt.ParseWithClaims(tokenString, &claims,
 			func(token *jwt.Token) (interface{}, error) {
 				return []byte(settings.JwtSecret), nil
 			})
