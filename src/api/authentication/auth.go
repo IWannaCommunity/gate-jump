@@ -32,12 +32,12 @@ type Context struct {
 }
 
 type Claims struct {
-	UUID    int64         `json:"uuid"`
-	Name    *string       `json:"username"`
-	Country *string       `json:"country"`
-	Locale  *string       `json:"locale"`
-	Group   []interface{} `json:"group"`
-	Scope   []interface{} `json:"scope"`
+	UUID    int64    `json:"uuid"`
+	Name    *string  `json:"username"`
+	Country *string  `json:"country"`
+	Locale  *string  `json:"locale"`
+	Group   []string `json:"group"`
+	Scope   []string `json:"scope"`
 	jwt.StandardClaims
 }
 
