@@ -43,9 +43,6 @@ type User struct {
 	Admin *bool `json:"admin,omitempty"`
 	// Read: PUBLIC
 	// Write: Nobody (by logging into sql only)
-	LastToken *string `json:"last_token,omitempty"` // ? is this needed
-	// Read: SERVER
-	// Write: SERVER
 	LastLogin *time.Time `json:"last_login,omitempty"`
 	// Read: PUBLIC
 	// Write: SERVER
@@ -156,12 +153,6 @@ func (u *User) UpdateUser(auth authentication.AuthLevel) res.ServerError {
 		serr.Args = append(serr.Args, u.Banned)
 	} else {
 		u.Banned = nil
-	}
-	if u.LastToken != nil && (auth == authentication.SERVER) {
-		serr.Query += " last_token=?,"
-		serr.Args = append(serr.Args, u.LastToken)
-	} else {
-		u.LastToken = nil
 	}
 	if u.LastLogin != nil && (auth == authentication.SERVER) {
 		serr.Query += " last_login=?,"
@@ -279,7 +270,6 @@ func (u *User) ScanAlls(rows *sql.Rows) error {
 		&u.Admin,
 		&u.Verified,
 		&u.Banned,
-		&u.LastToken,
 		&u.LastLogin,
 		&u.LastIP,
 		&u.Deleted,
@@ -306,7 +296,6 @@ func (u *User) CleanDataRead(auth authentication.AuthLevel) {
 		fallthrough
 	default: // by default always remove password. this is here for security of passwords
 		u.Password = nil
-		u.LastToken = nil
 	}
 }
 
@@ -369,9 +358,6 @@ func (u *User) ToString() string {
 	}
 	if u.Banned != nil {
 		str += "\tBanned:" + tabAmount + strconv.FormatBool(*u.Banned) + "\n"
-	}
-	if u.LastToken != nil {
-		str += "\tLastToken:" + tabAmount + "notnil" + "\n"
 	}
 	if u.LastLogin != nil {
 		str += "\tLastLogin:" + tabAmount + (*u.LastLogin).String() + "\n"
