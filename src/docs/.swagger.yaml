@@ -99,6 +99,7 @@ paths:
       operationId: "createUser"
       requestBody:
         description: "Registration Information"
+        required: true
         content:
           application/json:
             schema:
@@ -114,6 +115,13 @@ paths:
       summary: "Login an account to the website."
       description: "If a correct username and password authorization is given, a usable bearer token and refresh token will be subsequently handed out. The refresh token should be used on the /refresh endpoint to get a new bearer token when the original expires."
       operationId: "validateUser"
+      requestBody:
+        description: "User Credentials"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
       responses:
         200:
           description: Success
@@ -348,6 +356,16 @@ components:
           example: "XTLF2-P6MSX-5FGXP"
       xml:
         name: "UserRegistration"
+    LoginRequest:
+      type: "object"
+      properties:
+        username:
+          type: "string"
+        password:
+          type: "string"
+          format: "password"
+      xml:
+        name: "LoginRequest"
     Claims:
       type: "object"
       properties:
