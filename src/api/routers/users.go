@@ -35,13 +35,9 @@ func getAlive(w http.ResponseWriter, r *http.Request) {
 // get
 func getUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		res.New(http.StatusBadRequest).SetErrorMessage("Invalid User ID").Error(w)
-		return
-	}
 
-	u := database.User{ID: int64(id)}
+	uuid := vars["uuid"]
+	u := database.User{UUID: &uuid}
 
 	auth, response := getAuthLevel(r, &u)
 	if response != nil {
@@ -185,7 +181,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	// TODO: Probably don't need strings.Builder, maybe do string(<-chstr)
 	buf := new(strings.Builder)
 	buf.Write(<-chstr)
-	ml.UserID = u.ID
+	ml.UserID = *u.ID
 	ml.Magic = buf.String()
 	if serr := ml.CreateMagicLink(); serr.Err != nil {
 		// can't fail here either
@@ -220,7 +216,7 @@ func verifyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usr := database.User{ID: ml.UserID}
+	usr := database.User{ID: &ml.UserID}
 	serr = usr.GetUser(authentication.SERVER)
 
 	if serr.Err != nil {
@@ -259,11 +255,7 @@ func verifyUser(w http.ResponseWriter, r *http.Request) {
 // update
 func updateUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		res.New(http.StatusBadRequest).SetErrorMessage("Invalid User ID").Error(w)
-		return
-	}
+	uuid := vars["uuid"]
 
 	var u database.User
 	decoder := json.NewDecoder(r.Body)
@@ -272,7 +264,7 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
-	u.ID = int64(id) // set expected id to url id value
+	u.UUID = &uuid // set expected id to url id value
 
 	// get auth level of the request for the given id
 	auth, response := getAuthLevel(r, &u)
@@ -310,13 +302,9 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 // delete
 func deleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		res.New(http.StatusBadRequest).SetErrorMessage("Invalid User ID").Error(w)
-		return
-	}
 
-	u := database.User{ID: int64(id)}
+	uuid := vars["id"]
+	u := database.User{UUID: &uuid}
 
 	auth, response := getAuthLevel(r, &u)
 	if response != nil {
@@ -450,7 +438,7 @@ func getAuthLevel(r *http.Request, u1 *database.User) (authentication.Level, *re
 	}
 
 	var u2 database.User
-	u2.ID = ctx.Claims.ID
+	u2.UUID = bearer.UUID
 	serr := u2.GetUser(authentication.SERVER)
 	if serr.Err == sql.ErrNoRows { // claims user wasn't found
 		return authentication.PUBLIC, res.New(http.StatusUnauthorized).SetErrorMessage("Token's User Doesn't Exist")
