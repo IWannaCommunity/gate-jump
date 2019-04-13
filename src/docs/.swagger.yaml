@@ -39,7 +39,10 @@ paths:
       responses:
         200:
           description: Success
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alive"
 
   /scope:
     post:
@@ -241,6 +244,14 @@ components:
       type: "object"
       xml:
         name: "BlankModel"
+    Alive:
+      type: "object"
+      properties:
+        alive:
+          type: boolean
+          example: true
+      xml:
+        name: "Alive"
     User:
       type: "object"
       properties:
