@@ -61,6 +61,8 @@ type User struct {
 	UUID *string `json:"uuid"`
 	// READ: PUBLIC
 	// WRITE: Nobody
+	Group []string `json:"group"`
+	Scope []string `json:"scope"`
 }
 
 type UserList struct {
@@ -315,6 +317,8 @@ func (u *User) CreateToken() (string, error) {
 		u.Name,
 		u.Country,
 		u.Locale,
+		u.Group,
+		u.Scope,
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(), //expire in one hour
 			Issuer:    settings.Host + ":" + settings.Port,
