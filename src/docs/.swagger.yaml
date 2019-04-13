@@ -44,18 +44,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/Alive"
 
-  /scope:
-    post:
-      tags:
-      - "scopes"
-      summary: "Creates a new scope"
-      description: "Scopes are data, more precisely defining how a user can interact with services."
-      operationId: "createScope"
-      responses:
-        200:
-          description: Success
-          content: {}
-
   /user:  
     get:
       tags:
@@ -332,7 +320,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Blank"
-        
   /verify/{magic}:
     get:
       tags:
@@ -360,6 +347,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Blank"
+
+  /scope:
+    post:
+      tags:
+      - "scopes"
+      summary: "Creates a new scope."
+      description: "Scopes are data, more precisely defining how a user can interact with services. Unfinished and incomplete API, check back later!"
+      operationId: "createScope"
+      responses:
+        200:
+          description: Success
+          content: {}
+
 
 components:
   schemas:
