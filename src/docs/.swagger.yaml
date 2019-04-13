@@ -299,27 +299,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Blank"
-    post:
-      tags:
-      - "user"
-      summary: "next to api thingy"
-      description: "body inside click"
-      operationId: "function name4"
-      parameters:
-      - name: "id"
-        in: "path"
-        description: "parameter information"
-        required: true
-        schema:
-          type: integer
-          format: int64
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Blank"
   /user/{name}:
     get:
       tags:
