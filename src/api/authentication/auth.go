@@ -32,7 +32,7 @@ type Context struct {
 }
 
 type Claims struct {
-	UUID    int64    `json:"uuid"`
+	UUID    *string  `json:"uuid"`
 	Name    *string  `json:"username"`
 	Country *string  `json:"country"`
 	Locale  *string  `json:"locale"`
