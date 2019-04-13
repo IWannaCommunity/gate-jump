@@ -298,9 +298,9 @@ func (u *User) CleanDataRead(auth authentication.AuthLevel) {
 	}
 }
 
-func (u *User) CreateToken() (string, error) {
+func (u *User) CreateToken() (string, string, error) {
 	//create and sign the token
-	claims := authentication.Claims{
+	bearer := authentication.Bearer{
 		u.UUID,
 		u.Name,
 		u.Country,
@@ -313,8 +313,26 @@ func (u *User) CreateToken() (string, error) {
 			Subject:   *u.UUID, //user id as string
 		},
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(settings.JwtSecret))
+	refresh := authentication.Refresh{
+		u.UUID,
+		u.Group,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(), //expire in one hour
+			Issuer:    settings.Host + ":" + settings.Port,
+			Subject:   *u.UUID, //user id as string
+		},
+	}
+	bearerToken := jwt.NewWithClaims(jwt.SigningMethodHS256, bearer)
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refresh)
+	bearerString, err := bearerToken.SignedString([]byte(settings.JwtSecret))
+	if err != nil {
+		return "", "", err
+	}
+	refreshString, err := refreshToken.SignedString([]byte(settings.JwtSecret))
+	if err != nil {
+		return "", "", err
+	}
+	return bearerString, refreshString, nil
 }
 
 func (u *User) UnflagDeletion() res.ServerError {

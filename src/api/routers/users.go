@@ -365,7 +365,8 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	signedToken, err := u.CreateToken()
+	bearer, refresh, err := u.CreateToken()
+	_ = refresh // prevent error
 	if err != nil {
 		res.New(http.StatusInternalServerError).SetErrorMessage("Failed Creating Token").Error(w)
 		return
@@ -378,16 +379,16 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res.New(http.StatusOK).SetToken(signedToken).JSON(w)
+	res.New(http.StatusOK).SetToken(bearer).JSON(w)
 }
 
 func refreshUser(w http.ResponseWriter, r *http.Request) {
 	// get user
-	ctx := r.Context().Value(authentication.CLAIMS).(authentication.Context) // claims at this point are validated so refresh is allowed
-	claims := ctx.Claims
+	ctx := r.Context().Value(authentication.ClaimsKey).(authentication.Refresh) // claims at this point are validated so refresh is allowed
+	claims := ctx
 
 	var u database.User
-	u.ID = claims.ID
+	u.UUID = claims.UUID
 
 	auth, response := getAuthLevel(r, &u)
 	if response != nil {
@@ -406,7 +407,8 @@ func refreshUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// make token
-	token, err := u.CreateToken()
+	bearer, refresh, err := u.CreateToken()
+	_ = refresh // prevent error for now
 	if err != nil {
 		res.New(http.StatusInternalServerError).SetErrorMessage("Error Creating Token").Error(w)
 		return
@@ -423,17 +425,17 @@ func refreshUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// return token
-	res.New(http.StatusOK).SetToken(token).JSON(w)
+	res.New(http.StatusOK).SetToken(bearer).JSON(w)
 }
 
 // provide with request and said user and claims and confirm claims user exists and claims user's authentication level
 //TODO: move this function to the authentication package so we can unexport ctx.Claims and ctx.Tokens
-func getAuthLevel(r *http.Request, u1 *database.User) (authentication.Level, *res.Response) {
-	ctx := r.Context().Value(authentication.CLAIMS).(authentication.Context) // confirmed valid on jwt layer
-
-	if ctx.Claims.ID == 0 { // no claims exist
+func getAuthLevel(r *http.Request, u1 *database.User) (authentication.AuthLevel, *res.Response) {
+	ctx := r.Context().Value(authentication.ClaimsKey) // confirmed valid on jwt layer
+	if ctx == nil {
 		return authentication.PUBLIC, nil
 	}
+	bearer := ctx.(authentication.Bearer)
 
 	var u2 database.User
 	u2.UUID = bearer.UUID
