@@ -146,11 +146,30 @@ paths:
       tags:
       - "user"
       summary: "Retrieves a fresh bearer token for a user."
-      description: "body inside click"
+      description: "The refresh token must be vaild, invalid tokens will refuse to retrieve any new bearer tokens and you will be force to reauthenticate if you do not have any valid tokens."
       operationId: "refreshUser"
+      requestBody:
+        description: "Refresh Token"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshToken"
       responses:
         200:
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessToken"
+        401:
+          description: "Invalidated Token"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        500:
+          description: "Database Issue"
           content:
             application/json:
               schema:
@@ -379,6 +398,25 @@ components:
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
       xml:
         name: "Claims"
+    AccessToken:
+      type: "object"
+      properties:
+        bearer:
+          type: "string"
+          format: "jwt"
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+      xml:
+        name: "AccessToken"
+    RefreshToken:
+      type: "object"
+      properties:
+        refresh:
+          type: "string"
+          format: "jwt"
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+      xml:
+        name: "RefreshToken"
+
 externalDocs:
   description: "Find out more about Swagger"
   url: "http://swagger.io"
