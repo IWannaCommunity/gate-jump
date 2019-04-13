@@ -1,5 +1,6 @@
 # gate-jump
 ![Travis CI Build Status](https://img.shields.io/travis/IWannaCommunity/gate-jump/master.svg?&style=flat-square&logo=travis)
+![License](https://img.shields.io/github/license/IWannaCommunity/gate-jump.svg?style=flat-square)
 ![Go Report Card](https://goreportcard.com/badge/github.com/iwannacommunity/gate-jump?style=flat-square)
 
 Central Authentication Service for Delfruit, IWM, and other fangame community services!
