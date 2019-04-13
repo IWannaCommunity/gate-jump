@@ -263,13 +263,13 @@ paths:
     delete:
       tags:
       - "user"
-      summary: "next to api thingy"
-      description: "body inside click"
-      operationId: "function name3"
+      summary: "Mark a user as deleted from the given ID."
+      description: "This won't actually delete the account, but in the future there will be a function to actually wipe accounts from the database that have been marked as 'delete'. This endpoint requires that you are either the user in question, or an administrator acting on behalf of the user."
+      operationId: "deleteUser"
       parameters:
       - name: "id"
         in: "path"
-        description: "parameter information"
+        description: "User ID"
         required: true
         schema:
           type: integer
@@ -277,6 +277,24 @@ paths:
       responses:
         200:
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        400:
+          description: "Invalid Parameter"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        401:
+          description: "Not Admin or Self"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        500:
+          description: "Database Issue"
           content:
             application/json:
               schema:
