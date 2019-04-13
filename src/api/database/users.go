@@ -13,7 +13,7 @@ import (
 
 type User struct {
 	// PUBLIC < USER == ADMINUSER < ADMIN < SERVER
-	ID *int64 `json:"id",omitempty`
+	ID *int64 `json:"id,omitempty"`
 	// Read: PUBLIC
 	// Write: Nobody
 	Name *string `json:"name,omitempty"`
