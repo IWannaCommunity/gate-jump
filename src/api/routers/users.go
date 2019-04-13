@@ -394,6 +394,7 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 	res.New(http.StatusOK).SetToken(signedToken).JSON(w)
 }
 
+// refreshUser refresh the users bearer token
 func refreshUser(w http.ResponseWriter, r *http.Request) {
 	// get user
 	ctx := r.Context().Value(authentication.CLAIMS).(authentication.Context) // claims at this point are validated so refresh is allowed
