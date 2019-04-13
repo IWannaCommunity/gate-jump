@@ -117,7 +117,10 @@ paths:
       responses:
         200:
           description: Success
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
   /refresh:
     post:
       tags:
@@ -128,7 +131,10 @@ paths:
       responses:
         200:
           description: Success
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
   /user/{id}:
     get:
       tags:
@@ -147,7 +153,10 @@ paths:
       responses:
         200:
           description: Success
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
     put:
       tags:
       - "user"
@@ -165,7 +174,10 @@ paths:
       responses:
         200:
           description: Success
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
     delete:
       tags:
       - "user"
@@ -183,7 +195,10 @@ paths:
       responses:
         200:
           description: Success
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
     post:
       tags:
       - "user"
@@ -201,7 +216,10 @@ paths:
       responses:
         200:
           description: Success
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
   /user/{name}:
     get:
       tags:
@@ -219,7 +237,10 @@ paths:
       responses:
         200:
           description: Success
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
   /verify/{magic}:
     get:
       tags:
@@ -236,7 +257,10 @@ paths:
       responses:
         200:
           description: Success
-          content: {}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
 
 components:
   schemas:
