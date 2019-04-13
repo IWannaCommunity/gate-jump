@@ -87,9 +87,6 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/User"
-        500:
-          description: Invalid Parameters or Database Error
-          content: {}
   /register:
     post:
       tags:
