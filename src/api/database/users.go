@@ -73,7 +73,7 @@ type UserList struct {
 
 // SQL FUNCTIONS =================================================================================
 
-func (u *User) GetUser(auth authentication.Level) res.ServerError {
+func (u *User) GetUser(auth authentication.AuthLevel) res.ServerError {
 	var serr res.ServerError
 	if auth > authentication.USER { // deleted search check
 		serr.Query = "SELECT * FROM users WHERE id=?"
@@ -89,7 +89,7 @@ func (u *User) GetUser(auth authentication.Level) res.ServerError {
 	return serr
 }
 
-func (u *User) GetUserByName(auth authentication.Level) res.ServerError {
+func (u *User) GetUserByName(auth authentication.AuthLevel) res.ServerError {
 	var serr res.ServerError
 	if auth > authentication.USER { // deleted search check
 		serr.Query = "SELECT * FROM users WHERE name=?"
@@ -105,7 +105,7 @@ func (u *User) GetUserByName(auth authentication.Level) res.ServerError {
 	return serr
 }
 
-func (u *User) GetUserByEmail(auth authentication.Level) res.ServerError {
+func (u *User) GetUserByEmail(auth authentication.AuthLevel) res.ServerError {
 	var serr res.ServerError
 	serr.Query = "SELECT * FROM users WHERE email=?"
 	serr.Args = append(serr.Args, u.Email)
@@ -117,7 +117,7 @@ func (u *User) GetUserByEmail(auth authentication.Level) res.ServerError {
 	return serr
 }
 
-func (u *User) UpdateUser(auth authentication.Level) res.ServerError {
+func (u *User) UpdateUser(auth authentication.AuthLevel) res.ServerError {
 	var serr res.ServerError
 	//"UPDATE users SET name=?, password=?, email=?, country=?, locale=?, last_token=?, last_login=?, last_ip=? WHERE id=?"
 	serr.Query = "UPDATE users SET"
@@ -215,7 +215,7 @@ func (u *User) CreateUser() res.ServerError {
 	return serr
 }
 
-func GetUsers(start, count int, auth authentication.Level) (*UserList, res.ServerError) {
+func GetUsers(start, count int, auth authentication.AuthLevel) (*UserList, res.ServerError) {
 	var serr res.ServerError
 	var rows *sql.Rows
 	serr.Query = "SELECT * FROM users  WHERE deleted=FALSE LIMIT ? OFFSET ?"
@@ -288,7 +288,7 @@ func (u *User) ScanAlls(rows *sql.Rows) error {
 }
 
 // applies read user data permissions of a fully retrieved user
-func (u *User) CleanDataRead(auth authentication.Level) {
+func (u *User) CleanDataRead(auth authentication.AuthLevel) {
 	switch auth {
 	case authentication.SERVER:
 		// we dont want to stop the server from reading anything
