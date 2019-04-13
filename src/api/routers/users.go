@@ -371,7 +371,6 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u.LastToken = &signedToken
 	u.LastLogin = &[]time.Time{time.Now()}[0] // how to get pointer from function call (its gross): goo.gl/9BXtsj
 	u.LastIP = &r.RemoteAddr
 	if serr := u.UpdateUser(authentication.SERVER); serr.Err != nil {
@@ -414,7 +413,6 @@ func refreshUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// update login information
-	u.LastToken = &token
 	u.LastLogin = &[]time.Time{time.Now()}[0] // how to get pointer from function call (its gross): goo.gl/9BXtsj
 	u.LastIP = &r.RemoteAddr
 

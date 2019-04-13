@@ -249,7 +249,6 @@ func (u *User) ScanAll(row *sql.Row) error {
 		&u.Admin,
 		&u.Verified,
 		&u.Banned,
-		&u.LastToken,
 		&u.LastLogin,
 		&u.LastIP,
 		&u.Deleted,
