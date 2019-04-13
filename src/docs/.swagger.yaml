@@ -337,18 +337,25 @@ paths:
     get:
       tags:
       - "user"
-      summary: "next to api thingy"
-      description: "body inside click"
-      operationId: "function name6"
+      summary: "Verifies a user's email."
+      description: "This verifies that the given email from a user is their's. Under most circumstances this will allow the user to actually login and use their account to access resources."
+      operationId: "verifyUser"
       parameters:
       - name: "magic"
         in: "path"
+        description: "Magic"
         required: true
         schema:
           type: string
       responses:
-        200:
-          description: Success
+        202:
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        500:
+          description: "Generic Error"
           content:
             application/json:
               schema:
