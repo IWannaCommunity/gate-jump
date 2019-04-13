@@ -240,10 +240,10 @@ paths:
 
 components:
   schemas:
-    Model:
+    Blank:
       type: "object"
       xml:
-        name: "BlankModel"
+        name: "Blank"
     Alive:
       type: "object"
       properties:
