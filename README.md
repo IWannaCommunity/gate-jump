@@ -47,7 +47,6 @@ Central Authentication Service for Delfruit, IWM, and other fangame community se
 13. Run `./api`
 14. Verify the service is running by going to `localhost:80/`
 
-```
 ## Web Environnment Setup
 
 * Install Node.js from `https://nodejs.org/en/`
