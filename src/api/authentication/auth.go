@@ -9,15 +9,10 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-type Level int
+type ContextKey int
 
 const (
-	CLAIMS    Level = -1 // just the claims context tag
-	PUBLIC    Level = 0  // public return
-	USER      Level = 1  // user return
-	ADMINUSER Level = 2  // admin wants to change password. admins cant change other users passwords so this exists
-	ADMIN     Level = 3  // admin return
-	SERVER    Level = 4  // server can update any user without giving 2 shits
+	ClaimsKey ContextKey = -1 // claims context tag
 )
 
 type Context struct {
@@ -41,7 +36,7 @@ func JWTContext(next http.Handler) http.Handler {
 		tokenString := r.Header.Get("Authorization")
 
 		if tokenString == "" { // no token provided, value checked will be nil
-			ctx := context.WithValue(r.Context(), CLAIMS, nil)
+			ctx := context.WithValue(r.Context(), ClaimsKey, nil)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
@@ -64,7 +59,7 @@ func JWTContext(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), CLAIMS, claims)
+		ctx := context.WithValue(r.Context(), ClaimsKey, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
