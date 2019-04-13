@@ -26,28 +26,28 @@ type Context struct {
 }
 
 type Claims struct {
-	ID       int64   `json:"id"`
-	Name     *string `json:"username"`
-	Admin    bool    `json:"admin"`
-	Country  *string `json:"country"`
-	Locale   *string `json:"locale"`
-	Verified bool    `json:"verified"`
-	Banned   bool    `json:"banned"`
+	UUID    int64         `json:"uuid"`
+	Name    *string       `json:"username"`
+	Country *string       `json:"country"`
+	Locale  *string       `json:"locale"`
+	Group   []interface{} `json:"group"`
+	Scope   []interface{} `json:"scope"`
 	jwt.StandardClaims
 }
 
 func JWTContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		contextData := Context{}
+		claims := Context{}
 		tokenString := r.Header.Get("Authorization")
 
-		if tokenString == "" { // no token provided. public credential only
-			ctx := context.WithValue(r.Context(), CLAIMS, Context{Claims: Claims{ID: 0}})
+		if tokenString == "" { // no token provided, value checked will be nil
+			ctx := context.WithValue(r.Context(), CLAIMS, nil)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
+
 		// parse token provided
-		token, err := jwt.ParseWithClaims(tokenString, &contextData.Claims,
+		token, err := jwt.ParseWithClaims(tokenString, &claims.Claims,
 			func(token *jwt.Token) (interface{}, error) {
 				return []byte(settings.JwtSecret), nil
 			})
@@ -59,15 +59,12 @@ func JWTContext(next http.Handler) http.Handler {
 			res.New(http.StatusUnauthorized).SetErrorMessage("Token Is Invalid").Error(w)
 			return
 		}
-
 		if token.Claims == nil { // nothing was put into the token
 			res.New(http.StatusInternalServerError).SetErrorMessage("Token Is Null").Error(w)
 			return
 		}
-		contextData.Token = tokenString
-		contextData.Claims = *token.Claims.(*Claims)
 
-		ctx := context.WithValue(r.Context(), CLAIMS, contextData)
+		ctx := context.WithValue(r.Context(), CLAIMS, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
