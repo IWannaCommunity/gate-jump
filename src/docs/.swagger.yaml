@@ -58,11 +58,34 @@ paths:
       tags:
       - "user"
       summary: "Get a list of users from the given id."
-      description: "thinking"
+      description: "Returns a list of users from the given ID with the specified offset and count at a max of 100 each. For administrators only."
       operationId: "getUsers"
+      parameters:
+      - name: "offset"
+        in: "query"
+        description: "Starting number of users to enumerate through."
+        required: false
+        schema:
+          type: integer
+          format: uint8
+      - name: "count"
+        in: "query"
+        description: "Max amount of users to be returned."
+        required: false
+        schema:
+          type: integer
+          format: uint8
       responses:
         200:
           description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        500:
+          description: Invalid Parameters or Database Error
           content: {}
   /register:
     post:
@@ -218,6 +241,50 @@ components:
       type: "object"
       xml:
         name: "BlankModel"
+    User:
+      type: "object"
+      properties:
+        uuid:
+          type: "string"
+          example: ""
+        name:
+          type: "string"
+          example: "stinkycheeseone890"
+        password:
+          type: "string"
+          format: "password"
+          example: "CorrectHorseBatteryStaple"
+        email:
+          type: "string"
+          format: "email"
+          example: "iLOVEcheese@gmail.com"
+        country:
+          type: "string"
+          format: "ISO3166-1-Alpha3"
+          example: "USA"
+        locale:
+          type: "string"
+          format: "RFC5646"
+          example: "en-US"
+        date_created:
+          type: "string"
+          format: "date-time"
+        verified:
+          type: "boolean"
+          example: true
+        banned:
+          type: "boolean"
+          format: false
+        last_login:
+          type: "string"
+          format: "date-time"
+        deleted:
+          type: "boolean"
+          format: false
+        date_deleted:
+          type: "string"
+          format: "date-time"
+        
     CreateData:
       type: "object"
       properties:
