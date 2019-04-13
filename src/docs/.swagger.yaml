@@ -217,20 +217,45 @@ paths:
     put:
       tags:
       - "user"
-      summary: "next to api thingy"
-      description: "body inside click"
-      operationId: "function name2"
+      summary: "Update the user's information from the given ID."
+      description: "Requires that you are either an administrator or the given user."
+      operationId: "updateUser"
+      requestBody:
+        description: "User"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
       parameters:
       - name: "id"
         in: "path"
-        description: "parameter information"
+        description: "User ID"
         required: true
         schema:
           type: integer
-          format: int64
+          format: uint64
       responses:
         200:
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        400:
+          description: "Invalid Parameter"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        401:
+          description: "Not Admin or Self"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        500:
+          description: "Database Issue"
           content:
             application/json:
               schema:
