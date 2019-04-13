@@ -13,7 +13,7 @@ import (
 
 type User struct {
 	// PUBLIC < USER == ADMINUSER < ADMIN < SERVER
-	ID int64 `json:"id"`
+	ID *int64 `json:"id",omitempty`
 	// Read: PUBLIC
 	// Write: Nobody
 	Name *string `json:"name,omitempty"`
@@ -208,7 +208,8 @@ func (u *User) CreateUser() res.ServerError {
 	if serr.Err != nil {
 		return serr
 	}
-	u.ID, _ = result.LastInsertId() // we confirmed that there will be no error
+	id, _ := result.LastInsertId() // we confirmed that there will be no error
+	u.ID = &id
 	return serr
 }
 
@@ -320,7 +321,7 @@ func (u *User) CreateToken() (string, error) {
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(), //expire in one hour
 			Issuer:    settings.Host + ":" + settings.Port,
-			Subject:   strconv.FormatInt(u.ID, 10), //user id as string
+			Subject:   *u.UUID, //user id as string
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -340,7 +341,7 @@ func (u *User) ToString() string {
 	var str string
 	tabAmount := " ------ "
 	str += "\n{"
-	str += "\tID:" + tabAmount + strconv.FormatInt(u.ID, 10) + "\n"
+	str += "\tID:" + tabAmount + strconv.FormatInt(*u.ID, 10) + "\n"
 	if u.Name != nil {
 		str += "\tName:" + tabAmount + *u.Name + "\n"
 	}
