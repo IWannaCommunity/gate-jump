@@ -311,13 +311,10 @@ func (u *User) CleanDataRead(auth authentication.Level) {
 func (u *User) CreateToken() (string, error) {
 	//create and sign the token
 	claims := authentication.Claims{
-		u.ID,
+		u.UUID,
 		u.Name,
-		*u.Admin,
 		u.Country,
 		u.Locale,
-		*u.Verified,
-		*u.Banned,
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(), //expire in one hour
 			Issuer:    settings.Host + ":" + settings.Port,
