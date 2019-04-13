@@ -6,37 +6,16 @@ Central Authentication Service for Delfruit, IWM, and other fangame community se
 
 ## Environment Setup
 
-* Install the MySQL server (v14.14 Distrib 5.7.24 for Linux x86_64): https://www.mysql.com/downloads/
-* Install MySQL Driver for Go: `go get github.com/go-sql-driver/mysql`
-* Install Gorilla-Mux (golang http server framework) `go get github.com/gorilla/mux`
-* Install jwt-go (jwt token encoder and decoder) `go get github.com/dgrijalva/jwt-go`
-* Log into MySql by opening a terminal and typing `mysql -u root -p` and then entering the root password.
-* Type `CREATE DATABASE gatejump` then `USE gatejump` and then past the following create table code below.
-
-```sql
-CREATE TABLE users (
-    id INT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
-    password CHAR(60) BINARY NOT NULL,
-    email VARCHAR(100),
-    country CHAR(2),
-    locale VARCHAR(20),
-    date_created DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    admin BOOL NOT NULL DEFAULT FALSE,
-    verified BOOL NOT NULL DEFAULT FALSE,
-    banned BOOL NOT NULL DEFAULT FALSE,
-    last_token BLOB,
-    last_login DATETIME,
-    last_ip VARCHAR(50),
-    deleted BOOL NOT NULL DEFAULT FALSE,
-    date_deleted DATETIME,
-    PRIMARY KEY (id)
-)
-```
-
-For more details on the `users` columns please look at `user.go` in the main directory of the project.
-
-* Create a file and appropriately name the following information under `~/config/config.json`
+1. Go Get the repository from the /src/api directory or clone the repository and install libraries manually.
+2. Install MariaDB (MySQL may work, but the last time it was tested it failed).
+3. Databases aren't created or auto-migrate yet, so you'll have to do `create database gatejump` in MariaDB/MySQL for now.
+4. We use [Task](https://taskfile.dev) as the current Build System, install it.
+5. The build environment currently requires GNU Date and Git to be present on the system. So if it currently doesn't, fix that before continuing.
+6. Install fileb0x via `go get -i github.com/UnnoTed/fileb0x`
+7. Install a SMTP Server, for the purposes of testing we will be using a sink called [Inbucket](https://www.inbucket.org/), but you can use whatever one you like.
+8. Install [mkcert](https://mkcert.dev) via `go get -i github.com/FiloSottile/mkcert`. We'll need this for having STARTTLS on the SMTP Server. If you aren't using Inbucket or have a proper SMTP Server with STARTTLS, you may skip this.
+9. Build the API server by running `task build` in project root.
+10. Create a file and appropriately name the following information under `~/config/config.json`
 
 ```json
 {
@@ -45,34 +24,29 @@ For more details on the `users` columns please look at `user.go` in the main dir
     "sslPort":"443",
     "database":{
         "username":"root",
-        "password":"password",
+        "password":"",
         "dsn":"gatejump"
     },
     "https":{
         "certFile":"",
         "keyFile":""
-    }
+    },
+	"mailer":{
+		"host":"localhost",
+		"port":"2500",
+		"user":"gatejump@inbucket",
+		"pass":""
+	},
+	"superuser":{
+		"password": "password"
+	}
 }
 ```
+11. Run `mkcert cert` and rename the resulting files `cert.pem` to `cert.crt` and `cert-key.pem` to `cert.key` and place them with in the root tree next to the Inbucket binary.
+12. Run Inbucket with `INBUCKET_SMTP_TLSENABLED=true ./inbucket -netdebug`
+13. Run `./api`
+14. Verify the service is running by going to `localhost:80/`
 
-
-
-
-* Alternatively, import the user file from delfruit: ask Klazen for this! (Out of Date?)
-```sql
-select id as id
-    , name as username
-    , phash2 as password
-    , email as email
-    , locale as country
-    , date_created as dateCreated
-    , 0 as verified
-    , banned as banned
-    , is_admin as admin
-    , '' as lastToken
-    , date_last_login as lastLogin
-    , last_ip as lastIP
-from User where phash2 is not null and banned = 0;
 ```
 ## Web Environnment Setup
 
@@ -85,17 +59,3 @@ npm install
 ```shell
 npm start
 ```
-
-## How to run
-
-To build and run the project:
-
-```shell
-go build && gate-jump.exe
-```
-
-Navigate to `http://localhost:10420/`
-
-If you see `{"alive": true}`, you're all set!
-
-Try `http://localhost:10420/user/1` to see your user!
