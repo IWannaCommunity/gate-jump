@@ -44,18 +44,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/Alive"
 
-  /scope:
-    post:
-      tags:
-      - "scopes"
-      summary: "Creates a new scope"
-      description: "Scopes are data, more precisely defining how a user can interact with services."
-      operationId: "createScope"
-      responses:
-        200:
-          description: Success
-          content: {}
-
   /user:  
     get:
       tags:
@@ -143,11 +131,30 @@ paths:
       tags:
       - "user"
       summary: "Retrieves a fresh bearer token for a user."
-      description: "body inside click"
+      description: "The refresh token must be vaild, invalid tokens will refuse to retrieve any new bearer tokens and you will be force to reauthenticate if you do not have any valid tokens."
       operationId: "refreshUser"
+      requestBody:
+        description: "Refresh Token"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshToken"
       responses:
         200:
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessToken"
+        401:
+          description: "Invalidated Token"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        500:
+          description: "Database Issue"
           content:
             application/json:
               schema:
@@ -156,13 +163,13 @@ paths:
     get:
       tags:
       - "user"
-      summary: "next to api thingy"
-      description: "body inside click"
-      operationId: "function name"
+      summary: "Retrieves a user from the given ID."
+      description: "Administration Only."
+      operationId: "getUser"
       parameters:
       - name: "id"
         in: "path"
-        description: "parameter information"
+        description: "User ID"
         required: true
         schema:
           type: integer
@@ -173,24 +180,67 @@ paths:
           content:
             application/json:
               schema:
+                $ref: "#/components/schemas/User"
+        400:
+          description: "Invalid Parameter"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        404:
+          description: "Nonexistant User"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        500:
+          description: "Database Issue"
+          content:
+            application/json:
+              schema:
                 $ref: "#/components/schemas/Blank"
     put:
       tags:
       - "user"
-      summary: "next to api thingy"
-      description: "body inside click"
-      operationId: "function name2"
+      summary: "Update the user's information from the given ID."
+      description: "Requires that you are either an administrator or the given user."
+      operationId: "updateUser"
+      requestBody:
+        description: "User"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
       parameters:
       - name: "id"
         in: "path"
-        description: "parameter information"
+        description: "User ID"
         required: true
         schema:
           type: integer
-          format: int64
+          format: uint64
       responses:
         200:
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        400:
+          description: "Invalid Parameter"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        401:
+          description: "Not Admin or Self"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        500:
+          description: "Database Issue"
           content:
             application/json:
               schema:
@@ -198,13 +248,13 @@ paths:
     delete:
       tags:
       - "user"
-      summary: "next to api thingy"
-      description: "body inside click"
-      operationId: "function name3"
+      summary: "Mark a user as deleted from the given ID."
+      description: "This won't actually delete the account, but in the future there will be a function to actually wipe accounts from the database that have been marked as 'delete'. This endpoint requires that you are either the user in question, or an administrator acting on behalf of the user."
+      operationId: "deleteUser"
       parameters:
       - name: "id"
         in: "path"
-        description: "parameter information"
+        description: "User ID"
         required: true
         schema:
           type: integer
@@ -216,23 +266,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Blank"
-    post:
-      tags:
-      - "user"
-      summary: "next to api thingy"
-      description: "body inside click"
-      operationId: "function name4"
-      parameters:
-      - name: "id"
-        in: "path"
-        description: "parameter information"
-        required: true
-        schema:
-          type: integer
-          format: int64
-      responses:
-        200:
-          description: Success
+        400:
+          description: "Invalid Parameter"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        401:
+          description: "Not Admin or Self"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        500:
+          description: "Database Issue"
           content:
             application/json:
               schema:
@@ -241,9 +288,9 @@ paths:
     get:
       tags:
       - "user"
-      summary: "next to api thingy"
-      description: "body inside click"
-      operationId: "function name5"
+      summary: "Retrieve user by name."
+      description: "Volatile, may not return even if the user exists. We recommend using GET /user/{id} under most circumstances."
+      operationId: "getUserByName"
       parameters:
       - name: "name"
         in: "path"
@@ -257,27 +304,59 @@ paths:
           content:
             application/json:
               schema:
+                $ref: "#/components/schemas/User"
+        404:
+          description: "Nonexistant User"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        500:
+          description: "Database Issue"
+          content:
+            application/json:
+              schema:
                 $ref: "#/components/schemas/Blank"
   /verify/{magic}:
     get:
       tags:
       - "user"
-      summary: "next to api thingy"
-      description: "body inside click"
-      operationId: "function name6"
+      summary: "Verifies a user's email."
+      description: "This verifies that the given email from a user is their's. Under most circumstances this will allow the user to actually login and use their account to access resources."
+      operationId: "verifyUser"
       parameters:
       - name: "magic"
         in: "path"
+        description: "Magic"
         required: true
         schema:
           type: string
       responses:
-        200:
-          description: Success
+        202:
+          description: Accepted
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Blank"
+        500:
+          description: "Generic Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+
+  /scope:
+    post:
+      tags:
+      - "scopes"
+      summary: "Creates a new scope."
+      description: "Scopes are data, more precisely defining how a user can interact with services. Unfinished and incomplete API, check back later!"
+      operationId: "createScope"
+      responses:
+        200:
+          description: Success
+          content: {}
+
 
 components:
   schemas:
@@ -376,6 +455,25 @@ components:
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
       xml:
         name: "Claims"
+    AccessToken:
+      type: "object"
+      properties:
+        bearer:
+          type: "string"
+          format: "jwt"
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+      xml:
+        name: "AccessToken"
+    RefreshToken:
+      type: "object"
+      properties:
+        refresh:
+          type: "string"
+          format: "jwt"
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+      xml:
+        name: "RefreshToken"
+
 externalDocs:
   description: "Find out more about Swagger"
   url: "http://swagger.io"
