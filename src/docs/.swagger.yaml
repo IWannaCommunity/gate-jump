@@ -112,11 +112,23 @@ paths:
       tags:
       - "user"
       summary: "Login an account to the website."
-      description: "thinking"
+      description: "If a correct username and password authorization is given, a usable bearer token and refresh token will be subsequently handed out. The refresh token should be used on the /refresh endpoint to get a new bearer token when the original expires."
       operationId: "validateUser"
       responses:
         200:
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Claims"
+        401:
+          description: Banned or Deleted Account
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        500:
+          description: Invalid Parameters or Database Error
           content:
             application/json:
               schema:
@@ -319,7 +331,6 @@ components:
         date_deleted:
           type: "string"
           format: "date-time"
-        
     UserRegistration:
       type: "object"
       properties:
@@ -337,6 +348,19 @@ components:
           example: "XTLF2-P6MSX-5FGXP"
       xml:
         name: "UserRegistration"
+    Claims:
+      type: "object"
+      properties:
+        bearer:
+          type: "string"
+          format: "jwt"
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+        refresh:
+          type: "string"
+          format: "jwt"
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+      xml:
+        name: "Claims"
 externalDocs:
   description: "Find out more about Swagger"
   url: "http://swagger.io"
