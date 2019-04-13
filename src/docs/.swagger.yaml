@@ -303,9 +303,9 @@ paths:
     get:
       tags:
       - "user"
-      summary: "next to api thingy"
-      description: "body inside click"
-      operationId: "function name5"
+      summary: "Retrieve user by name."
+      description: "Volatile, may not return even if the user exists. We recommend using GET /user/{id} under most circumstances."
+      operationId: "getUserByName"
       parameters:
       - name: "name"
         in: "path"
@@ -319,7 +319,20 @@ paths:
           content:
             application/json:
               schema:
+                $ref: "#/components/schemas/User"
+        404:
+          description: "Nonexistant User"
+          content:
+            application/json:
+              schema:
                 $ref: "#/components/schemas/Blank"
+        500:
+          description: "Database Issue"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Blank"
+        
   /verify/{magic}:
     get:
       tags:
