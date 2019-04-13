@@ -94,15 +94,15 @@ paths:
     post:
       tags:
       - "user"
-      summary: "Register an account to the website."
-      description: "thinking"
+      summary: "Register an account to the authentication service."
+      description: "This will create an account for the applied authentication service. Depending on the settings of the service, a end-user will be unable to login to their account until they verify themselves by clicking the magic link sent to their email. Parameter input is also validated server-side, so if we find that the email, password, or username is badly formatted or unprocessable in someway we will reject the registration request. \r\n Additionally, we might require a invite code on registration to successfully sign-up."
       operationId: "createUser"
       requestBody:
-        description: "No Description"
+        description: "Registration Information"
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateData"
+              $ref: "#/components/schemas/UserRegistration"
       responses:
         200:
           description: Success
@@ -257,7 +257,7 @@ components:
       properties:
         uuid:
           type: "string"
-          example: ""
+          format: "uuid"
         name:
           type: "string"
           example: "stinkycheeseone890"
@@ -296,7 +296,7 @@ components:
           type: "string"
           format: "date-time"
         
-    CreateData:
+    UserRegistration:
       type: "object"
       properties:
         name:
@@ -308,8 +308,11 @@ components:
         email:
           type: "string"
           example: "iLOVEcheese@gmail.com"
+        invite-code:
+          type: "string"
+          example: "XTLF2-P6MSX-5FGXP"
       xml:
-        name: "UserCreateData"
+        name: "UserRegistration"
 externalDocs:
   description: "Find out more about Swagger"
   url: "http://swagger.io"
