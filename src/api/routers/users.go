@@ -428,7 +428,7 @@ func refreshUser(w http.ResponseWriter, r *http.Request) {
 
 // provide with request and said user and claims and confirm claims user exists and claims user's authentication level
 //TODO: move this function to the authentication package so we can unexport ctx.Claims and ctx.Tokens
-func getAuthLevel(r *http.Request, u1 *database.User) (authentication.AuthLevel, *res.Response) {
+func getAuthLevel(r *http.Request, u1 *database.User) (authentication.Level, *res.Response) {
 	ctx := r.Context().Value(authentication.ClaimsKey) // confirmed valid on jwt layer
 	if ctx == nil {
 		return authentication.PUBLIC, nil
