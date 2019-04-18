@@ -366,7 +366,6 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	bearer, refresh, err := u.CreateToken()
-	_ = refresh // prevent error
 	if err != nil {
 		res.New(http.StatusInternalServerError).SetErrorMessage("Failed Creating Token").Error(w)
 		return
@@ -379,7 +378,7 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res.New(http.StatusOK).SetToken(bearer).JSON(w)
+	res.New(http.StatusOK).SetBearer(bearer).SetRefresh(refresh).JSON(w)
 }
 
 func refreshUser(w http.ResponseWriter, r *http.Request) {
@@ -408,7 +407,6 @@ func refreshUser(w http.ResponseWriter, r *http.Request) {
 
 	// make token
 	bearer, refresh, err := u.CreateToken()
-	_ = refresh // prevent error for now
 	if err != nil {
 		res.New(http.StatusInternalServerError).SetErrorMessage("Error Creating Token").Error(w)
 		return
@@ -425,7 +423,7 @@ func refreshUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// return token
-	res.New(http.StatusOK).SetToken(bearer).JSON(w)
+	res.New(http.StatusOK).SetBearer(bearer).SetRefresh(refresh).JSON(w)
 }
 
 // provide with request and said user and claims and confirm claims user exists and claims user's authentication level
