@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/IWannaCommunity/gate-jump/src/api/authentication"
+	auth "github.com/IWannaCommunity/gate-jump/src/api/authentication"
 	"github.com/IWannaCommunity/gate-jump/src/api/database"
 	"github.com/IWannaCommunity/gate-jump/src/api/log"
 	"github.com/IWannaCommunity/gate-jump/src/api/mailer"
@@ -64,7 +64,7 @@ func getUserByName(w http.ResponseWriter, r *http.Request) {
 
 	u := database.User{Name: &name}
 
-	if serr := u.GetUserByName(authentication.PUBLIC); serr.Err != nil {
+	if serr := u.GetUserByName(auth.PUBLIC); serr.Err != nil {
 		switch serr.Err {
 		case sql.ErrNoRows:
 			res.New(http.StatusNotFound).SetErrorMessage("User Not Found").Error(w)
@@ -142,7 +142,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//check if user with name already exists; if not, we will get an ErrNoRows which is what we want
-	if serr := checkuser.GetUserByName(authentication.SERVER); serr.Err == nil {
+	if serr := checkuser.GetUserByName(auth.SERVER); serr.Err == nil {
 		res.New(http.StatusConflict).SetErrorMessage("Username Already Exists").Error(w)
 		return
 	} else if serr.Err != sql.ErrNoRows {
@@ -150,7 +150,7 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// check if user with email already exists; if not, we will get an ErrNoRows which is what we want
-	if serr := checkuser.GetUserByEmail(authentication.SERVER); serr.Err == nil {
+	if serr := checkuser.GetUserByEmail(auth.SERVER); serr.Err == nil {
 		res.New(http.StatusConflict).SetErrorMessage("Email Already In Use").Error(w)
 		return
 	} else if serr.Err != sql.ErrNoRows {
@@ -217,7 +217,7 @@ func verifyUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	usr := database.User{ID: &ml.UserID}
-	serr = usr.GetUser(authentication.SERVER)
+	serr = usr.GetUser(auth.SERVER)
 
 	if serr.Err != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
@@ -227,7 +227,7 @@ func verifyUser(w http.ResponseWriter, r *http.Request) {
 	// TODO: we need to get rid of pointer values in structs unless
 	// absolutely necessary, that way we don't get monsters like this
 	usr.Verified = &[]bool{true}[0]
-	serr = usr.UpdateUser(authentication.SERVER)
+	serr = usr.UpdateUser(auth.SERVER)
 
 	if serr.Err != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
@@ -266,14 +266,14 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	u.UUID = &uuid // set expected id to url id value
 
-	// get auth level of the request for the given id
-	auth, response := getAuthLevel(r, &u)
+	// get access level of the request for the given id
+	access, response := getAuthLevel(r, &u)
 	if response != nil {
 		response.Error(w)
 		return
 	}
 	// api requests made by permissions less than users can't edit any other user so reject them completely
-	if auth < authentication.USER {
+	if access < auth.USER {
 		res.New(http.StatusUnauthorized).SetErrorMessage("Requires User Permissions").Error(w)
 		return
 	}
@@ -290,7 +290,7 @@ func updateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	*u.Password = string(hashpwd)
 
-	serr := u.UpdateUser(auth)
+	serr := u.UpdateUser(access)
 	if serr.Err != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
@@ -306,12 +306,12 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 	uuid := vars["id"]
 	u := database.User{UUID: &uuid}
 
-	auth, response := getAuthLevel(r, &u)
+	access, response := getAuthLevel(r, &u)
 	if response != nil {
 		response.Error(w)
 		return
 	}
-	if auth < authentication.USER { // they arent the given user
+	if access < auth.USER { // they arent the given user
 		res.New(http.StatusUnauthorized).SetErrorMessage("Invalid Permissions").Error(w)
 		return
 	}
@@ -337,7 +337,7 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 	u.Name = &lr.Username
 
 	//get the user; if no user by that name, return 401, if other error, 500
-	if serr := u.GetUserByName(authentication.SERVER); serr.Err == sql.ErrNoRows {
+	if serr := u.GetUserByName(auth.SERVER); serr.Err == sql.ErrNoRows {
 		res.New(http.StatusUnauthorized).SetErrorMessage("User Doesn't Exist").Error(w)
 		return
 	} else if serr.Err != nil {
@@ -373,7 +373,7 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 
 	u.LastLogin = &[]time.Time{time.Now()}[0] // how to get pointer from function call (its gross): goo.gl/9BXtsj
 	u.LastIP = &r.RemoteAddr
-	if serr := u.UpdateUser(authentication.SERVER); serr.Err != nil {
+	if serr := u.UpdateUser(auth.SERVER); serr.Err != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
 	}
@@ -383,24 +383,24 @@ func validateUser(w http.ResponseWriter, r *http.Request) {
 
 func refreshUser(w http.ResponseWriter, r *http.Request) {
 	// get user
-	ctx := r.Context().Value(authentication.ClaimsKey).(authentication.Refresh) // claims at this point are validated so refresh is allowed
+	ctx := r.Context().Value(auth.ClaimsKey).(auth.Refresh) // claims at this point are validated so refresh is allowed
 	claims := ctx
 
 	var u database.User
 	u.UUID = claims.UUID
 
-	auth, response := getAuthLevel(r, &u)
+	access, response := getAuthLevel(r, &u)
 	if response != nil {
 		response.Error(w)
 		return
 	}
 
-	if !(auth == authentication.USER || auth == authentication.ADMINUSER) {
+	if !(access == auth.USER || access == auth.ADMINUSER) {
 		res.New(http.StatusUnauthorized).SetErrorMessage("Invalid Token Provided").Error(w)
 		return
 	}
 
-	if serr := u.GetUser(authentication.SERVER); serr.Err != nil {
+	if serr := u.GetUser(auth.SERVER); serr.Err != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
 	}
@@ -417,7 +417,7 @@ func refreshUser(w http.ResponseWriter, r *http.Request) {
 	u.LastIP = &r.RemoteAddr
 
 	// update information
-	if serr := u.UpdateUser(authentication.SERVER); serr.Err != nil {
+	if serr := u.UpdateUser(auth.SERVER); serr.Err != nil {
 		res.New(http.StatusInternalServerError).SetInternalError(&serr).Error(w)
 		return
 	}
@@ -426,45 +426,45 @@ func refreshUser(w http.ResponseWriter, r *http.Request) {
 	res.New(http.StatusOK).SetBearer(bearer).SetRefresh(refresh).JSON(w)
 }
 
-// provide with request and said user and claims and confirm claims user exists and claims user's authentication level
-//TODO: move this function to the authentication package so we can unexport ctx.Claims and ctx.Tokens
-func getAuthLevel(r *http.Request, u1 *database.User) (authentication.Level, *res.Response) {
-	ctx := r.Context().Value(authentication.ClaimsKey) // confirmed valid on jwt layer
+// provide with request and said user and claims and confirm claims user exists and claims user's access level
+//TODO: move this function to the access package so we can unexport ctx.Claims and ctx.Tokens
+func getAuthLevel(r *http.Request, u1 *database.User) (auth.Level, *res.Response) {
+	ctx := r.Context().Value(auth.ClaimsKey) // confirmed valid on jwt layer
 	if ctx == nil {
-		return authentication.PUBLIC, nil
+		return auth.PUBLIC, nil
 	}
-	bearer := ctx.(authentication.Bearer)
+	bearer := ctx.(auth.Bearer)
 
 	var u2 database.User
 	u2.UUID = bearer.UUID
-	serr := u2.GetUser(authentication.SERVER)
+	serr := u2.GetUser(auth.SERVER)
 	if serr.Err == sql.ErrNoRows { // claims user wasn't found
-		return authentication.PUBLIC, res.New(http.StatusUnauthorized).SetErrorMessage("Token's User Doesn't Exist")
+		return auth.PUBLIC, res.New(http.StatusUnauthorized).SetErrorMessage("Token's User Doesn't Exist")
 	} else if serr.Err != nil {
-		return authentication.PUBLIC, res.New(http.StatusInternalServerError).SetInternalError(&serr)
+		return auth.PUBLIC, res.New(http.StatusInternalServerError).SetInternalError(&serr)
 	}
 
 	// we assume the username of the claimed user and the found user (u2) is the same because we searched by name
 	if u2.Banned != nil && *u2.Banned { // fuck this guy in particular
-		return authentication.PUBLIC, nil
+		return auth.PUBLIC, nil
 	}
 
 	if u1 == nil { // we aren't editing a user directly so no user was provided
 		if u2.Admin != nil && *u2.Admin { // u2 is an admin
-			return authentication.ADMIN, nil
+			return auth.ADMIN, nil
 		} else { // u2 is not an admin
-			return authentication.PUBLIC, nil
+			return auth.PUBLIC, nil
 		}
 	} else {
 		if u1.ID == u2.ID { // is u1 u2?
 			if u2.Admin != nil && *u2.Admin { // is u2 an admin like they say they are?
-				return authentication.ADMINUSER, nil
+				return auth.ADMINUSER, nil
 			} else { // u2 is not an admin but is u1
-				return authentication.USER, nil
+				return auth.USER, nil
 			}
 		} else if u2.Admin != nil && *u2.Admin { // is u2 not u1 but is an admin?
-			return authentication.ADMIN, nil
+			return auth.ADMIN, nil
 		}
-		return authentication.PUBLIC, nil // u2 is neither u1 or an admin
+		return auth.PUBLIC, nil // u2 is neither u1 or an admin
 	}
 }
