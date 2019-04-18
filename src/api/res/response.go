@@ -16,7 +16,8 @@ type Response struct {
 	Payload  struct {
 		Success  bool        `json:"success"`
 		Error    *string     `json:"error,omitempty"`
-		Token    *string     `json:"token,omitempty"`
+		Refresh  *string     `json:"refresh,omitempty"`
+		Bearer   *string     `json:"bearer,omitempty"`
 		User     interface{} `json:"user,omitempty"`
 		UserList interface{} `json:"userList,omitempty"`
 	}
@@ -51,8 +52,14 @@ func (r *Response) SetUsers(datas interface{}) *Response {
 	r.Payload.UserList = datas
 	return r
 }
-func (r *Response) SetToken(token string) *Response {
-	r.Payload.Token = &token
+
+func (r *Response) SetRefresh(refresh string) *Response {
+	r.Payload.Refresh = &refresh
+	return r
+}
+
+func (r *Response) SetBearer(bearer string) *Response {
+	r.Payload.Bearer = &bearer
 	return r
 }
 
