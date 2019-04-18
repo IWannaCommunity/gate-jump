@@ -10,15 +10,15 @@ import (
 )
 
 type ContextKey int
-type AuthLevel int
+type Level int
 
 // Auth Levels
 const (
-	PUBLIC    AuthLevel = 0 // public return
-	USER      AuthLevel = 1 // user return
-	ADMINUSER AuthLevel = 2 // admin wants to change password. admins cant change other users passwords so this exists
-	ADMIN     AuthLevel = 3 // admin return
-	SERVER    AuthLevel = 4 // server has mega powerlevel
+	PUBLIC    Level = 0 // public return
+	USER      Level = 1 // user return
+	ADMINUSER Level = 2 // admin wants to change password. admins cant change other users passwords so this exists
+	ADMIN     Level = 3 // admin return
+	SERVER    Level = 4 // server has mega powerlevel
 )
 
 // Context Keys
@@ -79,7 +79,7 @@ func JWTContext(next http.Handler) http.Handler {
 			res.New(http.StatusUnauthorized).SetErrorMessage("Token Is Invalid").Error(w)
 			return
 		}
-		if token.Claims == nil { // nothing was put into the token
+		if token.Claims == nil { // nothing was put into the token??
 			res.New(http.StatusInternalServerError).SetErrorMessage("Token Is Null").Error(w)
 			return
 		}
