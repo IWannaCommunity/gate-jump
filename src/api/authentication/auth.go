@@ -44,20 +44,33 @@ type Bearer struct {
 
 func JWTContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		claims := Refresh{}
+
+		var ctx context.Context
+		var err error
+		var token *jwt.Token
 		tokenString := r.Header.Get("Authorization")
 
 		if tokenString == "" { // no token provided, value checked will be nil
 			ctx := context.WithValue(r.Context(), ClaimsKey, nil)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
+		} else if r.URL.Path == "/refresh" {
+			// parse token provided
+			claims := Refresh{}
+			token, err = jwt.ParseWithClaims(tokenString, &claims,
+				func(token *jwt.Token) (interface{}, error) {
+					return []byte(settings.JwtSecret), nil
+				})
+			ctx = context.WithValue(r.Context(), ClaimsKey, claims)
+		} else {
+			claims := Bearer{}
+			token, err = jwt.ParseWithClaims(tokenString, &claims,
+				func(token *jwt.Token) (interface{}, error) {
+					return []byte(settings.JwtSecret), nil
+				})
+			ctx = context.WithValue(r.Context(), ClaimsKey, claims)
 		}
 
-		// parse token provided
-		token, err := jwt.ParseWithClaims(tokenString, &claims,
-			func(token *jwt.Token) (interface{}, error) {
-				return []byte(settings.JwtSecret), nil
-			})
 		if err != nil { // token couldn't be read
 			res.New(http.StatusUnauthorized).SetErrorMessage("Invalid Token Provided").Error(w)
 			return
@@ -71,7 +84,6 @@ func JWTContext(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), ClaimsKey, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
