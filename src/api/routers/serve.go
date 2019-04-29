@@ -17,6 +17,7 @@ var router *mux.Router
 func Serve(port, sslport string) {
 	router = mux.NewRouter()
 
+	// Deprecated
 	router.HandleFunc("/", getAlive).Methods("GET")
 	router.HandleFunc("/user", getUsers).Methods("GET")
 	router.HandleFunc("/register", createUser).Methods("POST")
@@ -29,6 +30,10 @@ func Serve(port, sslport string) {
 	router.HandleFunc("/user/{name}", getUserByName).Methods("GET")
 	router.HandleFunc("/verify/{magic}", verifyUser).Methods("GET")
 	router.HandleFunc("/scope", createScope).Methods("POST")
+
+	// OAuth 2.0 + OpenID Connect
+	router.HandleFunc("/oauth/v1/owner", createOwner).Methods("POST")
+
 	router.Use(HTTPRecovery)
 	router.Use(authentication.JWTContext)
 
