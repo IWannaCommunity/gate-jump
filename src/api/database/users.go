@@ -307,12 +307,12 @@ func (u *User) CreateToken() (string, string, error) {
 		u.Locale,
 		u.Group,
 		u.Scope,
-		jwt.StandardClaims{
+		jwt.StandardClaims{ //// TODO: Bearer tokens should only last 5 minutes
 			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(), //expire in one hour
 			Issuer:    settings.Host + ":" + settings.Port,
 			Subject:   *u.UUID, //user id as string
 		},
-	}
+	} //// TODO: Refresh tokens should not expire
 	refresh := auth.Refresh{
 		u.UUID,
 		u.Group,

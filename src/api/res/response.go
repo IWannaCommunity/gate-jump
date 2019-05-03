@@ -19,6 +19,7 @@ type Response struct {
 		Token    *string     `json:"token,omitempty"`
 		User     interface{} `json:"user,omitempty"`
 		UserList interface{} `json:"userList,omitempty"`
+		Grant    interface{} `json:"grant,omitempty"`
 	}
 	InternalError *ServerError
 }
@@ -53,6 +54,10 @@ func (r *Response) SetUsers(datas interface{}) *Response {
 }
 func (r *Response) SetToken(token string) *Response {
 	r.Payload.Token = &token
+	return r
+}
+func (r *Response) SetGrant(grant interface{}) *Response {
+	r.Payload.Grant = grant
 	return r
 }
 
