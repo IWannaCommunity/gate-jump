@@ -14,21 +14,22 @@ import (
 
 var router *mux.Router
 
-func Serve(port, sslport string) {
+func Serve(version, port, sslport string) {
 	router = mux.NewRouter()
 
-	router.HandleFunc("/", getAlive).Methods("GET")
-	router.HandleFunc("/user", getUsers).Methods("GET")
-	router.HandleFunc("/register", createUser).Methods("POST")
-	router.HandleFunc("/login", validateUser).Methods("POST")
-	router.HandleFunc("/refresh", refreshUser).Methods("POST")
-	router.HandleFunc("/user/{id:[0-9]+}", getUser).Methods("GET")
-	router.HandleFunc("/user/{id:[0-9]+}", updateUser).Methods("PUT")
-	router.HandleFunc("/user/{id:[0-9]+}", deleteUser).Methods("DELETE")
-	//router.HandleFunc("/user/{id:[0-9]+}", banUser).Methods("POST")
-	router.HandleFunc("/user/{name}", getUserByName).Methods("GET")
-	router.HandleFunc("/verify/{magic}", verifyUser).Methods("GET")
-	router.HandleFunc("/scope", createScope).Methods("POST")
+	prefix := fmt.Sprintf("/oauth/%s/", version)
+	owners := prefix + "owners"
+	token := prefix + "token"
+
+	router.HandleFunc(prefix, serverInfo).Methods("GET")
+	router.HandleFunc(owners, createUser).Methods("POST")
+	router.HandleFunc(owners, updateUser).Methods("PUT")
+	router.HandleFunc(owners, verifyUser).Methods("PATCH")
+	router.HandleFunc(owners, deleteUser).Methods("DELETE")
+	router.HandleFunc(token, createToken).Methods("POST")
+	router.HandleFunc(token, updateToken).Methods("PUT")
+	router.HandleFunc(token, deleteToken).Methods("DELETE")
+
 	router.Use(HTTPRecovery)
 	router.Use(authentication.JWTContext)
 
