@@ -19,7 +19,7 @@ config/config\.json
 
 debug
 
-src/api/config/
 node_modules
 
 src/api/api
+src/api/config/config.json
