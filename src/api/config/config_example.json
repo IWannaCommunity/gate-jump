@@ -2,6 +2,7 @@
     "host":"0.0.0.0",
     "port":"80",
     "sslPort":"443",
+    "apiVer":"v0",
     "database":{
         "username":"root",
         "password":"",
