@@ -67,6 +67,6 @@ func main() {
 
 	// Preparing to serve. https://github.com/spidernest-go/mux
 	log.Info().Msgf("Router listening at %s:%s", settings.Host, settings.Port)
-	routers.Serve(settings.Port, settings.SslPort)
+	routers.Serve(settings.Version, settings.Port, settings.SslPort)
 
 }
