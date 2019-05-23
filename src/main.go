@@ -38,26 +38,32 @@ func main() {
 	}
 
 	// Initalize the mailer.
-	log.Info().Msg("Initalizing mailer...")
-	err = mailer.SMTPInit()
-	if err != nil {
-		log.Fatal().Msgf("Failed initalizing mailer: %v", err)
-	}
-	go mailer.Daemon()
+	/*
+		log.Info().Msg("Initalizing mailer...")
+			err = mailer.SMTPInit()
+			if err != nil {
+				log.Fatal().Msgf("Failed initalizing mailer: %v", err)
+			}
+			go mailer.Daemon()
+	*/
 
 	// Initalize the database.
-	log.Info().Msg("Initalizing database...")
-	database.Connect(
-		settings.Database.Username,
-		settings.Database.Password,
-		settings.Database.Dsn)
+	/*
+		log.Info().Msg("Initalizing database...")
+		database.Connect(
+			settings.Database.Username,
+			settings.Database.Password,
+			settings.Database.Dsn)
+	*/
 
 	// Verify database schema.
-	log.Info().Msg("Verifying database schema...")
-	err = database.Init()
-	if err != nil {
-		log.Fatal().Msgf("Database could not initalize: %v", err)
-	}
+	/*
+		log.Info().Msg("Verifying database schema...")
+		err = database.Init()
+		if err != nil {
+			log.Fatal().Msgf("Database could not initalize: %v", err)
+		}
+	*/
 
 	// Preparing to serve.
 	log.Info().Msgf("Router listening at %s:%s", settings.Host, settings.Port)
