@@ -44,6 +44,7 @@ var (
 	Protocol          string
 	JwtSecret         string
 	DiscordWebhookURL string
+	APIVer            string
 	Major             int
 	Patch             int
 	Minor             int
@@ -95,4 +96,5 @@ func setActiveConfig(configmap map[string]interface{}) {
 	Host = configmap["host"].(string)
 	Port = configmap["port"].(string)
 	SslPort = configmap["sslPort"].(string)
+	APIVer = configmap["apiVer"].(string)
 }
