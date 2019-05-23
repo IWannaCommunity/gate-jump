@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/IWannaCommunity/gate-jump/src/api/routers"
 	"github.com/IWannaCommunity/gate-jump/src/api/settings"
 	log "github.com/spidernest-go/logger"
 )
@@ -67,6 +68,6 @@ func main() {
 
 	// Preparing to serve. https://github.com/spidernest-go/mux
 	log.Info().Msgf("Router listening at %s:%s", settings.Host, settings.Port)
-	routers.Serve(settings.Version, settings.Port, settings.SslPort)
+	routers.Serve(settings.APIVer, settings.Port, settings.SslPort)
 
 }
