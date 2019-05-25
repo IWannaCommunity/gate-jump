@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/IWannaCommunity/gate-jump/src/api/settings"
 	log "github.com/spidernest-go/logger"
 	mux "github.com/spidernest-go/mux"
 )
@@ -45,5 +46,26 @@ func STB(s interface{}) ([]byte, error) {
 }
 
 func serverInfo(ctx mux.Context) error {
-	return mux.ErrNotFound
+	r, err := STB(
+		struct {
+			Minor  int          `json:"minor"`
+			Patch  int          `json:"patch"`
+			Major  int          `json:"major"`
+			Routes []*mux.Route `json:"routes"`
+		}{
+			settings.Minor,
+			settings.Patch,
+			settings.Major,
+			Echo.Routes(),
+		})
+	if err != nil {
+		log.Err(err).Msgf("Error converting struct to byte array: %v", err)
+		return mux.ErrInternalServerError
+	}
+	_, err = mux.NewResponse(ctx.Request(), ctx.Echo()).Write(r)
+	if err != nil {
+		log.Err(err).Msgf("Unknown error sending server info: %v", err)
+		return mux.ErrInternalServerError
+	}
+	return nil
 }
