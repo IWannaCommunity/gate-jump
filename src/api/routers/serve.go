@@ -9,28 +9,26 @@ import (
 )
 
 var (
-	Echo   *mux.Echo
-	Router *mux.Router
+	Echo *mux.Echo
 )
 
 func Serve(version, port, sslport string) {
 	Echo = mux.New()
-	Router = Echo.Router()
 
 	prefix := fmt.Sprintf("/oauth/%s/", version)
 	owners := prefix + "owners"
 	token := prefix + "token"
 
-	Router.Add(http.MethodGet, prefix, serverInfo)
+	Echo.Add(http.MethodGet, prefix, serverInfo)
 
-	Router.Add(http.MethodPost, owners, createUser)
-	Router.Add(http.MethodPut, owners, updateUser)
-	Router.Add(http.MethodPatch, owners, verifyUser)
-	Router.Add(http.MethodDelete, owners, deleteUser)
+	Echo.Add(http.MethodPost, owners, createUser)
+	Echo.Add(http.MethodPut, owners, updateUser)
+	Echo.Add(http.MethodPatch, owners, verifyUser)
+	Echo.Add(http.MethodDelete, owners, deleteUser)
 
-	Router.Add(http.MethodPost, token, createToken)
-	Router.Add(http.MethodPut, token, updateToken)
-	Router.Add(http.MethodDelete, token, deleteToken)
+	Echo.Add(http.MethodPost, token, createToken)
+	Echo.Add(http.MethodPut, token, updateToken)
+	Echo.Add(http.MethodDelete, token, deleteToken)
 
 	log.Fatal().Msgf("Router ran into fatal error: %v", Echo.Start(fmt.Sprintf(":%s", port)))
 }
