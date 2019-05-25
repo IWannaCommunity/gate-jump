@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -31,6 +32,16 @@ func Serve(version, port, sslport string) {
 	Echo.Add(http.MethodDelete, token, deleteToken)
 
 	log.Fatal().Msgf("Router ran into fatal error: %v", Echo.Start(fmt.Sprintf(":%s", port)))
+}
+
+// STB Converts a given structure to a byte array.
+// Setup as a function so it can be improved upon later.
+func STB(s interface{}) ([]byte, error) {
+	marshaled, err := json.Marshal(s)
+	if err != nil {
+		return []byte(""), err
+	}
+	return []byte(marshaled), nil
 }
 
 func serverInfo(ctx mux.Context) error {
