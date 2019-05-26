@@ -36,26 +36,15 @@ func Serve(version, port, sslport string) {
 
 // serverInfo returns the version information and routes of the server.
 func serverInfo(ctx mux.Context) error {
-	r, err := STB(
-		struct {
-			Minor  int          `json:"minor"`
-			Patch  int          `json:"patch"`
-			Major  int          `json:"major"`
-			Routes []*mux.Route `json:"routes"`
-		}{
-			settings.Minor,
-			settings.Patch,
-			settings.Major,
-			Echo.Routes(),
-		})
-	if err != nil {
-		log.Err(err).Msgf("Error converting struct to byte array: %v", err)
-		return mux.ErrInternalServerError
-	}
-	_, err = mux.NewResponse(ctx.Request(), ctx.Echo()).Write(r)
-	if err != nil {
-		log.Err(err).Msgf("Unknown error sending server info: %v", err)
-		return mux.ErrInternalServerError
-	}
-	return nil
+	return ctx.JSON(http.StatusOK, struct {
+		Minor  int          `json:"minor"`
+		Patch  int          `json:"patch"`
+		Major  int          `json:"major"`
+		Routes []*mux.Route `json:"routes"`
+	}{
+		settings.Minor,
+		settings.Patch,
+		settings.Major,
+		Echo.Routes(),
+	})
 }
