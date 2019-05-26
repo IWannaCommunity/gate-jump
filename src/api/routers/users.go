@@ -64,7 +64,6 @@ func createUser(ctx mux.Context) error {
 //	500 @ ???
 // 	204 @ updated successfully
 func updateUser(ctx mux.Context) error {
-	//uuid := ctx.FormValue("id")
 	//token := ctx.FormValue("token")
 	//data := ctx.Get("data").(map[string]string) // Format may change depending on database package inputs.
 
