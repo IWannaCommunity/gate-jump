@@ -59,14 +59,14 @@ func createUser(ctx mux.Context) error {
 	return ctx.NoContent(http.StatusCreated)
 }
 
-func updateUser(mux.Context) error {
+func updateUser(ctx mux.Context) error {
 	return errors.New("Not Implemented")
 }
 
-func verifyUser(mux.Context) error {
+func verifyUser(ctx mux.Context) error {
 	return errors.New("Not Implemented")
 }
 
-func deleteUser(mux.Context) error {
+func deleteUser(ctx mux.Context) error {
 	return errors.New("Not Implemented")
 }
