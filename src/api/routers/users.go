@@ -60,9 +60,7 @@ func createUser(ctx mux.Context) error {
 
 // updateUser takes a refresh token, confirms its a valid token, and then updates the user it represents in the user database
 // returns:
-//	400 @ invalid magic link
-// 	401 @ tried to edit a user that they are not
-//	404 @ user doesn't exist
+//	401 @ invalid token provided
 //	500 @ ???
 // 	204 @ updated successfully
 func updateUser(ctx mux.Context) error {
