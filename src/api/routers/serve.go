@@ -31,6 +31,8 @@ func Serve(version, port, sslport string) {
 	Echo.PUT(token, updateToken)
 	Echo.DELETE(token, deleteToken)
 
+	Echo.Use(Recover())
+
 	log.Fatal().Msgf("Router ran into fatal error: %v", Echo.Start(fmt.Sprintf(":%s", port)))
 }
 
