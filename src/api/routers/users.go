@@ -2,12 +2,61 @@ package routers
 
 import (
 	"errors"
+	"net/http"
 
+	"github.com/badoux/checkmail"
+
+	log "github.com/spidernest-go/logger"
 	mux "github.com/spidernest-go/mux"
+	"golang.org/x/crypto/bcrypt"
 )
 
-func createUser(mux.Context) error {
-	return errors.New("Not Implemented")
+// validUsername confirms that the given username string is a valid username
+func validUsername(username string) bool {
+	return len(username) >= 3
+}
+
+// validPassword confirms that the given password string is a valid password
+func validPassword(password string) bool {
+	return len(password) >= 8
+}
+
+// createUser creates a user and adds it to database as well as sends a verification email to the provided email
+// returns:
+//	400 @ invalid username,password,email
+//	409 @ user/email already exists
+//	500 @ general parsing error
+// 	201 @ created user
+func createUser(ctx mux.Context) error {
+	username := ctx.FormValue("username")
+	password := ctx.FormValue("password")
+	email := ctx.FormValue("email")
+
+	// TODO: Move checkmail functions to mailer package.
+	// TODO: checkmail doesn't approve of gmails <email>+<string>@gmail.com format and invalidates it. Consider forking and fixing it.
+	// TODO: Confirm that no '.suffix' is required at the end of an email for it to be valid. checkmail says its valid but I am uncertain.
+	if !(validUsername(username) && validPassword(password) && (checkmail.ValidateFormat(email) == nil)) {
+		log.Info().Msgf("Invalid data given... %v:%v:%v", validUsername(username), validPassword(password), checkmail.ValidateFormat(email))
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	// TODO: Check database to confirm user/email doesn't already exist.
+
+	// Hash the password.
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		log.Err(err).Msgf("Error encrypting password: %v", err)
+		return err
+	}
+	password = string(bytes)
+
+	// TODO: Create the user in the database.
+
+	// TODO: Initalize the magic link for email verification.
+
+	// TODO: Send email to provided email address.
+
+	return ctx.NoContent(http.StatusCreated)
 }
 
 func updateUser(mux.Context) error {
