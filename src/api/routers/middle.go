@@ -2,10 +2,22 @@ package routers
 
 import (
 	"errors"
+	"time"
 
 	log "github.com/spidernest-go/logger"
 	echo "github.com/spidernest-go/mux"
 )
+
+// Logging returns a middleware function that returns a handler func that logs the starting time finds the time elapsed of a given route.
+func Logging() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc { // middleware function
+		return func(ctx echo.Context) error { // handler function
+			start := time.Now()
+			defer log.Info().Msgf("%3dns @ %d -> %s", time.Since(start).Nanoseconds(), ctx.Request().Response.StatusCode(), ctx.Path())
+			return next(ctx)
+		}
+	}
+}
 
 // Recover returns a middleware function that returns a handler func that defers a recover handler and passes context into the next route.
 func Recover() echo.MiddlewareFunc {
