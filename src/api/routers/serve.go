@@ -9,33 +9,29 @@ import (
 	mux "github.com/spidernest-go/mux"
 )
 
-var (
-	Echo *mux.Echo
-)
-
 // Serve initalizes the router to the given port, adding the routes to them, middleware, and then starting the server until a fatal error occurs.
 func Serve(version, port, sslport string) {
-	Echo = mux.New()
+	e := mux.New()
 
 	prefix := fmt.Sprintf("/oauth/%s/", version)
 	owners := prefix + "owners"
 	token := prefix + "token"
 
-	Echo.GET(prefix, serverInfo)
+	e.GET(prefix, serverInfo)
 
-	Echo.POST(owners, createUser)
-	Echo.PUT(owners, updateUser)
-	Echo.PATCH(owners, verifyUser)
-	Echo.DELETE(owners, deleteUser)
+	e.POST(owners, createUser)
+	e.PUT(owners, updateUser)
+	e.PATCH(owners, verifyUser)
+	e.DELETE(owners, deleteUser)
 
-	Echo.POST(token, createToken)
-	Echo.PUT(token, updateToken)
-	Echo.DELETE(token, deleteToken)
+	e.POST(token, createToken)
+	e.PUT(token, updateToken)
+	e.DELETE(token, deleteToken)
 
-	Echo.Use(Logging())
-	Echo.Use(Recover())
+	e.Use(Logging())
+	e.Use(Recover())
 
-	log.Fatal().Msgf("Router ran into fatal error: %v", Echo.Start(fmt.Sprintf(":%s", port)))
+	log.Fatal().Msgf("Router ran into fatal error: %v", e.Start(fmt.Sprintf(":%s", port)))
 }
 
 // serverInfo returns the version information and routes of the server.
@@ -49,6 +45,6 @@ func serverInfo(ctx mux.Context) error {
 		settings.Minor,
 		settings.Patch,
 		settings.Major,
-		Echo.Routes(),
+		ctx.Echo().Routes(),
 	})
 }
