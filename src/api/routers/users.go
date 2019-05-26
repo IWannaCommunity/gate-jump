@@ -62,8 +62,23 @@ func updateUser(ctx mux.Context) error {
 	return errors.New("Not Implemented")
 }
 
+// verifyUser takes a "magic" parameter and crossreferences the user and magic database to confirm correctness and then update their verified status
+// returns:
+//	400 @ invalid magic link
+//	500 @ ???
+// 	202 @ verified successfully
 func verifyUser(ctx mux.Context) error {
-	return errors.New("Not Implemented")
+	//magix := ctx.FormValue("magic")
+
+	// TODO: Verify the magic link exists in the database.
+
+	// TODO: Set the verified flag for the user of the given magic link.
+
+	// TODO: Delete the magic link from the database.
+
+	// TODO: Email user to let them know their email is verified.
+
+	return ctx.NoContent(http.StatusAccepted)
 }
 
 func deleteUser(ctx mux.Context) error {
