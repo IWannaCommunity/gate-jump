@@ -36,7 +36,6 @@ func createUser(ctx mux.Context) error {
 	// TODO: checkmail doesn't approve of gmails <email>+<string>@gmail.com format and invalidates it. Consider forking and fixing it.
 	// TODO: Confirm that no '.suffix' is required at the end of an email for it to be valid. checkmail says its valid but I am uncertain.
 	if !(validUsername(username) && validPassword(password) && (checkmail.ValidateFormat(email) == nil)) {
-		log.Info().Msgf("Invalid data given... %v:%v:%v", validUsername(username), validPassword(password), checkmail.ValidateFormat(email))
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
