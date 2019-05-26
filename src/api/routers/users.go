@@ -68,7 +68,7 @@ func updateUser(ctx mux.Context) error {
 //	500 @ ???
 // 	202 @ verified successfully
 func verifyUser(ctx mux.Context) error {
-	//magix := ctx.FormValue("magic")
+	//magic := ctx.FormValue("magic")
 
 	// TODO: Verify the magic link exists in the database.
 
