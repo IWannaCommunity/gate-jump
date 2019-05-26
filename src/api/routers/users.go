@@ -68,7 +68,7 @@ func updateUser(ctx mux.Context) error {
 	//token := ctx.FormValue("token")
 	//data := ctx.Get("data").(map[string]string) // Format may change depending on database package inputs.
 
-	// TODO: Confirm valid token. (Confirms the user knows who they are.)
+	// TODO: Confirm valid token. (Confirms the user knows who they are updating.)
 
 	// TODO: Pass data into database to update the specified user.
 
