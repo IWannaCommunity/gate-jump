@@ -21,16 +21,16 @@ func Serve(version, port, sslport string) {
 	owners := prefix + "owners"
 	token := prefix + "token"
 
-	Echo.Add(http.MethodGet, prefix, serverInfo)
+	Echo.GET(prefix, serverInfo)
 
-	Echo.Add(http.MethodPost, owners, createUser)
-	Echo.Add(http.MethodPut, owners, updateUser)
-	Echo.Add(http.MethodPatch, owners, verifyUser)
-	Echo.Add(http.MethodDelete, owners, deleteUser)
+	Echo.POST(owners, createUser)
+	Echo.PUT(owners, updateUser)
+	Echo.PATCH(owners, verifyUser)
+	Echo.DELETE(owners, deleteUser)
 
-	Echo.Add(http.MethodPost, token, createToken)
-	Echo.Add(http.MethodPut, token, updateToken)
-	Echo.Add(http.MethodDelete, token, deleteToken)
+	Echo.POST(token, createToken)
+	Echo.PUT(token, updateToken)
+	Echo.DELETE(token, deleteToken)
 
 	log.Fatal().Msgf("Router ran into fatal error: %v", Echo.Start(fmt.Sprintf(":%s", port)))
 }
