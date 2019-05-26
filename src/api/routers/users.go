@@ -1,7 +1,6 @@
 package routers
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/badoux/checkmail"
@@ -93,6 +92,17 @@ func verifyUser(ctx mux.Context) error {
 	return ctx.NoContent(http.StatusAccepted)
 }
 
+// deleteUser takes a refresh token, confirms its a valid token, and then flags the user for deactivation after a certain amount of days unless logged in before deactivation
+// returns:
+//	401 @ invalid token provided
+//	500 @ ???
+//	202 @ user flagged for deletion
 func deleteUser(ctx mux.Context) error {
-	return errors.New("Not Implemented")
+	//token := ctx.FormValue("token")
+
+	// TODO: Confirm valid token. (Confirms the user knows who they are updating.)
+
+	// TODO: Update users deleted flag in the database.
+
+	return ctx.NoContent(http.StatusAccepted)
 }
