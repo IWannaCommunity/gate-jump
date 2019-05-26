@@ -12,8 +12,10 @@ import (
 func Logging() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc { // middleware function
 		return func(ctx echo.Context) error { // handler function
-			start := time.Now()
-			defer log.Info().Msgf("%3dns @ %d -> %s", time.Since(start).Nanoseconds(), ctx.Request().Response.StatusCode(), ctx.Path())
+			start := float64(time.Now().UnixNano()) / 1e6
+			defer func() {
+				log.Info().Msgf("%4.2fms @ %d -> %s", (float64(time.Now().UnixNano())/1e6)-start, ctx.Request().Response.StatusCode(), ctx.Path())
+			}()
 			return next(ctx)
 		}
 	}
