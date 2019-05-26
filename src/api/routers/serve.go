@@ -13,6 +13,7 @@ var (
 	Echo *mux.Echo
 )
 
+// Serve initalizes the router to the given port, adding the routes to them, middleware, and then starting the server until a fatal error occurs.
 func Serve(version, port, sslport string) {
 	Echo = mux.New()
 
