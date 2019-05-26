@@ -58,8 +58,23 @@ func createUser(ctx mux.Context) error {
 	return ctx.NoContent(http.StatusCreated)
 }
 
+// updateUser takes a refresh token, confirms its a valid token, and then updates the user it represents in the user database
+// returns:
+//	400 @ invalid magic link
+// 	401 @ tried to edit a user that they are not
+//	404 @ user doesn't exist
+//	500 @ ???
+// 	204 @ updated successfully
 func updateUser(ctx mux.Context) error {
-	return errors.New("Not Implemented")
+	//uuid := ctx.FormValue("id")
+	//token := ctx.FormValue("token")
+	//data := ctx.Get("data").(map[string]string) // Format may change depending on database package inputs.
+
+	// TODO: Confirm valid token. (Confirms the user knows who they are.)
+
+	// TODO: Pass data into database to update the specified user.
+
+	return ctx.NoContent(http.StatusNoContent)
 }
 
 // verifyUser takes a "magic" parameter and crossreferences the user and magic database to confirm correctness and then update their verified status
