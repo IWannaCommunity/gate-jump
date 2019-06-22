@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/IWannaCommunity/gate-jump/src/api/database"
 	"github.com/IWannaCommunity/gate-jump/src/api/routers"
 	"github.com/IWannaCommunity/gate-jump/src/api/settings"
 	log "github.com/spidernest-go/logger"
@@ -23,7 +24,7 @@ func main() {
 	BuildInfo()         // Print build info to log.
 	LoadConfiguration() // Load the configuration data into the server.
 	// StartMailer() // Begin running the mailer service.
-	// ConnectDatabase() // Connect to the database.
+	ConnectDatabase() // Connect to the database.
 	// VerifySchemas() // Verify that the database schemas are correct.
 	ListenAndServe() // Listen and serve API requests.
 }
@@ -63,22 +64,11 @@ func StartMailer() {
 
 func ConnectDatabase() {
 	log.Info().Msg("Initalizing database...")
-	/*
-		database.Connect(
-			settings.Database.Username,
-			settings.Database.Password,
-			settings.Database.Dsn)
-	*/
+	database.Init(settings.Database.Dsn, settings.Host, settings.Database.Username, settings.Database.Password)
 }
 
 func VerifySchemas() {
 	log.Info().Msg("Verifying database schema...")
-	/*
-		err = database.Init()
-		if err != nil {
-			log.Fatal().Msgf("Database could not initalize: %v", err)
-		}
-	*/
 }
 
 func ListenAndServe() {
