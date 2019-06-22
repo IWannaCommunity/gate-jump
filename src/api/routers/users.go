@@ -4,9 +4,11 @@ import (
 	"net/http"
 
 	"github.com/badoux/checkmail"
+	mux "github.com/labstack/echo"
 
 	log "github.com/spidernest-go/logger"
-	mux "github.com/spidernest-go/mux"
+
+	//mux "github.com/spidernest-go/mux"
 	"golang.org/x/crypto/bcrypt"
 )
 

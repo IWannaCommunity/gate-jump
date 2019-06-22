@@ -4,8 +4,9 @@ import (
 	"errors"
 	"time"
 
+	echo "github.com/labstack/echo"
 	log "github.com/spidernest-go/logger"
-	echo "github.com/spidernest-go/mux"
+	//echo "github.com/spidernest-go/mux"
 )
 
 // Logging returns a middleware function that returns a handler func that logs the starting time finds the time elapsed of a given route.
@@ -14,7 +15,7 @@ func Logging() echo.MiddlewareFunc {
 		return func(ctx echo.Context) error { // handler function
 			start := float64(time.Now().UnixNano()) / 1e6
 			defer func() {
-				log.Info().Msgf("%4.2fms @ %d -> %s", (float64(time.Now().UnixNano())/1e6)-start, ctx.Request().Response.StatusCode(), ctx.Path())
+				log.Info().Msgf("%4.2fms @ %d -> %s", (float64(time.Now().UnixNano())/1e6)-start, ctx.Request().Response.StatusCode, ctx.Path())
 			}()
 			return next(ctx)
 		}

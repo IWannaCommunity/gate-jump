@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"github.com/IWannaCommunity/gate-jump/src/api/settings"
+	mux "github.com/labstack/echo"
+	middleware "github.com/labstack/echo/middleware"
 	log "github.com/spidernest-go/logger"
-	mux "github.com/spidernest-go/mux"
+	//mux "github.com/spidernest-go/mux"
 )
 
 // Serve initalizes the router to the given port, adding the routes to them, middleware, and then starting the server until a fatal error occurs.
@@ -28,8 +30,8 @@ func Serve(version, port, sslport string) {
 	e.PUT(token, updateToken)
 	e.DELETE(token, deleteToken)
 
-	e.Use(Logging())
-	e.Use(Recover())
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
 	log.Fatal().Msgf("Router ran into fatal error: %v", e.Start(fmt.Sprintf(":%s", port)))
 }
