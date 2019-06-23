@@ -30,7 +30,10 @@ func Serve(version, port, sslport string) {
 	e.PUT(token, updateToken)
 	e.DELETE(token, deleteToken)
 
-	e.Use(middleware.Logger())
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Output: log.Logger(),
+		Format: "method=${method}, uri=${uri}, status=${status}\n",
+	}))
 	e.Use(middleware.Recover())
 
 	log.Fatal().Msgf("Router ran into fatal error: %v", e.Start(fmt.Sprintf(":%s", port)))
